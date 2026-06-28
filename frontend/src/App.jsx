@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import Login from './pages/Login';
+import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -9,7 +11,15 @@ export default function App() {
     return <Login onLogin={() => setIsLoggedIn(true)} />
   }
 
+  const renderPage = () => {
+    switch (activePage) {
+      case "dashboard": return <Dashboard setActivePage={setActivePage} />
+    }
+  }
+
   return (
-    <div>App</div>
+    <Layout activePage={activePage} setActivePage={setActivePage}>
+      {renderPage()}
+    </Layout>
   )
 }
