@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import MyApplications from './pages/MyApplications';
 import JobSearch from './pages/JobSearch';
+import AIInsights from './pages/AIInsights';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -18,6 +19,7 @@ export default function App() {
       case "dashboard": return <Dashboard setActivePage={setActivePage} />
       case "applications": return <MyApplications />;
       case "jobsearch": return <JobSearch />
+      case "aiinsights": return <AIInsights />
     }
   }
 
