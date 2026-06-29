@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import MyApplications from './pages/MyApplications';
+import JobSearch from './pages/JobSearch';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -16,6 +17,7 @@ export default function App() {
     switch (activePage) {
       case "dashboard": return <Dashboard setActivePage={setActivePage} />
       case "applications": return <MyApplications />;
+      case "jobsearch": return <JobSearch />
     }
   }
 
