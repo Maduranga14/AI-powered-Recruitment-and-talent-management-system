@@ -12,6 +12,7 @@ import Interviews from './pages/Interviews';
 
 import RecriterLayout from './recruiter/RecriterLayout';
 import RecruiterDashboard from './recruiter/pages/RecruiterDashboard';
+import JobManagement from './recruiter/pages/JobManagement';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -50,6 +51,7 @@ export default function App() {
   const renderRecruiterPage = () => {
     switch (recruiterPage) {
       case 'r-dashboard': return <RecruiterDashboard setActivePage={setRecruiterPage} />
+      case 'r-jobmanagement': return <JobManagement />
     }
   }
 
