@@ -15,6 +15,8 @@ import RecruiterDashboard from './recruiter/pages/RecruiterDashboard';
 import JobManagement from './recruiter/pages/JobManagement';
 import Applications from './recruiter/pages/Applications';
 import InterviewManagement from './recruiter/pages/InterviewManagement';
+import CandidateSearch from './recruiter/pages/CandidateSearch';
+import ReportsAnalytics from './recruiter/pages/ReportAnalytics';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -56,6 +58,9 @@ export default function App() {
       case 'r-jobmanagement': return <JobManagement />
       case 'r-applications': return <Applications />
       case 'r-interviewmanagement': return <InterviewManagement />
+      case 'r-candidatesearch':     return <CandidateSearch />;
+      case 'r-reports':             return <ReportsAnalytics />;
+      default:                      return <RecruiterDashboard setActivePage={setRecruiterPage} />;
     }
   }
 
