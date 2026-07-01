@@ -18,6 +18,15 @@ import InterviewManagement from './recruiter/pages/InterviewManagement';
 import CandidateSearch from './recruiter/pages/CandidateSearch';
 import ReportsAnalytics from './recruiter/pages/ReportAnalytics';
 
+import HiringManagerLayout from './hiringmanager/HiringManagerLayout';
+import HMDashboard from './hiringmanager/pages/HMDashboard';
+import HMReviews from './hiringmanager/pages/HMReviews';
+import HMInterviews from './hiringmanager/pages/HMInterviews';
+import HMAnalytics from './hiringmanager/pages/HMAnalytics';
+import HMAIInsights from './hiringmanager/pages/HMAIInsights';
+import HMSettings from './hiringmanager/pages/HMSettings';
+
+
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState('candidate');
@@ -27,7 +36,11 @@ export default function App() {
   const handleLogin = (selectedRole) => {
     setRole(selectedRole);
     setIsLoggedIn(true);
-    setActivePage('dashboard');
+    if (selectedRole === 'hiringmanager') {
+      setActivePage('hm-dashboard');
+    } else {
+      setActivePage('dashboard');
+    }
     setRecruiterPage('r-dashboard');
   };
 
@@ -52,15 +65,34 @@ export default function App() {
     )
   }
 
+  if (role == 'hiringmanager') {
+    const renderHiringManagerPage = () => {
+      switch (activePage) {
+        case "hm-dashboard": return <HMDashboard setActivePage={setActivePage} />;
+        case "hm-reviews": return <HMReviews />;
+        case "hm-interviews": return <HMInterviews />;
+        case "hm-analytics": return <HMAnalytics />;
+        case "hm-aiinsights": return <HMAIInsights />;
+        case "hm-settings": return <HMSettings />;
+        default: return <HMDashboard setActivePage={setActivePage} />;
+      }
+    };
+    return (
+      <HiringManagerLayout activePage={activePage} setActivePage={setActivePage}>
+        {renderHiringManagerPage()}
+      </HiringManagerLayout>
+    );
+  }
+
   const renderRecruiterPage = () => {
     switch (recruiterPage) {
       case 'r-dashboard': return <RecruiterDashboard setActivePage={setRecruiterPage} />
       case 'r-jobmanagement': return <JobManagement />
       case 'r-applications': return <Applications />
       case 'r-interviewmanagement': return <InterviewManagement />
-      case 'r-candidatesearch':     return <CandidateSearch />;
-      case 'r-reports':             return <ReportsAnalytics />;
-      default:                      return <RecruiterDashboard setActivePage={setRecruiterPage} />;
+      case 'r-candidatesearch': return <CandidateSearch />;
+      case 'r-reports': return <ReportsAnalytics />;
+      default: return <RecruiterDashboard setActivePage={setRecruiterPage} />;
     }
   }
 
