@@ -65,6 +65,17 @@ export default function Login({ onLogin }) {
                             </svg>
                             Hiring Manager
                         </button>
+                        <button
+                            id="role-admin"
+                            onClick={() => setRole('admin')}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-md text-[12px] font-semibold transition-all duration-200
+                                ${role === 'admin' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                            Admin
+                        </button>
                     </div>
 
                     <div className="mb-5">
@@ -108,8 +119,7 @@ export default function Login({ onLogin }) {
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" />
-                        </svg>
-                        Sign In as {role === 'recruiter' ? 'Recruiter' : role === 'hiringmanager' ? 'Hiring Manager' : 'Candidate'}
+                        </svg>Sign In as {role === 'recruiter' ? 'Recruiter' : role === 'hiringmanager' ? 'Hiring Manager' : role === 'admin' ? 'Admin' : 'Candidate'}
                     </button>
                 </div>
 
