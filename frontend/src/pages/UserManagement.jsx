@@ -77,7 +77,7 @@ export default function UserManagement() {
     return (
         <div className="flex flex-col gap-6">
 
-            {/* Header */}
+            
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-[22px] font-bold text-gray-900">User Management</h1>
@@ -103,7 +103,7 @@ export default function UserManagement() {
                 </div>
             </div>
 
-            {/* Success Banner */}
+          
             {successMsg && (
                 <div className="flex items-center gap-2.5 p-3.5 bg-green-50 border border-green-200 rounded-xl text-green-700 text-[13px] font-medium">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -113,7 +113,7 @@ export default function UserManagement() {
                 </div>
             )}
 
-            {/* Stat Cards */}
+            
             <div className="grid grid-cols-4 gap-4">
                 {[
                     { label: 'Total Users', value: totalCount, icon: 'users' },
@@ -141,9 +141,9 @@ export default function UserManagement() {
                 ))}
             </div>
 
-            {/* User Directory Table */}
+           
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                {/* Table Header */}
+               
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <div className="flex items-center gap-2.5">
                         <span className="font-semibold text-[15px] text-gray-900">User Directory</span>
@@ -164,7 +164,7 @@ export default function UserManagement() {
                     </div>
                 </div>
 
-                {/* Loading State */}
+                
                 {isLoading ? (
                     <div className="py-16 flex flex-col items-center gap-3 text-gray-400">
                         <svg className="animate-spin" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -243,7 +243,7 @@ export default function UserManagement() {
                     </table>
                 )}
 
-                {/* Pagination */}
+                
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
                         <span className="text-[12.5px] text-gray-500">
@@ -278,7 +278,7 @@ export default function UserManagement() {
                 )}
             </div>
 
-            {/* Add User Modal */}
+            
             {showModal && (
                 <AddUserModal
                     onClose={() => setShowModal(false)}
