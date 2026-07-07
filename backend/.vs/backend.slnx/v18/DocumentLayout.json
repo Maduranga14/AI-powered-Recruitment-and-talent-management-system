@@ -1,0 +1,177 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\recruitement system original\\backend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\migrations\\20260707210041_initialcreate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:migrations\\20260707210041_initialcreate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\backend.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:backend.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\dtos\\auth\\registercandidatedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:dtos\\auth\\registercandidatedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\data\\dbseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:data\\dbseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|d:\\recruitement system original\\backend\\dtos\\admin\\userlistdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F2AA4101-2D96-4734-AE1B-D8AA1FE6CB14}|backend.csproj|solutionrelative:dtos\\admin\\userlistdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "Properties\\launchSettings.json",
+              "ToolTip": "D:\\recruitement system original\\backend\\Properties\\launchSettings.json",
+              "RelativeToolTip": "Properties\\launchSettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-07-07T21:36:23.251Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "20260707210041_InitialCreate.cs",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\Migrations\\20260707210041_InitialCreate.cs",
+              "RelativeDocumentMoniker": "Migrations\\20260707210041_InitialCreate.cs",
+              "ToolTip": "D:\\recruitement system original\\backend\\Migrations\\20260707210041_InitialCreate.cs",
+              "RelativeToolTip": "Migrations\\20260707210041_InitialCreate.cs",
+              "ViewState": "AgIAAAQAAAAAAAAAAADwvxYAAABYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T21:00:41.758Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "backend",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\backend.csproj",
+              "RelativeDocumentMoniker": "backend.csproj",
+              "ToolTip": "D:\\recruitement system original\\backend\\backend.csproj",
+              "RelativeToolTip": "backend.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-07-07T20:58:15.479Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "RegisterCandidateDto.cs",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\DTOs\\Auth\\RegisterCandidateDto.cs",
+              "RelativeDocumentMoniker": "DTOs\\Auth\\RegisterCandidateDto.cs",
+              "ToolTip": "D:\\recruitement system original\\backend\\DTOs\\Auth\\RegisterCandidateDto.cs",
+              "RelativeToolTip": "DTOs\\Auth\\RegisterCandidateDto.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAkwBoAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T20:54:40.002Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "DbSeeder.cs",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\Data\\DbSeeder.cs",
+              "RelativeDocumentMoniker": "Data\\DbSeeder.cs",
+              "ToolTip": "D:\\recruitement system original\\backend\\Data\\DbSeeder.cs",
+              "RelativeToolTip": "Data\\DbSeeder.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAABgAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T20:40:27.383Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "D:\\recruitement system original\\backend\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAEMAAAAAAAAAAAAAAFMAAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T20:28:19.508Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "D:\\recruitement system original\\backend\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAABJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-07-07T20:25:50.832Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "Data\\AppDbContext.cs",
+              "ToolTip": "D:\\recruitement system original\\backend\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "Data\\AppDbContext.cs",
+              "ViewState": "AgIAADgAAAAAAAAAAAAgwDQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T19:14:45.582Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "UserListDto.cs",
+              "DocumentMoniker": "D:\\recruitement system original\\backend\\DTOs\\Admin\\UserListDto.cs",
+              "RelativeDocumentMoniker": "DTOs\\Admin\\UserListDto.cs",
+              "ToolTip": "D:\\recruitement system original\\backend\\DTOs\\Admin\\UserListDto.cs",
+              "RelativeToolTip": "DTOs\\Admin\\UserListDto.cs",
+              "ViewState": "AgIAABMAAAAAAAAAAAAwwB0AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-07-07T19:08:46.501Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
