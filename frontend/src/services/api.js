@@ -98,6 +98,25 @@ export const adminApi = {
 
     deleteDepartment: (id) =>
         request(`/admin/departments/${id}`, { method: 'DELETE' }),
+
+    getRoles: () => request('/admin/roles'),
+
+    getRoleDetails: (id) => request(`/admin/roles/${id}`),
+
+    createRole: (payload) =>
+        request('/admin/roles', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        }),
+
+    updateRolePermissions: (id, payload) =>
+        request(`/admin/roles/${id}/permissions`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        }),
+
+    deleteRole: (id) =>
+        request(`/admin/roles/${id}`, { method: 'DELETE' }),
 };
 
 

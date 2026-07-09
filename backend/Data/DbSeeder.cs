@@ -10,6 +10,7 @@ namespace backend.Data
         {
             await SeedAdminAsync(db);
             await SeedDepartmentDashboardAsync(db);
+            await SeedRolesAndPermissionsAsync(db);
         }
 
         private static async Task SeedAdminAsync(AppDbContext db)
@@ -115,6 +116,79 @@ namespace backend.Data
                 await db.SaveChangesAsync();
                 Console.WriteLine("Global policies seeded.");
             }
+        }
+
+        private static async Task SeedRolesAndPermissionsAsync(AppDbContext db)
+        {
+            if (await db.Roles.AnyAsync()) return;
+
+            var roles = new List<Role>
+            {
+                new Role
+                {
+                    Id = "global-admin",
+                    Name = "Admin",
+                    Description = "Unrestricted access to all modules and system settings.",
+                    Icon = "admin",
+                    Tags = "Manage Users,Billing,AI Config,+12 more",
+                    IsDefault = true,
+                    Permissions = new List<RolePermission>
+                    {
+                        new RolePermission { PermissionId = "candidate-scoring", Type = "AIInsight", Label = "Candidate Scoring", Description = "Allow AI to generate match scores based on job descriptions.", Enabled = true },
+                        new RolePermission { PermissionId = "predictive-retention", Type = "AIInsight", Label = "Predictive Retention Analytics", Description = "Access AI-driven forecasting for long-term candidate retention.", Enabled = true },
+                        new RolePermission { PermissionId = "user-lifecycle", Type = "SystemManagement", Label = "User Lifecycle Management", Description = "Create, suspend, and delete user accounts.", Enabled = true },
+                        new RolePermission { PermissionId = "billing", Type = "SystemManagement", Label = "Billing & Subscription", Description = "Manage payment methods and upgrade plans.", Enabled = true },
+                        new RolePermission { PermissionId = "audit-log", Type = "SystemManagement", Label = "Audit Log Access", Description = "View historical logs of all system activities.", Enabled = true },
+                        new RolePermission { PermissionId = "job-postings", Type = "RecruitmentOps", Label = "Job Postings", View = true, Edit = true, Delete = true },
+                        new RolePermission { PermissionId = "candidate-profiles", Type = "RecruitmentOps", Label = "Candidate Profiles", View = true, Edit = true, Delete = true },
+                        new RolePermission { PermissionId = "interview-schedules", Type = "RecruitmentOps", Label = "Interview Schedules", View = true, Edit = true, Delete = true }
+                    }
+                },
+                new Role
+                {
+                    Id = "recruiter",
+                    Name = "Recruiter",
+                    Description = "Execute searches, manage candidates, and schedule interviews.",
+                    Icon = "recruiter",
+                    Tags = "Candidate Sourcing,Interviews",
+                    IsDefault = false,
+                    Permissions = new List<RolePermission>
+                    {
+                        new RolePermission { PermissionId = "candidate-scoring", Type = "AIInsight", Label = "Candidate Scoring", Description = "Allow AI to generate match scores based on job descriptions.", Enabled = true },
+                        new RolePermission { PermissionId = "predictive-retention", Type = "AIInsight", Label = "Predictive Retention Analytics", Description = "Access AI-driven forecasting for long-term candidate retention.", Enabled = false },
+                        new RolePermission { PermissionId = "user-lifecycle", Type = "SystemManagement", Label = "User Lifecycle Management", Description = "Create, suspend, and delete user accounts.", Enabled = false },
+                        new RolePermission { PermissionId = "billing", Type = "SystemManagement", Label = "Billing & Subscription", Description = "Manage payment methods and upgrade plans.", Enabled = false },
+                        new RolePermission { PermissionId = "audit-log", Type = "SystemManagement", Label = "Audit Log Access", Description = "View historical logs of all system activities.", Enabled = false },
+                        new RolePermission { PermissionId = "job-postings", Type = "RecruitmentOps", Label = "Job Postings", View = true, Edit = true, Delete = true },
+                        new RolePermission { PermissionId = "candidate-profiles", Type = "RecruitmentOps", Label = "Candidate Profiles", View = true, Edit = true, Delete = true },
+                        new RolePermission { PermissionId = "interview-schedules", Type = "RecruitmentOps", Label = "Interview Schedules", View = true, Edit = true, Delete = false }
+                    }
+                },
+                new Role
+                {
+                    Id = "HiringManager",
+                    Name = "Hiring Manager",
+                    Description = "Access candidate profiles and submit structured feedback.",
+                    Icon = "interviewer",
+                    Tags = "Feedback,Candidate Profiles",
+                    IsDefault = false,
+                    Permissions = new List<RolePermission>
+                    {
+                        new RolePermission { PermissionId = "candidate-scoring", Type = "AIInsight", Label = "Candidate Scoring", Description = "Allow AI to generate match scores based on job descriptions.", Enabled = false },
+                        new RolePermission { PermissionId = "predictive-retention", Type = "AIInsight", Label = "Predictive Retention Analytics", Description = "Access AI-driven forecasting for long-term candidate retention.", Enabled = false },
+                        new RolePermission { PermissionId = "user-lifecycle", Type = "SystemManagement", Label = "User Lifecycle Management", Description = "Create, suspend, and delete user accounts.", Enabled = false },
+                        new RolePermission { PermissionId = "billing", Type = "SystemManagement", Label = "Billing & Subscription", Description = "Manage payment methods and upgrade plans.", Enabled = false },
+                        new RolePermission { PermissionId = "audit-log", Type = "SystemManagement", Label = "Audit Log Access", Description = "View historical logs of all system activities.", Enabled = false },
+                        new RolePermission { PermissionId = "job-postings", Type = "RecruitmentOps", Label = "Job Postings", View = true, Edit = false, Delete = false },
+                        new RolePermission { PermissionId = "candidate-profiles", Type = "RecruitmentOps", Label = "Candidate Profiles", View = true, Edit = false, Delete = false },
+                        new RolePermission { PermissionId = "interview-schedules", Type = "RecruitmentOps", Label = "Interview Schedules", View = true, Edit = false, Delete = false }
+                    }
+                },
+            };
+
+            db.Roles.AddRange(roles);
+            await db.SaveChangesAsync();
+            Console.WriteLine("Roles and default permissions seeded.");
         }
     }
 }

@@ -10,6 +10,8 @@ namespace backend.Data
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<GlobalPolicy> GlobalPolicies { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -62,6 +64,20 @@ namespace backend.Data
 
                 entity.Property(cp => cp.ResumeFileUrl)
                       .HasMaxLength(500);
+            });
+
+            modelBuilder.Entity<Role>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+                entity.HasMany(r => r.Permissions)
+                      .WithOne(rp => rp.Role)
+                      .HasForeignKey(rp => rp.RoleId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<RolePermission>(entity =>
+            {
+                entity.HasKey(rp => rp.Id);
             });
         }
     }
