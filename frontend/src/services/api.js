@@ -84,6 +84,20 @@ export const adminApi = {
             method: 'PUT',
             body: JSON.stringify({ newPassword }),
         }),
+
+    getDepartmentDashboard: () => request('/admin/departments/dashboard'),
+
+    createDepartment: (payload) =>
+        request('/admin/departments', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        }),
+
+    togglePolicy: (id) =>
+        request(`/admin/departments/policies/${id}/toggle`, { method: 'PUT' }),
+
+    deleteDepartment: (id) =>
+        request(`/admin/departments/${id}`, { method: 'DELETE' }),
 };
 
 
