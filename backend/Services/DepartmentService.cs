@@ -1,0 +1,151 @@
+﻿using backend.Data;
+using backend.DTOs.Admin;
+using backend.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace backend.Services
+{
+    public class DepartmentService(AppDbContext dbContext) : IDepartmentService
+    {
+        private readonly AppDbContext _db = dbContext;
+
+        public async Task<DepartmentDashboardDto> GetDepartmentDashboardAsync()
+        {
+            
+            var org = await _db.Organizations.FirstOrDefaultAsync();
+            var orgDto = org != null ? new OrganizationDto
+            {
+                Id = org.Id,
+                Name = org.Name,
+                Sub = org.Sub
+            } : new OrganizationDto
+            {
+                Id = Guid.Empty,
+                Name = "TalentAI Global Holding",
+                Sub = "Principal Entity • NYC HQ"
+            };
+
+            
+            var depts = await _db.Departments
+                .Select(d => new DepartmentDto
+                {
+                    Id = d.Id,
+                    Name = d.Name,
+                    Badge = d.Badge,
+                    BadgeColor = d.BadgeColor,
+                    Head = d.Head,
+                    HeadInitials = d.HeadInitials,
+                    HeadColor = d.HeadColor
+                })
+                .ToListAsync();
+
+            
+            var policies = await _db.GlobalPolicies
+                .Select(p => new GlobalPolicyDto
+                {
+                    Id = p.Id,
+                    Label = p.Label,
+                    Desc = p.Desc,
+                    Enabled = p.Enabled
+                })
+                .ToListAsync();
+
+            return new DepartmentDashboardDto
+            {
+                CorporateStructure = orgDto,
+                Departments = depts,
+                GlobalPolicies = policies
+            };
+        }
+
+        public async Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentDto dto)
+        {
+            var initials = dto.HeadInitials;
+            if (string.IsNullOrWhiteSpace(initials) && !string.IsNullOrWhiteSpace(dto.Head))
+            {
+                var parts = dto.Head.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 1)
+                {
+                    initials = $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+                }
+                else if (parts.Length == 1)
+                {
+                    initials = parts[0][0].ToString().ToUpper();
+                }
+            }
+
+            var colors = new[] { "#2563EB", "#7c3aed", "#ea580c", "#0d9488", "#0284c7", "#ec4899", "#8b5cf6" };
+            var headColor = dto.HeadColor;
+            if (string.IsNullOrWhiteSpace(headColor) || headColor == "#2563EB")
+            {
+                var random = new Random();
+                headColor = colors[random.Next(colors.Length)];
+            }
+
+            var badgeColors = new[] { "#f59e0b", "#0d9488", "#64748b", "#3b82f6", "#ef4444" };
+            var badgeColor = dto.BadgeColor;
+            if (string.IsNullOrWhiteSpace(badgeColor) || badgeColor == "#64748b")
+            {
+                var random = new Random();
+                badgeColor = badgeColors[random.Next(badgeColors.Length)];
+            }
+
+            var dept = new Department
+            {
+                Name = dto.Name,
+                Badge = dto.Badge,
+                BadgeColor = badgeColor,
+                Head = dto.Head,
+                HeadInitials = initials,
+                HeadColor = headColor
+            };
+
+            _db.Departments.Add(dept);
+            await _db.SaveChangesAsync();
+
+            return new DepartmentDto
+            {
+                Id = dept.Id,
+                Name = dept.Name,
+                Badge = dept.Badge,
+                BadgeColor = dept.BadgeColor,
+                Head = dept.Head,
+                HeadInitials = dept.HeadInitials,
+                HeadColor = dept.HeadColor
+            };
+        }
+
+        public async Task<GlobalPolicyDto> TogglePolicyAsync(string id)
+        {
+            var policy = await _db.GlobalPolicies.FindAsync(id);
+            if (policy == null)
+            {
+                throw new KeyNotFoundException($"Policy with ID '{id}' was not found.");
+            }
+
+            policy.Enabled = !policy.Enabled;
+            await _db.SaveChangesAsync();
+
+            return new GlobalPolicyDto
+            {
+                Id = policy.Id,
+                Label = policy.Label,
+                Desc = policy.Desc,
+                Enabled = policy.Enabled
+            };
+        }
+
+        public async Task<bool> DeleteDepartmentAsync(Guid id)
+        {
+            var dept = await _db.Departments.FindAsync(id);
+            if (dept == null)
+            {
+                return false;
+            }
+
+            _db.Departments.Remove(dept);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+    }
+}

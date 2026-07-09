@@ -7,6 +7,9 @@ namespace backend.Data
     {
         public DbSet<User> Users { get; set; }
         public DbSet<CandidateProfile> CandidateProfiles { get; set; }
+        public DbSet<Organization> Organizations { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<GlobalPolicy> GlobalPolicies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

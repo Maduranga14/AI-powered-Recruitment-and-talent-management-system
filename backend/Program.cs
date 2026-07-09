@@ -39,7 +39,7 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 
-   
+
     options.Events = new JwtBearerEvents
     {
         OnChallenge = context =>
@@ -79,6 +79,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
 
 builder.Services.AddOpenApi(options =>
@@ -107,10 +108,10 @@ if (app.Environment.IsDevelopment())
 
 if (app.Environment.IsDevelopment())
 {
-    
+
     app.MapOpenApi();
 
-    
+
     app.MapScalarApiReference(options =>
     {
         options.Title = "TalentPortal AI API";
