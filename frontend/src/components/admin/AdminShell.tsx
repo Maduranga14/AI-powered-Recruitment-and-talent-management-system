@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   BellIcon,
   Building2Icon,
@@ -12,6 +14,9 @@ import {
   SparklesIcon,
   UsersRoundIcon,
   XIcon,
+  LogOutIcon,
+  ChevronDownIcon,
+  BriefcaseIcon,
   type LucideIcon } from
 'lucide-react';
 export type AdminView =
@@ -67,6 +72,20 @@ export function AdminShell({
   children
 }: AdminShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getInitials = () => {
+    if (!user) return 'AD';
+    return user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   const changeView = (view: AdminView) => {
     onViewChange(view);
     setMobileOpen(false);
@@ -182,9 +201,71 @@ export function AdminShell({
                 
                 <ShieldCheckIcon className="h-4 w-4" /> Safeguards
               </button>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-100 text-sm font-extrabold text-accent-700">
-                EB
-              </span>
+              <div className="relative">
+                <button
+                  onClick={() => setMenuOpen((o) => !o)}
+                  className="flex items-center gap-2 rounded-xl py-1 pl-1 pr-2 text-left hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  aria-label="Admin account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}>
+                  
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-100 text-sm font-extrabold text-accent-700">
+                    {getInitials()}
+                  </span>
+                  
+                  <span className="hidden text-sm font-semibold text-slate-700 sm:block">
+                    {user?.name.split(' ')[0] || "Admin"}
+                  </span>
+                  <ChevronDownIcon className="hidden h-4 w-4 text-slate-400 sm:block" />
+                </button>
+                <AnimatePresence>
+                  {menuOpen &&
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lift"
+                        role="menu">
+                        <div className="px-3 py-2">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {user?.name || "System Admin"}
+                          </p>
+                          <p className="truncate text-xs text-slate-500">
+                            {user?.email || "admin@talentportal.com"}
+                          </p>
+                        </div>
+                        <div className="my-1 h-px bg-slate-100" />
+                        <button
+                          onClick={() => {
+                            changeView('overview');
+                            setMenuOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                          role="menuitem">
+                          <LayoutDashboardIcon className="h-4 w-4" /> Dashboard
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate('/jobs');
+                            setMenuOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                          role="menuitem">
+                          <BriefcaseIcon className="h-4 w-4" /> Find Jobs
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                          role="menuitem">
+                          <LogOutIcon className="h-4 w-4" /> Log out
+                        </button>
+                      </motion.div>
+                    </>
+                  }
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </header>
@@ -245,6 +326,11 @@ export function AdminShell({
                 </button>
               </div>
               <div className="mt-8">{navigationContent()}</div>
+              <button
+                onClick={handleLogout}
+                className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+                <LogOutIcon className="h-4 w-4" /> Log out
+              </button>
               <button
               onClick={() => changeView('moderation')}
               className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">

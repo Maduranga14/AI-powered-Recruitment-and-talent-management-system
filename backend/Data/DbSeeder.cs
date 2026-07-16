@@ -1,4 +1,4 @@
-﻿using backend.Models;
+using backend.Models;
 using backend.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +11,7 @@ namespace backend.Data
             await SeedAdminAsync(db);
             await SeedDepartmentDashboardAsync(db);
             await SeedRolesAndPermissionsAsync(db);
+            await SeedDemoAccountsAsync(db);
         }
 
         private static async Task SeedAdminAsync(AppDbContext db)
@@ -189,6 +190,73 @@ namespace backend.Data
             db.Roles.AddRange(roles);
             await db.SaveChangesAsync();
             Console.WriteLine("Roles and default permissions seeded.");
+        }
+
+        private static async Task SeedDemoAccountsAsync(AppDbContext db)
+        {
+            // Seed Recruiter
+            if (!await db.Users.AnyAsync(u => u.Email == "recruiter@talentportal.com"))
+            {
+                var recruiter = new User
+                {
+                    FirstName = "Olivia",
+                    LastName = "Park",
+                    Email = "recruiter@talentportal.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Recruiter@12345"),
+                    Role = UserRole.Recruiter,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                db.Users.Add(recruiter);
+                Console.WriteLine("Recruiter account seeded: recruiter@talentportal.com");
+            }
+
+            // Seed Hiring Manager
+            if (!await db.Users.AnyAsync(u => u.Email == "manager@talentportal.com"))
+            {
+                var manager = new User
+                {
+                    FirstName = "Samantha",
+                    LastName = "Reed",
+                    Email = "manager@talentportal.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Manager@12345"),
+                    Role = UserRole.HiringManager,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                db.Users.Add(manager);
+                Console.WriteLine("Hiring Manager account seeded: manager@talentportal.com");
+            }
+
+            // Seed Demo Candidate
+            if (!await db.Users.AnyAsync(u => u.Email == "alex.morgan@example.com"))
+            {
+                var candidate = new User
+                {
+                    FirstName = "Alex",
+                    LastName = "Morgan",
+                    Email = "alex.morgan@example.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("demo1234"),
+                    Role = UserRole.Candidate,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                db.Users.Add(candidate);
+
+                var profile = new CandidateProfile
+                {
+                    UserId = candidate.Id,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                db.CandidateProfiles.Add(profile);
+                Console.WriteLine("Demo Candidate account seeded: alex.morgan@example.com");
+            }
+
+            await db.SaveChangesAsync();
         }
     }
 }

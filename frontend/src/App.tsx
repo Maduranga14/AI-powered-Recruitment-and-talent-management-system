@@ -1,6 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ScrollToTop } from './components/ScrollToTop';
@@ -14,13 +13,50 @@ import { Dashboard } from './pages/Dashboard';
 import { Recruiter } from './pages/Recruiter';
 import { HiringManager } from './pages/HiringManager';
 import { Admin } from './pages/Admin';
+
 function Layout() {
   const { pathname } = useLocation();
+  const { user, isAuthenticated } = useAuth();
+
   const isAuthPage = pathname === '/login' || pathname === '/register';
   const isInternalWorkspace =
-  pathname === '/recruiter' ||
-  pathname === '/hiring-manager' ||
-  pathname === '/admin';
+    pathname === '/recruiter' ||
+    pathname === '/hiring-manager' ||
+    pathname === '/admin' ||
+    pathname === '/dashboard';
+
+  const getRole = (email?: string) => {
+    if (!email) return null;
+    const emailLower = email.toLowerCase();
+    if (emailLower.includes('admin')) return 'admin';
+    if (emailLower.includes('recruiter')) return 'recruiter';
+    if (emailLower.includes('manager')) return 'hiringmanager';
+    return 'candidate';
+  };
+
+
+  if (isInternalWorkspace) {
+    if (!isAuthenticated || !user) {
+      return <Navigate to={`/login?redirect=${encodeURIComponent(pathname)}`} replace />;
+    }
+
+    const role = getRole(user.email);
+
+
+    if (pathname === '/admin' && role !== 'admin') {
+      return <Navigate to={role === 'recruiter' ? '/recruiter' : role === 'hiringmanager' ? '/hiring-manager' : '/dashboard'} replace />;
+    }
+    if (pathname === '/recruiter' && role !== 'recruiter') {
+      return <Navigate to={role === 'admin' ? '/admin' : role === 'hiringmanager' ? '/hiring-manager' : '/dashboard'} replace />;
+    }
+    if (pathname === '/hiring-manager' && role !== 'hiringmanager') {
+      return <Navigate to={role === 'admin' ? '/admin' : role === 'recruiter' ? '/recruiter' : '/dashboard'} replace />;
+    }
+    if (pathname === '/dashboard' && role !== 'candidate') {
+      return <Navigate to={role === 'admin' ? '/admin' : role === 'recruiter' ? '/recruiter' : '/hiring-manager'} replace />;
+    }
+  }
+
   if (pathname === '/recruiter') {
     return <Recruiter />;
   }
@@ -30,6 +66,7 @@ function Layout() {
   if (pathname === '/admin') {
     return <Admin />;
   }
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-slate-50">
       {!isAuthPage && <Navbar />}
@@ -49,9 +86,10 @@ function Layout() {
         </Routes>
       </main>
       {!isAuthPage && !isInternalWorkspace && <Footer />}
-    </div>);
-
+    </div>
+  );
 }
+
 export function App() {
   return (
     <AuthProvider>
@@ -59,6 +97,6 @@ export function App() {
         <ScrollToTop />
         <Layout />
       </BrowserRouter>
-    </AuthProvider>);
-
+    </AuthProvider>
+  );
 }

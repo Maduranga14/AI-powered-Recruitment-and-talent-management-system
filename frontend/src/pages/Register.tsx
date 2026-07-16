@@ -6,10 +6,10 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 const perks = [
-'AI-ranked job matches tailored to you',
-'One-click apply with your saved profile',
-'Track every application in one place',
-'Private until you choose to share'];
+  'AI-ranked job matches tailored to you',
+  'One-click apply with your saved profile',
+  'Track every application in one place',
+  'Private until you choose to share'];
 
 export function Register() {
   const { register } = useAuth();
@@ -27,7 +27,7 @@ export function Register() {
     const e: Record<string, string> = {};
     if (!form.name.trim()) e.name = 'Please enter your name';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-    e.email = 'Enter a valid email';
+      e.email = 'Enter a valid email';
     if (form.password.length < 6) e.password = 'Use at least 6 characters';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -36,14 +36,21 @@ export function Register() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      register(form.name.trim(), form.email.trim(), form.password);
-      navigate(redirect);
-    }, 700);
+
+    (async () => {
+      try {
+        await register(form.name.trim(), form.email.trim(), form.password);
+        navigate(redirect);
+      } catch (err: any) {
+        setErrors({ form: err.message || 'Registration failed. Please try again.' });
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
   return (
     <div className="grid w-full flex-1 lg:grid-cols-2">
-      {/* Brand panel */}
+
       <div className="relative hidden flex-col justify-between bg-brand-700 p-12 text-white lg:flex">
         <Link to="/" className="flex items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
@@ -57,7 +64,7 @@ export function Register() {
           </h2>
           <ul className="mt-8 space-y-4">
             {perks.map((p) =>
-            <li key={p} className="flex items-center gap-3 text-brand-100">
+              <li key={p} className="flex items-center gap-3 text-brand-100">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15">
                   <CheckIcon className="h-3.5 w-3.5" />
                 </span>
@@ -69,7 +76,7 @@ export function Register() {
         <p className="text-sm text-brand-200">Free forever for job seekers.</p>
       </div>
 
-      {/* Form */}
+
       <div className="flex items-center justify-center bg-white px-4 py-12 sm:px-8">
         <motion.div
           initial={{
@@ -81,7 +88,7 @@ export function Register() {
             y: 0
           }}
           className="w-full max-w-md">
-          
+
           <div className="lg:hidden">
             <Link to="/" className="flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
@@ -100,19 +107,24 @@ export function Register() {
           </p>
 
           <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
+            {errors.form && (
+              <div className="rounded-xl bg-red-50 p-3.5 text-xs font-semibold text-red-600 border border-red-100">
+                {errors.form}
+              </div>
+            )}
             <Input
               label="Full name"
               name="name"
               placeholder="Alex Morgan"
               value={form.name}
               onChange={(e) =>
-              setForm({
-                ...form,
-                name: e.target.value
-              })
+                setForm({
+                  ...form,
+                  name: e.target.value
+                })
               }
               error={errors.name} />
-            
+
             <Input
               label="Email"
               name="email"
@@ -120,13 +132,13 @@ export function Register() {
               placeholder="you@example.com"
               value={form.email}
               onChange={(e) =>
-              setForm({
-                ...form,
-                email: e.target.value
-              })
+                setForm({
+                  ...form,
+                  email: e.target.value
+                })
               }
               error={errors.email} />
-            
+
             <Input
               label="Password"
               name="password"
@@ -134,13 +146,13 @@ export function Register() {
               placeholder="At least 6 characters"
               value={form.password}
               onChange={(e) =>
-              setForm({
-                ...form,
-                password: e.target.value
-              })
+                setForm({
+                  ...form,
+                  password: e.target.value
+                })
               }
               error={errors.password} />
-            
+
             <Button type="submit" fullWidth size="lg" disabled={loading}>
               {loading ? 'Creating account…' : 'Create account'}
             </Button>
@@ -151,7 +163,7 @@ export function Register() {
             <Link
               to="/login"
               className="font-semibold text-brand-600 hover:underline">
-              
+
               Log in
             </Link>
           </p>
