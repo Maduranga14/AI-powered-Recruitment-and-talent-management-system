@@ -6,6 +6,7 @@ import React, {
   useContext,
   Component } from
 'react';
+import { authApi } from '../services/api';
 export interface CandidateProfile {
   name: string;
   email: string;
@@ -32,8 +33,8 @@ interface AuthContextValue {
   savedJobs: string[];
   applications: Application[];
   isAuthenticated: boolean;
-  login: (email: string, password: string) => void;
-  register: (name: string, email: string, password: string) => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   updateProfile: (patch: Partial<CandidateProfile>) => void;
   toggleSaveJob: (jobId: string) => void;
@@ -92,39 +93,49 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
 
       /* ignore */}
   }, [user, savedJobs, applications]);
-  const login: AuthContextValue['login'] = (email) => {
-    const name = email.split('@')[0].replace(/[._]/g, ' ');
-    const pretty = name.replace(/\b\w/g, (c) => c.toUpperCase());
+  const login: AuthContextValue['login'] = async (email, password) => {
+    const res = await authApi.login({ email, password });
+    localStorage.setItem('tp_token', res.data.token);
     setUser({
-      name: pretty || 'Alex Morgan',
-      email,
-      title: 'Senior Frontend Engineer',
-      location: 'San Francisco, CA',
-      bio: 'Product-minded frontend engineer who loves building accessible, delightful interfaces.',
-      skills: [
-      'React',
-      'TypeScript',
-      'Tailwind CSS',
-      'Design Systems',
-      'GraphQL'],
-
-      resumeName: 'Alex_Morgan_CV.pdf',
-      avatar: makeAvatar(pretty)
-    });
-  };
-  const register: AuthContextValue['register'] = (name, email) => {
-    setUser({
-      name,
-      email,
-      title: '',
-      location: '',
-      bio: '',
+      name: res.data.fullName,
+      email: res.data.email,
+      title: res.data.role === 'Admin' ? 'Super Administrator' : 'Platform Staff',
+      location: 'Office',
+      bio: 'Workspace user.',
       skills: [],
       resumeName: null,
-      avatar: name ? makeAvatar(name) : DEFAULT_AVATAR
+      avatar: makeAvatar(res.data.fullName)
     });
   };
-  const logout = () => setUser(null);
+  const register: AuthContextValue['register'] = async (name, email, password) => {
+    const parts = name.trim().split(/\s+/);
+    const firstName = parts[0] || '';
+    const lastName = parts.slice(1).join(' ') || 'User';
+
+    const res = await authApi.register({
+      firstName,
+      lastName,
+      email,
+      password,
+      confirmPassword: password
+    });
+
+    localStorage.setItem('tp_token', res.data.token);
+    setUser({
+      name: res.data.fullName,
+      email: res.data.email,
+      title: 'Candidate Profile',
+      location: 'City, Country',
+      bio: 'New Candidate joining Talenta.',
+      skills: [],
+      resumeName: null,
+      avatar: makeAvatar(res.data.fullName)
+    });
+  };
+  const logout = () => {
+    localStorage.removeItem('tp_token');
+    setUser(null);
+  };
   const updateProfile: AuthContextValue['updateProfile'] = (patch) => {
     setUser((prev) => {
       if (!prev) return prev;

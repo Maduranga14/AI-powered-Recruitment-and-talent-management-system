@@ -25,10 +25,29 @@ export function Login() {
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setLoading(true);
-    setTimeout(() => {
-      login(form.email.trim(), form.password);
-      navigate(redirect);
-    }, 700);
+    
+    // Perform login
+    (async () => {
+      try {
+        await login(form.email.trim(), form.password);
+        
+        const emailLower = form.email.toLowerCase();
+        let targetRedirect = redirect;
+        if (emailLower.includes('admin')) {
+          targetRedirect = '/admin';
+        } else if (emailLower.includes('recruiter')) {
+          targetRedirect = '/recruiter';
+        } else if (emailLower.includes('manager')) {
+          targetRedirect = '/hiring-manager';
+        }
+        
+        navigate(targetRedirect);
+      } catch (err: any) {
+        setErrors({ form: err.message || 'Login failed. Please check your credentials.' });
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
   const demoLogin = () => {
     setLoading(true);
@@ -67,6 +86,11 @@ export function Login() {
         </p>
 
         <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
+          {errors.form && (
+            <div className="rounded-xl bg-red-50 p-3.5 text-xs font-semibold text-red-600 border border-red-100">
+              {errors.form}
+            </div>
+          )}
           <Input
             label="Email"
             name="email"

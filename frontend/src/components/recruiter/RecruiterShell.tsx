@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   BellIcon,
   BriefcaseBusinessIcon,
@@ -11,7 +13,9 @@ import {
   PlusIcon,
   SparklesIcon,
   UsersRoundIcon,
-  XIcon } from
+  XIcon,
+  LogOutIcon,
+  BriefcaseIcon } from
 'lucide-react';
 import { Button } from '../ui/Button';
 export type RecruiterView =
@@ -66,6 +70,15 @@ export function RecruiterShell({
   children
 }: RecruiterShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const setView = (view: RecruiterView) => {
     onViewChange(view);
     setMobileOpen(false);
@@ -144,7 +157,6 @@ export function RecruiterShell({
           </button>
         </div>
       </aside>
-
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 h-16 border-b border-slate-200 bg-white/90 px-4 backdrop-blur-lg sm:px-6 lg:px-8">
           <div className="mx-auto flex h-full max-w-[1600px] items-center justify-between gap-3">
@@ -179,20 +191,72 @@ export function RecruiterShell({
                 
                 <PlusIcon className="h-4 w-4" /> Create job
               </Button>
-              <button
-                className="flex items-center gap-2 rounded-xl py-1 pl-1 pr-2 text-left hover:bg-slate-100"
-                aria-label="Recruiter account menu">
-                
-                <img
-                  src="https://ui-avatars.com/api/?name=Olivia+Park&background=312e81&color=fff&bold=true&size=96"
-                  alt=""
-                  className="h-8 w-8 rounded-lg" />
-                
-                <span className="hidden text-sm font-semibold text-slate-700 sm:block">
-                  Olivia
-                </span>
-                <ChevronDownIcon className="hidden h-4 w-4 text-slate-400 sm:block" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setMenuOpen((o) => !o)}
+                  className="flex items-center gap-2 rounded-xl py-1 pl-1 pr-2 text-left hover:bg-slate-100"
+                  aria-label="Recruiter account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}>
+                  
+                  <img
+                    src={user?.avatar || "https://ui-avatars.com/api/?name=Olivia+Park&background=312e81&color=fff&bold=true&size=96"}
+                    alt=""
+                    className="h-8 w-8 rounded-lg" />
+                  
+                  <span className="hidden text-sm font-semibold text-slate-700 sm:block">
+                    {user?.name.split(' ')[0] || "Olivia"}
+                  </span>
+                  <ChevronDownIcon className="hidden h-4 w-4 text-slate-400 sm:block" />
+                </button>
+                <AnimatePresence>
+                  {menuOpen &&
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lift"
+                        role="menu">
+                        <div className="px-3 py-2">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {user?.name || "Olivia Park"}
+                          </p>
+                          <p className="truncate text-xs text-slate-500">
+                            {user?.email || "olivia@northwind.com"}
+                          </p>
+                        </div>
+                        <div className="my-1 h-px bg-slate-100" />
+                        <button
+                          onClick={() => {
+                            setView('overview');
+                            setMenuOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                          role="menuitem">
+                          <LayoutDashboardIcon className="h-4 w-4" /> Dashboard
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate('/jobs');
+                            setMenuOpen(false);
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                          role="menuitem">
+                          <BriefcaseIcon className="h-4 w-4" /> Find Jobs
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                          role="menuitem">
+                          <LogOutIcon className="h-4 w-4" /> Log out
+                        </button>
+                      </motion.div>
+                    </>
+                  }
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </header>
@@ -257,6 +321,11 @@ export function RecruiterShell({
                 </button>
               </div>
               <div className="mt-8">{nav()}</div>
+              <button
+                onClick={handleLogout}
+                className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+                <LogOutIcon className="h-4 w-4" /> Log out
+              </button>
               <Button
               className="mt-auto"
               fullWidth
