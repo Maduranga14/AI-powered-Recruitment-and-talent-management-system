@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2Icon } from 'lucide-react';
 import { AdminAuditSettings } from '../components/admin/AdminAuditSettings';
@@ -8,6 +8,7 @@ import { AdminOrganizationDrawer } from '../components/admin/AdminOrganizationDr
 import { AdminOrganizations } from '../components/admin/AdminOrganizations';
 import { AdminOverview } from '../components/admin/AdminOverview';
 import { AdminPeople } from '../components/admin/AdminPeople';
+import { AdminPendingApprovals } from '../components/admin/AdminPendingApprovals';
 import { AdminPersonDrawer } from '../components/admin/AdminPersonDrawer';
 import { AdminShell, type AdminView } from '../components/admin/AdminShell';
 import {
@@ -16,11 +17,15 @@ import {
   ADMIN_ORGANIZATIONS,
   ADMIN_PEOPLE,
   type AdminPerson,
-  type ModerationItem } from
+  type ModerationItem,
+  type AdminRole,
+  type AccountStatus } from
 '../data/admin';
+import { adminApi } from '../services/api';
 export function Admin() {
   const [view, setView] = useState<AdminView>('overview');
   const [people, setPeople] = useState(ADMIN_PEOPLE);
+  const [organizations, setOrganizations] = useState(ADMIN_ORGANIZATIONS);
   const [moderation, setModeration] = useState(ADMIN_MODERATION);
   const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
   const [selectedOrganizationId, setSelectedOrganizationId] = useState<
@@ -33,6 +38,96 @@ export function Admin() {
     strictSafeguards: true
   });
   const [feedback, setFeedback] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await adminApi.getUsers(undefined, 1, 100);
+        
+        // 1. Map backend users to AdminPerson
+        const backendPeople: AdminPerson[] = res.items.map((u) => {
+          let mappedRole: AdminRole = 'Candidate';
+          if (u.role === 'Admin') mappedRole = 'Administrator';
+          else if (u.role === 'Recruiter') mappedRole = 'Recruiter';
+          else if (u.role === 'HiringManager') mappedRole = 'Hiring manager';
+
+          let mappedStatus: AccountStatus = u.isActive ? 'Active' : 'Suspended';
+
+          return {
+            id: u.id,
+            name: u.fullName,
+            email: u.email,
+            role: mappedRole,
+            status: mappedStatus,
+            organization: u.organizationName || 'Independent',
+            joined: new Date(u.createdAt).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            }),
+            lastActive: 'Recently',
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=4f46e5&color=fff&bold=true&size=96&format=png`
+          };
+        });
+
+        // Combine backend users with existing mock users, filtering out duplicates by email
+        setPeople((prev) => {
+          const combined = [...prev];
+          backendPeople.forEach((bp) => {
+            if (!combined.some((p) => p.email.toLowerCase() === bp.email.toLowerCase())) {
+              combined.push(bp);
+            }
+          });
+          return combined;
+        });
+
+        // 2. Extract organizations from backend users
+        const orgNames = new Set<string>();
+        res.items.forEach((u) => {
+          if (u.organizationName) {
+            orgNames.add(u.organizationName);
+          }
+        });
+
+        // Combine backend organizations with existing mock organizations
+        setOrganizations((prev) => {
+          const combined = [...prev];
+          Array.from(orgNames).forEach((orgName) => {
+            if (!combined.some((o) => o.name.toLowerCase() === orgName.toLowerCase())) {
+              const initials = orgName.split(' ').map((w) => w[0]).join('').toUpperCase().substring(0, 3);
+              combined.push({
+                id: `org-${orgName.toLowerCase().replace(/\s+/g, '-')}`,
+                name: orgName,
+                initials: initials || 'ORG',
+                plan: 'Starter',
+                members: res.items.filter((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase()).length,
+                activeJobs: 1, // mock count
+                status: 'Healthy',
+                owner: res.items.find((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase() && u.role === 'Recruiter')?.fullName || 'Unknown',
+                joined: new Date().toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                }),
+                monthlyUsage: '$0'
+              });
+            } else {
+              // Update members count of existing organization if needed
+              const org = combined.find((o) => o.name.toLowerCase() === orgName.toLowerCase());
+              if (org) {
+                org.members = res.items.filter((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase()).length;
+              }
+            }
+          });
+          return combined;
+        });
+
+      } catch (err) {
+        console.error('Failed to load live admin data:', err);
+      }
+    })();
+  }, [view]);
+
   const showFeedback = (message: string) => {
     setFeedback(message);
     window.setTimeout(() => setFeedback(''), 2800);
@@ -95,7 +190,7 @@ export function Admin() {
     );
   };
   const selectedOrganization =
-  ADMIN_ORGANIZATIONS.find((item) => item.id === selectedOrganizationId) ??
+  organizations.find((item) => item.id === selectedOrganizationId) ??
   null;
   const pendingCount = moderation.filter(
     (item) => item.status === 'Pending'
@@ -125,7 +220,7 @@ export function Admin() {
           {view === 'overview' &&
           <AdminOverview
             people={people}
-            organizations={ADMIN_ORGANIZATIONS}
+            organizations={organizations}
             moderation={moderation}
             onViewChange={setView} />
 
@@ -135,7 +230,7 @@ export function Admin() {
           }
           {view === 'organizations' &&
           <AdminOrganizations
-            organizations={ADMIN_ORGANIZATIONS}
+            organizations={organizations}
             onOrganizationSelect={(organization) =>
             setSelectedOrganizationId(organization.id)
             } />
@@ -147,6 +242,7 @@ export function Admin() {
             onItemSelect={setSelectedModeration} />
 
           }
+          {view === 'pending-approvals' && <AdminPendingApprovals />}
           {view === 'audit-settings' &&
           <AdminAuditSettings
             auditEvents={ADMIN_AUDIT_EVENTS}

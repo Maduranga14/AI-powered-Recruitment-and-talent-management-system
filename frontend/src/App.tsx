@@ -9,6 +9,7 @@ import { JobDetail } from './pages/JobDetail';
 import { Companies } from './pages/Companies';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { RegisterHiringManager } from './pages/RegisterHiringManager';
 import { Dashboard } from './pages/Dashboard';
 import { Recruiter } from './pages/Recruiter';
 import { HiringManager } from './pages/HiringManager';
@@ -18,30 +19,34 @@ function Layout() {
   const { pathname } = useLocation();
   const { user, isAuthenticated } = useAuth();
 
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/register-hm';
   const isInternalWorkspace =
     pathname === '/recruiter' ||
     pathname === '/hiring-manager' ||
     pathname === '/admin' ||
     pathname === '/dashboard';
 
-  const getRole = (email?: string) => {
-    if (!email) return null;
-    const emailLower = email.toLowerCase();
-    if (emailLower.includes('admin')) return 'admin';
-    if (emailLower.includes('recruiter')) return 'recruiter';
-    if (emailLower.includes('manager')) return 'hiringmanager';
+  // Role is stored in user.title from the backend JWT response
+  const getRole = (user: { title?: string; email?: string } | null) => {
+    if (!user) return null;
+    const r = (user.title || '').toLowerCase();
+    if (r === 'admin') return 'admin';
+    if (r === 'recruiter') return 'recruiter';
+    if (r === 'hiringmanager') return 'hiringmanager';
+    // fallback: email-based heuristic for legacy sessions
+    const email = (user.email || '').toLowerCase();
+    if (email.includes('admin')) return 'admin';
+    if (email.includes('recruiter')) return 'recruiter';
+    if (email.includes('manager')) return 'hiringmanager';
     return 'candidate';
   };
-
 
   if (isInternalWorkspace) {
     if (!isAuthenticated || !user) {
       return <Navigate to={`/login?redirect=${encodeURIComponent(pathname)}`} replace />;
     }
 
-    const role = getRole(user.email);
-
+    const role = getRole(user);
 
     if (pathname === '/admin' && role !== 'admin') {
       return <Navigate to={role === 'recruiter' ? '/recruiter' : role === 'hiringmanager' ? '/hiring-manager' : '/dashboard'} replace />;
@@ -78,6 +83,7 @@ function Layout() {
           <Route path="/companies" element={<Companies />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/register-hm" element={<RegisterHiringManager />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/recruiter" element={<Recruiter />} />
           <Route path="/hiring-manager" element={<HiringManager />} />

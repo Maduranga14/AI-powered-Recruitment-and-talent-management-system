@@ -1,4 +1,5 @@
-﻿using backend.Models;
+using backend.Models;
+using backend.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data
@@ -12,6 +13,7 @@ namespace backend.Data
         public DbSet<GlobalPolicy> GlobalPolicies { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<HiringManagerInvitation> HiringManagerInvitations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -22,19 +24,17 @@ namespace backend.Data
                 entity.HasKey(u => u.Id);
 
                 entity.HasIndex(u => u.Email)
-                .IsUnique();
+                      .IsUnique();
 
                 entity.Property(u => u.FirstName)
-                .IsRequired()
-                .HasMaxLength(50);
+                      .IsRequired()
+                      .HasMaxLength(50);
 
                 entity.Property(u => u.LastName)
                       .IsRequired();
 
-
                 entity.Property(u => u.Email)
                       .IsRequired();
-
 
                 entity.Property(u => u.PasswordHash)
                       .IsRequired();
@@ -42,12 +42,17 @@ namespace backend.Data
                 entity.Property(u => u.Role)
                       .HasConversion<string>();
 
+                entity.Property(u => u.Status)
+                      .HasConversion<string>()
+                      .HasDefaultValue(UserStatus.Active);
+
+                entity.Property(u => u.OrganizationName)
+                      .HasMaxLength(200);
 
                 entity.HasOne(u => u.CandidateProfile)
                       .WithOne(cp => cp.User)
                       .HasForeignKey<CandidateProfile>(cp => cp.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
-
 
                 entity.Ignore(u => u.FullName);
             });
@@ -78,6 +83,26 @@ namespace backend.Data
             modelBuilder.Entity<RolePermission>(entity =>
             {
                 entity.HasKey(rp => rp.Id);
+            });
+
+            modelBuilder.Entity<HiringManagerInvitation>(entity =>
+            {
+                entity.HasKey(i => i.Id);
+
+                entity.HasIndex(i => i.Token)
+                      .IsUnique();
+
+                entity.Property(i => i.Token)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.Property(i => i.InvitedEmail)
+                      .IsRequired()
+                      .HasMaxLength(256);
+
+                entity.Property(i => i.OrganizationName)
+                      .IsRequired()
+                      .HasMaxLength(200);
             });
         }
     }

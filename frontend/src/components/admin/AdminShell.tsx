@@ -19,11 +19,13 @@ import {
   BriefcaseIcon,
   type LucideIcon } from
 'lucide-react';
+import { ClockIcon } from 'lucide-react';
 export type AdminView =
 'overview' |
 'people' |
 'organizations' |
 'moderation' |
+'pending-approvals' |
 'audit-settings';
 interface AdminShellProps {
   activeView: AdminView;
@@ -47,6 +49,12 @@ const navigation: NavigationItem[] = [
   id: 'people',
   label: 'People',
   icon: UsersRoundIcon
+},
+{
+  id: 'pending-approvals',
+  label: 'Pending Approvals',
+  icon: ClockIcon,
+  badge: true
 },
 {
   id: 'organizations',
