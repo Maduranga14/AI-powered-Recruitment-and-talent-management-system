@@ -36,8 +36,8 @@ function toJob(p: PublicJob): Job {
     Math.floor((Date.now() - publishedMs) / (1000 * 60 * 60 * 24))
   );
 
-  const salaryMin = p.salaryMin ?? 0;
-  const salaryMax = p.salaryMax ?? 0;
+  const salaryMin = p.salaryMin ?? -1;
+  const salaryMax = p.salaryMax ?? -1;
 
   const companyName = p.postedBy || p.organizationName || 'Company';
   const bgColor = stringToColor(companyName);
@@ -53,6 +53,7 @@ function toJob(p: PublicJob): Job {
     level: 'Mid',
     salaryMin,
     salaryMax,
+    salaryCurrency: p.salaryCurrency || 'USD',
     postedDaysAgo,
     category: p.departmentName ?? 'General',
     skills: p.requiredSkills,

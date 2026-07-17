@@ -140,8 +140,8 @@ export function JobCard({ job, showMatch = false }: JobCardProps) {
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
               Estimated salary
             </p>
-            <p className="mt-1 font-display text-lg font-bold text-slate-900">
-              {formatSalary(job.salaryMin, job.salaryMax)}
+            <p className={`mt-1 font-display text-lg font-bold ${job.salaryMin <= 0 && job.salaryMax <= 0 ? 'text-slate-400' : 'text-slate-900'}`}>
+              {formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}
             </p>
           </div>
           <div className="flex items-center gap-2">
