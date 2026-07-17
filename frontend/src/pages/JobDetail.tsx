@@ -23,7 +23,7 @@ import { JobCard } from '../components/JobCard';
 import { ApplyModal } from '../components/ApplyModal';
 import { useAuth } from '../context/AuthContext';
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+
 
 function stringToColor(str: string): string {
   const colors = ['4f46e5', '0d9488', '7c3aed', 'db2777', 'ea580c', '2563eb', '0284c7'];
@@ -48,7 +48,7 @@ function msToPostedLabel(publishedAt: string): string {
   return `${diff} days ago`;
 }
 
-// ─── Section component ────────────────────────────────────────────────────────
+
 
 function Section({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
@@ -67,16 +67,15 @@ function Section({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
 
 export function JobDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Static job (mock data)
+  
   const staticJob = id ? getJob(id) : undefined;
 
-  // API job state
+  
   const [apiJob, setApiJob] = useState<PublicJob | null>(null);
   const [loading, setLoading] = useState(!staticJob); // only load if static not found
   const [notFound, setNotFound] = useState(false);
@@ -91,7 +90,7 @@ export function JobDetail() {
       .finally(() => setLoading(false));
   }, [id, staticJob]);
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -100,7 +99,7 @@ export function JobDetail() {
     );
   }
 
-  // ── Not found ──────────────────────────────────────────────────────────────
+  
   if (notFound || (!staticJob && !apiJob)) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-24 text-center">
@@ -113,16 +112,15 @@ export function JobDetail() {
     );
   }
 
-  // ── Render static (mock) job ───────────────────────────────────────────────
+  
   if (staticJob) {
     return <StaticJobDetail job={staticJob} />;
   }
 
-  // ── Render API job ─────────────────────────────────────────────────────────
-  return <ApiJobDetail job={apiJob!} />;
+  
 }
 
-// ─── Static job detail (original layout, unchanged) ──────────────────────────
+
 
 function StaticJobDetail({ job }: { job: Job }) {
   const navigate = useNavigate();
@@ -287,13 +285,32 @@ function StaticJobDetail({ job }: { job: Job }) {
 
 function ApiJobDetail({ job }: { job: PublicJob }) {
   const navigate = useNavigate();
-  const { isAuthenticated, savedJobs, toggleSaveJob } = useAuth();
+  const { isAuthenticated, savedJobs, toggleSaveJob, hasApplied } = useAuth();
+  const [applyOpen, setApplyOpen] = useState(false);
 
   const saved = savedJobs.includes(job.id);
+  const applied = hasApplied(job.id);
   const companyName = job.postedBy || job.organizationName || 'Company';
   const bgColor = stringToColor(companyName);
   const logoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bgColor}&color=fff&bold=true&size=128&format=png`;
   const postedLabel = msToPostedLabel(job.publishedAt);
+
+  // Shape compatible with ApplyModal
+  const applyJobShape = {
+    id: job.id,
+    title: job.title,
+    company: companyName,
+    companyLogo: logoUrl,
+    location: job.location,
+  };
+
+  const onApply = () => {
+    if (!isAuthenticated) {
+      navigate(`/register?redirect=/jobs/${job.id}`);
+      return;
+    }
+    setApplyOpen(true);
+  };
 
   // Parse description into paragraphs for clean rendering
   const descParagraphs = job.description
@@ -378,9 +395,15 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               <Button variant="outline" aria-label="Share job">
                 <Share2Icon className="h-4 w-4" />
               </Button>
-              <Button onClick={() => !isAuthenticated && navigate(`/register?redirect=/jobs/${job.id}`)}>
-                {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
-              </Button>
+              {applied ? (
+                <Button variant="secondary" disabled>
+                  <CheckCircle2Icon className="h-4 w-4" /> Applied
+                </Button>
+              ) : (
+                <Button onClick={onApply}>
+                  {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
+                </Button>
+              )}
             </div>
           </div>
         </motion.div>
@@ -475,6 +498,8 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
           </aside>
         </div>
       </div>
+
+      <ApplyModal job={applyJobShape} open={applyOpen} onClose={() => setApplyOpen(false)} />
     </div>
   );
 }

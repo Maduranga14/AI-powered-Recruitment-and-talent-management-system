@@ -28,6 +28,10 @@ export interface Application {
   jobId: string;
   status: ApplicationStatus;
   appliedAt: number;
+  
+  jobTitle?: string;
+  jobCompany?: string;
+  jobCompanyLogo?: string;
 }
 interface AuthContextValue {
   user: CandidateProfile | null;
@@ -39,7 +43,7 @@ interface AuthContextValue {
   logout: () => void;
   updateProfile: (patch: Partial<CandidateProfile>) => void;
   toggleSaveJob: (jobId: string) => void;
-  applyToJob: (jobId: string) => void;
+  applyToJob: (jobId: string, meta?: { title: string; company: string; logo: string }) => void;
   hasApplied: (jobId: string) => boolean;
 }
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -157,17 +161,20 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
     [...prev, jobId]
     );
   };
-  const applyToJob = (jobId: string) => {
+  const applyToJob = (jobId: string, meta?: { title: string; company: string; logo: string }) => {
     setApplications((prev) => {
       if (prev.some((a) => a.jobId === jobId)) return prev;
       return [
-      ...prev,
-      {
-        jobId,
-        status: 'Applied',
-        appliedAt: Date.now()
-      }];
-
+        ...prev,
+        {
+          jobId,
+          status: 'Applied',
+          appliedAt: Date.now(),
+          jobTitle: meta?.title,
+          jobCompany: meta?.company,
+          jobCompanyLogo: meta?.logo,
+        },
+      ];
     });
   };
   const hasApplied = (jobId: string) =>
