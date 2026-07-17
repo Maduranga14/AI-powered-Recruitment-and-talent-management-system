@@ -7,7 +7,7 @@ import {
   XIcon,
   SparklesIcon,
 } from 'lucide-react';
-import { JOBS, CATEGORIES, type WorkMode, type JobType, type Job } from '../data/jobs';
+import { CATEGORIES, type WorkMode, type JobType, type Job } from '../data/jobs';
 import { JobCard } from '../components/JobCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -128,8 +128,8 @@ export function Jobs() {
   const toggle = <T,>(arr: T[], set: (v: T[]) => void, value: T) =>
     set(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);
 
-  // Merge static + backend jobs, backend jobs appear at the top (most recent)
-  const allJobs = useMemo(() => [...apiJobs, ...JOBS], [apiJobs]);
+  // Only show real backend jobs
+  const allJobs = useMemo(() => apiJobs, [apiJobs]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -298,11 +298,6 @@ export function Jobs() {
               ) : (
                 <>
                   <span className="font-bold text-slate-900">{filtered.length}</span> jobs found
-                  {apiJobs.length > 0 && (
-                    <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
-                      {apiJobs.length} live
-                    </span>
-                  )}
                 </>
               )}
             </p>
@@ -334,14 +329,6 @@ export function Jobs() {
           {!apiLoading && apiError && (
             <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
               Could not load live jobs: {apiError}
-            </div>
-          )}
-          {!apiLoading && !apiError && apiJobs.length > 0 && !query && !activeFilterCount && (
-            <div className="mb-4 flex items-center gap-2">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-              <p className="text-xs font-semibold text-slate-500">
-                {apiJobs.length} newly posted {apiJobs.length === 1 ? 'role' : 'roles'} at the top
-              </p>
             </div>
           )}
 
