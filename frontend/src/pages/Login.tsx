@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SparklesIcon } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { Input, PasswordInput } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 export function Login() {
   const { login } = useAuth();
@@ -106,19 +106,14 @@ export function Login() {
             error={errors.email} />
           
           <div>
-            <Input
+            <PasswordInput
               label="Password"
               name="password"
-              type="password"
               placeholder="Your password"
               value={form.password}
-              onChange={(e) =>
-              setForm({
-                ...form,
-                password: e.target.value
-              })
-              }
-              error={errors.password} />
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              error={errors.password}
+            />
             
             <div className="mt-1.5 text-right">
               <Link
