@@ -118,17 +118,18 @@ export function JobDetail() {
   }
 
   
+  return <ApiJobDetail job={apiJob!} />;
 }
 
 
 
 function StaticJobDetail({ job }: { job: Job }) {
   const navigate = useNavigate();
-  const { isAuthenticated, hasApplied, savedJobs, toggleSaveJob } = useAuth();
+  const { isAuthenticated, hasApplied, isSaved, toggleSaveJob } = useAuth();
   const [applyOpen, setApplyOpen] = useState(false);
 
   const applied = hasApplied(job.id);
-  const saved = savedJobs.includes(job.id);
+  const saved = isSaved(job.id);
 
   const onApply = () => {
     if (!isAuthenticated) {
@@ -206,7 +207,7 @@ function StaticJobDetail({ job }: { job: Job }) {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => (isAuthenticated ? toggleSaveJob(job.id) : navigate('/login'))}
+                onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: job.company, logo: job.companyLogo, location: job.location }) : navigate('/login')}
                 aria-pressed={saved}
               >
                 <BookmarkIcon className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
@@ -281,21 +282,21 @@ function StaticJobDetail({ job }: { job: Job }) {
   );
 }
 
-// ─── API job detail (backend-created jobs) ────────────────────────────────────
+
 
 function ApiJobDetail({ job }: { job: PublicJob }) {
   const navigate = useNavigate();
-  const { isAuthenticated, savedJobs, toggleSaveJob, hasApplied } = useAuth();
+  const { isAuthenticated, isSaved, toggleSaveJob, hasApplied } = useAuth();
   const [applyOpen, setApplyOpen] = useState(false);
 
-  const saved = savedJobs.includes(job.id);
+  const saved = isSaved(job.id);
   const applied = hasApplied(job.id);
   const companyName = job.postedBy || job.organizationName || 'Company';
   const bgColor = stringToColor(companyName);
   const logoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bgColor}&color=fff&bold=true&size=128&format=png`;
   const postedLabel = msToPostedLabel(job.publishedAt);
 
-  // Shape compatible with ApplyModal
+  
   const applyJobShape = {
     id: job.id,
     title: job.title,
@@ -312,7 +313,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
     setApplyOpen(true);
   };
 
-  // Parse description into paragraphs for clean rendering
+  
   const descParagraphs = job.description
     .split(/\n+/)
     .map((p) => p.trim())
@@ -328,7 +329,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
           <ArrowLeftIcon className="h-4 w-4" /> Back to jobs
         </Link>
 
-        {/* Header card */}
+        
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -368,14 +369,14 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
             </div>
           </div>
 
-          {/* Badges */}
+          
           <div className="mt-6 flex flex-wrap gap-2">
             <Badge tone="brand">{job.employmentType.replace(/([A-Z])/g, ' $1').trim()}</Badge>
             {job.departmentName && <Badge tone="accent">{job.departmentName}</Badge>}
             {job.experienceRequired && <Badge tone="slate">{job.experienceRequired}</Badge>}
           </div>
 
-          {/* Salary + actions */}
+         
           <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <span className="font-display text-xl font-bold text-slate-900">
               {formatApiSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}
@@ -386,7 +387,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => (isAuthenticated ? toggleSaveJob(job.id) : navigate('/login'))}
+                onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: companyName, logo: logoUrl, location: job.location }) : navigate('/login')}
                 aria-pressed={saved}
               >
                 <BookmarkIcon className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
@@ -408,7 +409,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
           </div>
         </motion.div>
 
-        {/* Body */}
+        
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
@@ -429,7 +430,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
             </div>
           </div>
 
-          {/* Sidebar */}
+          
           <aside className="space-y-6">
             {job.requiredSkills.length > 0 && (
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
@@ -442,7 +443,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               </div>
             )}
 
-            {/* Job details card */}
+            
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
               <h3 className="font-display text-base font-bold text-slate-900">Job details</h3>
               <dl className="mt-4 space-y-3 text-sm">
@@ -483,7 +484,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               </dl>
             </div>
 
-            {/* Company card */}
+            
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
               <h3 className="flex items-center gap-2 font-display text-base font-bold text-slate-900">
                 <BuildingIcon className="h-4 w-4 text-slate-400" /> {companyName}

@@ -33,16 +33,26 @@ export interface Application {
   jobCompany?: string;
   jobCompanyLogo?: string;
 }
+export interface SavedJob {
+  jobId: string;
+  jobTitle: string;
+  jobCompany: string;
+  jobCompanyLogo: string;
+  jobLocation: string;
+  savedAt: number;
+}
+
 interface AuthContextValue {
   user: CandidateProfile | null;
-  savedJobs: string[];
+  savedJobs: SavedJob[];
   applications: Application[];
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   updateProfile: (patch: Partial<CandidateProfile>) => void;
-  toggleSaveJob: (jobId: string) => void;
+  toggleSaveJob: (jobId: string, meta?: { title: string; company: string; logo: string; location: string }) => void;
+  isSaved: (jobId: string) => boolean;
   applyToJob: (jobId: string, meta?: { title: string; company: string; logo: string }) => void;
   hasApplied: (jobId: string) => boolean;
 }
@@ -50,7 +60,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const STORAGE_KEY = 'talenta.auth.v1';
 interface PersistedState {
   user: CandidateProfile | null;
-  savedJobs: string[];
+  savedJobs: SavedJob[];
   applications: Application[];
 }
 const DEFAULT_AVATAR =
@@ -154,13 +164,24 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
       return next;
     });
   };
-  const toggleSaveJob = (jobId: string) => {
-    setSavedJobs((prev) =>
-    prev.includes(jobId) ?
-    prev.filter((id) => id !== jobId) :
-    [...prev, jobId]
-    );
+  const toggleSaveJob = (jobId: string, meta?: { title: string; company: string; logo: string; location: string }) => {
+    setSavedJobs((prev) => {
+      const exists = prev.some((s) => s.jobId === jobId);
+      if (exists) return prev.filter((s) => s.jobId !== jobId);
+      return [
+        ...prev,
+        {
+          jobId,
+          jobTitle: meta?.title ?? '',
+          jobCompany: meta?.company ?? '',
+          jobCompanyLogo: meta?.logo ?? '',
+          jobLocation: meta?.location ?? '',
+          savedAt: Date.now(),
+        },
+      ];
+    });
   };
+  const isSaved = (jobId: string) => savedJobs.some((s) => s.jobId === jobId);
   const applyToJob = (jobId: string, meta?: { title: string; company: string; logo: string }) => {
     setApplications((prev) => {
       if (prev.some((a) => a.jobId === jobId)) return prev;
@@ -190,6 +211,7 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
       logout,
       updateProfile,
       toggleSaveJob,
+      isSaved,
       applyToJob,
       hasApplied
     }),
