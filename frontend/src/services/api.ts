@@ -65,6 +65,28 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return data as T;
 }
 
+// Public request — never sends Authorization header so expired tokens
+// don't cause AllowAnonymous endpoints to return 401
+async function publicRequest<T>(endpoint: string): Promise<T> {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const errorMsg = data?.message || `Request failed with status ${response.status}`;
+    throw new Error(errorMsg);
+  }
+
+  return data as T;
+}
+
 export const authApi = {
   
   login: (payload: { email: string; password: string }) =>
@@ -254,4 +276,37 @@ export const recruiterApi = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
+};
+
+// ─── Public job types ─────────────────────────────────────────────────────────
+
+export interface PublicJob {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  employmentType: string;
+  departmentName: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string;
+  experienceRequired: string | null;
+  requiredSkills: string[];
+  deadline: string | null;
+  publishedAt: string;
+  organizationName: string;
+  postedBy: string;
+}
+
+export const publicApi = {
+  getPublishedJobs: (keyword?: string, location?: string) => {
+    const params = new URLSearchParams();
+    if (keyword) params.set('keyword', keyword);
+    if (location) params.set('location', location);
+    const qs = params.toString();
+    return publicRequest<PublicJob[]>(`/jobs${qs ? '?' + qs : ''}`);
+  },
+
+  getJobById: (id: string) =>
+    publicRequest<PublicJob>(`/jobs/${id}`),
 };

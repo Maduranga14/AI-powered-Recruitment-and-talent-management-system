@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -17,7 +17,20 @@ import {
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { JobCard } from '../components/JobCard';
-import { JOBS } from '../data/jobs';
+import { JOBS, type Job } from '../data/jobs';
+import { publicApi } from '../services/api';
+
+// reuse the same converter from Jobs.tsx inline
+const EMPLOYMENT_TYPE_LABEL: Record<string, string> = {
+  FullTime: 'Full-time', PartTime: 'Part-time', Contract: 'Contract',
+  Internship: 'Internship', Remote: 'Full-time',
+};
+function stringToColor(str: string): string {
+  const colors = ['4f46e5', '0d9488', '7c3aed', 'db2777', 'ea580c', '2563eb', '0284c7'];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
 const HERO_IMG = "/319f6e15-d12b-45d3-abbd-034800eb8b5b.jpg";
 
 const stats = [
@@ -124,13 +137,57 @@ const testimonials = [
 export function Landing() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [liveJobs, setLiveJobs] = useState<Job[]>([]);
+
+  useEffect(() => {
+    publicApi
+      .getPublishedJobs()
+      .then((jobs) =>
+        setLiveJobs(
+          jobs.map((p) => {
+            const companyName = p.postedBy || p.organizationName || 'Company';
+            const bg = stringToColor(companyName);
+            const publishedMs = new Date(p.publishedAt).getTime();
+            const postedDaysAgo = Math.max(1, Math.floor((Date.now() - publishedMs) / 86400000));
+            return {
+              id: p.id,
+              title: p.title,
+              company: companyName,
+              companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bg}&color=fff&bold=true&size=128&format=png`,
+              location: p.location,
+              workMode: (p.employmentType === 'Remote' ? 'Remote' : 'On-site') as any,
+              type: (EMPLOYMENT_TYPE_LABEL[p.employmentType] ?? 'Full-time') as any,
+              level: 'Mid' as any,
+              salaryMin: p.salaryMin ?? 0,
+              salaryMax: p.salaryMax ?? 0,
+              postedDaysAgo,
+              category: p.departmentName ?? 'General',
+              skills: p.requiredSkills,
+              shortDescription: p.description.slice(0, 300),
+              responsibilities: [],
+              requirements: p.requiredSkills,
+              benefits: [],
+              applicants: 0,
+              matchScore: 75,
+              featured: true,
+            } satisfies Job;
+          })
+        )
+      )
+      .catch(() => {/* silent on landing */});
+  }, []);
+
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(`/jobs?q=${encodeURIComponent(query)}`);
   };
-  const featured = JOBS.filter((j) => j.featured).
-  concat(JOBS.filter((j) => !j.featured)).
-  slice(0, 4);
+
+  // Live jobs first, then static featured, capped at 4 total
+  const featured = [
+    ...liveJobs,
+    ...JOBS.filter((j) => j.featured),
+    ...JOBS.filter((j) => !j.featured),
+  ].slice(0, 4);
   return (
     <div className="w-full bg-slate-50">
       {/* Hero */}

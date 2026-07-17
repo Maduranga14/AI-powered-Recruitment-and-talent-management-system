@@ -1,46 +1,101 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import {
   SearchIcon,
   SlidersHorizontalIcon,
   XIcon,
-  SparklesIcon } from
-'lucide-react';
-import { JOBS, CATEGORIES, type WorkMode, type JobType } from '../data/jobs';
+  SparklesIcon,
+} from 'lucide-react';
+import { JOBS, CATEGORIES, type WorkMode, type JobType, type Job } from '../data/jobs';
 import { JobCard } from '../components/JobCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../context/AuthContext';
+import { publicApi, type PublicJob } from '../services/api';
+
 const WORK_MODES: WorkMode[] = ['Remote', 'Hybrid', 'On-site'];
-const JOB_TYPES: JobType[] = [
-'Full-time',
-'Part-time',
-'Contract',
-'Internship'];
+const JOB_TYPES: JobType[] = ['Full-time', 'Part-time', 'Contract', 'Internship'];
 
 type SortKey = 'match' | 'recent' | 'salary';
+
+// Map backend employment type string → JobType label used in the UI
+const EMPLOYMENT_TYPE_LABEL: Record<string, JobType> = {
+  FullTime: 'Full-time',
+  PartTime: 'Part-time',
+  Contract: 'Contract',
+  Internship: 'Internship',
+  Remote: 'Full-time', // Remote is a work mode, not a job type
+};
+
+// Convert a PublicJob from the API into the Job shape used by JobCard
+function toJob(p: PublicJob): Job {
+  const publishedMs = new Date(p.publishedAt).getTime();
+  const postedDaysAgo = Math.max(
+    1,
+    Math.floor((Date.now() - publishedMs) / (1000 * 60 * 60 * 24))
+  );
+
+  const salaryMin = p.salaryMin ?? 0;
+  const salaryMax = p.salaryMax ?? 0;
+
+  const companyName = p.postedBy || p.organizationName || 'Company';
+  const bgColor = stringToColor(companyName);
+
+  return {
+    id: p.id,
+    title: p.title,
+    company: companyName,
+    companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bgColor}&color=fff&bold=true&size=128&format=png`,
+    location: p.location,
+    workMode: p.employmentType === 'Remote' ? 'Remote' : 'On-site',
+    type: EMPLOYMENT_TYPE_LABEL[p.employmentType] ?? 'Full-time',
+    level: 'Mid',
+    salaryMin,
+    salaryMax,
+    postedDaysAgo,
+    category: p.departmentName ?? 'General',
+    skills: p.requiredSkills,
+    shortDescription: p.description.slice(0, 300),
+    responsibilities: [],
+    requirements: p.requiredSkills,
+    benefits: [],
+    applicants: 0,
+    matchScore: 75,
+    featured: false,
+  };
+}
+
+// Simple deterministic color from a string
+function stringToColor(str: string): string {
+  const colors = ['4f46e5', '0d9488', '7c3aed', 'db2777', 'ea580c', '2563eb', '0284c7'];
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
 function CheckboxRow({
   label,
   checked,
-  onChange
-
-
-
-
-}: {label: string;checked: boolean;onChange: () => void;}) {
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
   return (
     <label className="flex cursor-pointer items-center gap-2.5 py-1.5 text-sm text-slate-600 hover:text-slate-900">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
-      
+        className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+      />
       {label}
-    </label>);
-
+    </label>
+  );
 }
+
 export function Jobs() {
   const [params, setParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
@@ -48,19 +103,42 @@ export function Jobs() {
   const [categories, setCategories] = useState<string[]>([]);
   const [modes, setModes] = useState<WorkMode[]>([]);
   const [types, setTypes] = useState<JobType[]>([]);
-  const [sort, setSort] = useState<SortKey>('match');
+  const [sort, setSort] = useState<SortKey>('recent');
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Backend jobs state
+  const [apiJobs, setApiJobs] = useState<Job[]>([]);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [apiError, setApiError] = useState('');
+
+  useEffect(() => {
+    setApiError('');
+    publicApi
+      .getPublishedJobs()
+      .then((jobs) => setApiJobs(jobs.map(toJob)))
+      .catch((err) => {
+        console.error('[Jobs] failed to load live jobs:', err);
+        setApiError(err?.message ?? 'Could not load live jobs.');
+        setApiJobs([]);
+      })
+      .finally(() => setApiLoading(false));
+  }, []);
+
   const toggle = <T,>(arr: T[], set: (v: T[]) => void, value: T) =>
-  set(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);
+    set(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);
+
+  // Merge static + backend jobs, backend jobs appear at the top (most recent)
+  const allJobs = useMemo(() => [...apiJobs, ...JOBS], [apiJobs]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const result = JOBS.filter((job) => {
+    const result = allJobs.filter((job) => {
       const matchesQuery =
-      !q ||
-      job.title.toLowerCase().includes(q) ||
-      job.company.toLowerCase().includes(q) ||
-      job.category.toLowerCase().includes(q) ||
-      job.skills.some((s) => s.toLowerCase().includes(q));
+        !q ||
+        job.title.toLowerCase().includes(q) ||
+        job.company.toLowerCase().includes(q) ||
+        job.category.toLowerCase().includes(q) ||
+        job.skills.some((s) => s.toLowerCase().includes(q));
       const matchesCat = !categories.length || categories.includes(job.category);
       const matchesMode = !modes.length || modes.includes(job.workMode);
       const matchesType = !types.length || types.includes(job.type);
@@ -72,81 +150,78 @@ export function Jobs() {
       return b.matchScore - a.matchScore;
     });
     return result;
-  }, [query, categories, modes, types, sort]);
+  }, [allJobs, query, categories, modes, types, sort]);
+
   const activeFilterCount = categories.length + modes.length + types.length;
+
   const clearAll = () => {
     setCategories([]);
     setModes([]);
     setTypes([]);
   };
+
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setParams(
-      query ?
-      {
-        q: query
-      } :
-      {}
-    );
+    setParams(query ? { q: query } : {});
   };
-  const filterPanel =
-  <div className="space-y-6">
+
+  const filterPanel = (
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-base font-bold text-slate-900">
-          Filters
-        </h2>
-        {activeFilterCount > 0 &&
-      <button
-        onClick={clearAll}
-        className="text-xs font-semibold text-brand-600 hover:underline">
-        
+        <h2 className="font-display text-base font-bold text-slate-900">Filters</h2>
+        {activeFilterCount > 0 && (
+          <button
+            onClick={clearAll}
+            className="text-xs font-semibold text-brand-600 hover:underline"
+          >
             Clear all
           </button>
-      }
+        )}
       </div>
 
       <div>
         <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">
           Category
         </h3>
-        {CATEGORIES.map((c) =>
-      <CheckboxRow
-        key={c}
-        label={c}
-        checked={categories.includes(c)}
-        onChange={() => toggle(categories, setCategories, c)} />
-
-      )}
+        {CATEGORIES.map((c) => (
+          <CheckboxRow
+            key={c}
+            label={c}
+            checked={categories.includes(c)}
+            onChange={() => toggle(categories, setCategories, c)}
+          />
+        ))}
       </div>
 
       <div>
         <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">
           Work mode
         </h3>
-        {WORK_MODES.map((m) =>
-      <CheckboxRow
-        key={m}
-        label={m}
-        checked={modes.includes(m)}
-        onChange={() => toggle(modes, setModes, m)} />
-
-      )}
+        {WORK_MODES.map((m) => (
+          <CheckboxRow
+            key={m}
+            label={m}
+            checked={modes.includes(m)}
+            onChange={() => toggle(modes, setModes, m)}
+          />
+        ))}
       </div>
 
       <div>
         <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">
           Job type
         </h3>
-        {JOB_TYPES.map((t) =>
-      <CheckboxRow
-        key={t}
-        label={t}
-        checked={types.includes(t)}
-        onChange={() => toggle(types, setTypes, t)} />
-
-      )}
+        {JOB_TYPES.map((t) => (
+          <CheckboxRow
+            key={t}
+            label={t}
+            checked={types.includes(t)}
+            onChange={() => toggle(types, setTypes, t)}
+          />
+        ))}
       </div>
-    </div>;
+    </div>
+  );
 
   return (
     <div className="w-full bg-slate-50">
@@ -157,9 +232,9 @@ export function Jobs() {
             Find your next role
           </h1>
           <p className="mt-1 text-slate-500">
-            {isAuthenticated ?
-            'Roles are ranked by your AI match score.' :
-            'Sign in to unlock personalized AI match scores.'}
+            {isAuthenticated
+              ? 'Roles are ranked by your AI match score.'
+              : 'Sign in to unlock personalized AI match scores.'}
           </p>
           <form onSubmit={onSearch} className="mt-6 flex gap-2">
             <div className="flex flex-1 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
@@ -169,20 +244,20 @@ export function Jobs() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by title, skill, or company"
                 className="w-full bg-transparent py-3 text-sm focus:outline-none"
-                aria-label="Search jobs" />
-              
-              {query &&
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery('');
-                  setParams({});
-                }}
-                aria-label="Clear search">
-                
+                aria-label="Search jobs"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery('');
+                    setParams({});
+                  }}
+                  aria-label="Clear search"
+                >
                   <XIcon className="h-4 w-4 text-slate-400 hover:text-slate-600" />
                 </button>
-              }
+              )}
             </div>
             <Button type="submit" size="lg">
               Search
@@ -192,14 +267,14 @@ export function Jobs() {
               variant="outline"
               size="lg"
               className="lg:hidden"
-              onClick={() => setFiltersOpen(true)}>
-              
+              onClick={() => setFiltersOpen(true)}
+            >
               <SlidersHorizontalIcon className="h-4 w-4" />
-              {activeFilterCount > 0 &&
-              <span className="ml-1 rounded-full bg-brand-600 px-1.5 text-xs text-white">
+              {activeFilterCount > 0 && (
+                <span className="ml-1 rounded-full bg-brand-600 px-1.5 text-xs text-white">
                   {activeFilterCount}
                 </span>
-              }
+              )}
             </Button>
           </form>
         </div>
@@ -217,98 +292,119 @@ export function Jobs() {
         <main className="min-w-0 flex-1">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-600">
-              <span className="font-bold text-slate-900">
-                {filtered.length}
-              </span>{' '}
-              jobs found
+              {apiLoading ? (
+                <span className="text-slate-400">Loading jobs…</span>
+              ) : (
+                <>
+                  <span className="font-bold text-slate-900">{filtered.length}</span> jobs found
+                  {apiJobs.length > 0 && (
+                    <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
+                      {apiJobs.length} live
+                    </span>
+                  )}
+                </>
+              )}
             </p>
             <label className="flex items-center gap-2 text-sm text-slate-600">
               Sort by
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100">
-                
-                <option value="match">AI match</option>
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              >
                 <option value="recent">Most recent</option>
+                <option value="match">AI match</option>
                 <option value="salary">Salary</option>
               </select>
             </label>
           </div>
 
-          {activeFilterCount > 0 &&
-          <div className="mb-4 flex flex-wrap gap-2">
-              {[...categories, ...modes, ...types].map((f) =>
-            <Badge key={f} tone="brand">
+          {activeFilterCount > 0 && (
+            <div className="mb-4 flex flex-wrap gap-2">
+              {[...categories, ...modes, ...types].map((f) => (
+                <Badge key={f} tone="brand">
                   {f}
                 </Badge>
-            )}
+              ))}
             </div>
-          }
+          )}
 
-          {filtered.length > 0 ?
-          <div className="grid gap-6 sm:grid-cols-2">
-              {filtered.map((job) =>
-            <JobCard key={job.id} job={job} showMatch={isAuthenticated} />
-            )}
-            </div> :
-
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-20 text-center">
-              <SparklesIcon className="mx-auto h-10 w-10 text-slate-300" />
-              <p className="mt-3 font-semibold text-slate-900">
-                No jobs match your filters
+          {/* Live jobs from backend shown first with a subtle indicator */}
+          {!apiLoading && apiError && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+              Could not load live jobs: {apiError}
+            </div>
+          )}
+          {!apiLoading && !apiError && apiJobs.length > 0 && !query && !activeFilterCount && (
+            <div className="mb-4 flex items-center gap-2">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+              <p className="text-xs font-semibold text-slate-500">
+                {apiJobs.length} newly posted {apiJobs.length === 1 ? 'role' : 'roles'} at the top
               </p>
+            </div>
+          )}
+
+          {apiLoading ? (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-72 animate-pulse rounded-3xl border border-slate-200 bg-white"
+                />
+              ))}
+            </div>
+          ) : filtered.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {filtered.map((job) => (
+                <JobCard key={job.id} job={job} showMatch={isAuthenticated} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-20 text-center">
+              <SparklesIcon className="mx-auto h-10 w-10 text-slate-300" />
+              <p className="mt-3 font-semibold text-slate-900">No jobs match your filters</p>
               <p className="mt-1 text-sm text-slate-500">
                 Try broadening your search or clearing filters.
               </p>
               <Button
-              variant="outline"
-              className="mt-5"
-              onClick={() => {
-                setQuery('');
-                clearAll();
-                setParams({});
-              }}>
-              
+                variant="outline"
+                className="mt-5"
+                onClick={() => {
+                  setQuery('');
+                  clearAll();
+                  setParams({});
+                }}
+              >
                 Reset search
               </Button>
             </div>
-          }
+          )}
         </main>
       </div>
 
       {/* Mobile filter drawer */}
       <AnimatePresence>
-        {filtersOpen &&
-        <div className="fixed inset-0 z-50 lg:hidden">
+        {filtersOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
             <div
-            className="absolute inset-0 bg-slate-900/40"
-            onClick={() => setFiltersOpen(false)} />
-          
+              className="absolute inset-0 bg-slate-900/40"
+              onClick={() => setFiltersOpen(false)}
+            />
             <div className="absolute right-0 top-0 h-full w-80 max-w-[85vw] overflow-y-auto bg-white p-5 shadow-2xl">
               <div className="mb-4 flex items-center justify-between">
-                <span className="font-display font-bold text-slate-900">
-                  Filters
-                </span>
-                <button
-                onClick={() => setFiltersOpen(false)}
-                aria-label="Close filters">
-                
+                <span className="font-display font-bold text-slate-900">Filters</span>
+                <button onClick={() => setFiltersOpen(false)} aria-label="Close filters">
                   <XIcon className="h-5 w-5 text-slate-500" />
                 </button>
               </div>
               {filterPanel}
-              <Button
-              fullWidth
-              className="mt-6"
-              onClick={() => setFiltersOpen(false)}>
-              
+              <Button fullWidth className="mt-6" onClick={() => setFiltersOpen(false)}>
                 Show {filtered.length} jobs
               </Button>
             </div>
           </div>
-        }
+        )}
       </AnimatePresence>
-    </div>);
-
+    </div>
+  );
 }

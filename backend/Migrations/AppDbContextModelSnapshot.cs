@@ -207,6 +207,11 @@ namespace backend.Migrations
                     b.Property<DateTime?>("PublishedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("PostedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("RequiredSkills")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");

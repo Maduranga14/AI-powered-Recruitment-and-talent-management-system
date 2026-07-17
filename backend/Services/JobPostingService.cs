@@ -214,29 +214,47 @@ namespace backend.Services
 
             return await query
                 .OrderByDescending(j => j.PublishedAt)
-                .Select(j => new PublicJobPageDto
+                .Select(j => new
+                {
+                    j.Id,
+                    j.Title,
+                    j.Description,
+                    j.Location,
+                    j.EmploymentType,
+                    DepartmentName = j.Department != null ? j.Department.Name : null,
+                    j.SalaryMin,
+                    j.SalaryMax,
+                    j.SalaryCurrency,
+                    j.ExperienceRequired,
+                    j.RequiredSkills,
+                    j.Deadline,
+                    j.PublishedAt,
+                    OrganizationName = j.CreatedByRecruiter != null
+                        ? j.CreatedByRecruiter.OrganizationName ?? string.Empty
+                        : string.Empty,
+                    j.PostedBy
+                })
+                .ToListAsync()
+                .ContinueWith(t => t.Result.Select(j => new PublicJobPageDto
                 {
                     Id = j.Id,
                     Title = j.Title,
                     Description = j.Description,
                     Location = j.Location,
                     EmploymentType = j.EmploymentType.ToString(),
-                    DepartmentName = j.Department != null ? j.Department.Name : null,
+                    DepartmentName = j.DepartmentName,
                     SalaryMin = j.SalaryMin,
                     SalaryMax = j.SalaryMax,
                     SalaryCurrency = j.SalaryCurrency,
                     ExperienceRequired = j.ExperienceRequired,
-                    RequiredSkills = j.RequiredSkills != null
+                    RequiredSkills = !string.IsNullOrEmpty(j.RequiredSkills)
                         ? j.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList()
                         : new List<string>(),
                     Deadline = j.Deadline,
                     PublishedAt = j.PublishedAt!.Value,
-                    OrganizationName = j.CreatedByRecruiter != null
-                        ? j.CreatedByRecruiter.OrganizationName ?? string.Empty
-                        : string.Empty,
+                    OrganizationName = j.OrganizationName,
                     PostedBy = j.PostedBy
-                })
-                .ToListAsync();
+                }).ToList());
         }
 
         

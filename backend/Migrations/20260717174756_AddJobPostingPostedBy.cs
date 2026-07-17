@@ -10,13 +10,21 @@ namespace backend.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-
+            migrationBuilder.AddColumn<string>(
+                name: "PostedBy",
+                table: "JobPostings",
+                type: "nvarchar(200)",
+                maxLength: 200,
+                nullable: false,
+                defaultValue: "");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-
+            migrationBuilder.DropColumn(
+                name: "PostedBy",
+                table: "JobPostings");
         }
     }
 }
