@@ -16,6 +16,7 @@ export interface CandidateProfile {
   skills: string[];
   resumeName: string | null;
   avatar: string;
+  organizationName?: string;
 }
 export type ApplicationStatus =
 'Applied' |
@@ -105,7 +106,8 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
       bio: 'Workspace user.',
       skills: [],
       resumeName: null,
-      avatar: makeAvatar(res.data.fullName)
+      avatar: makeAvatar(res.data.fullName),
+      organizationName: res.data.organizationName,
     });
   };
   const register: AuthContextValue['register'] = async (name, email, password) => {

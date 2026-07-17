@@ -13,6 +13,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 interface RecruiterJobsProps {
   jobs: RecruiterJob[];
+  loading?: boolean;
   onCreateJob: () => void;
   onSchedule: () => void;
   onStatusChange: (jobId: string) => void;
@@ -20,6 +21,7 @@ interface RecruiterJobsProps {
 }
 export function RecruiterJobs({
   jobs,
+  loading,
   onCreateJob,
   onSchedule,
   onStatusChange,

@@ -14,6 +14,7 @@ namespace backend.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<HiringManagerInvitation> HiringManagerInvitations { get; set; }
+        public DbSet<JobPosting> JobPostings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -83,6 +84,40 @@ namespace backend.Data
             modelBuilder.Entity<RolePermission>(entity =>
             {
                 entity.HasKey(rp => rp.Id);
+            });
+
+            modelBuilder.Entity<JobPosting>(entity =>
+            {
+                entity.HasKey(j => j.Id);
+
+                entity.Property(j => j.Title).IsRequired().HasMaxLength(200);
+                entity.Property(j => j.Location).IsRequired().HasMaxLength(200);
+                entity.Property(j => j.SalaryCurrency).HasMaxLength(10);
+                entity.Property(j => j.ExperienceRequired).HasMaxLength(100);
+                entity.Property(j => j.RequiredSkills).HasMaxLength(1000);
+                entity.Property(j => j.SalaryMin).HasColumnType("decimal(18,2)");
+                entity.Property(j => j.SalaryMax).HasColumnType("decimal(18,2)");
+                entity.Property(j => j.PostedBy).HasMaxLength(200);
+
+                entity.Property(j => j.EmploymentType)
+                      .HasConversion<string>();
+
+                entity.Property(j => j.Status)
+                      .HasConversion<string>()
+                      .HasDefaultValue(JobStatus.Draft);
+
+                entity.HasOne(j => j.Department)
+                      .WithMany()
+                      .HasForeignKey(j => j.DepartmentId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(j => j.CreatedByRecruiter)
+                      .WithMany()
+                      .HasForeignKey(j => j.CreatedByRecruiterId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(j => j.Status);
+                entity.HasIndex(j => j.CreatedByRecruiterId);
             });
 
             modelBuilder.Entity<HiringManagerInvitation>(entity =>
