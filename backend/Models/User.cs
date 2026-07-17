@@ -1,4 +1,4 @@
-﻿using backend.Models.Enums;
+using backend.Models.Enums;
 
 namespace backend.Models
 {
@@ -16,6 +16,12 @@ namespace backend.Models
 
         public UserRole Role { get; set; }
 
+        
+        public UserStatus Status { get; set; } = UserStatus.Active;
+
+        
+        public string? OrganizationName { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -24,7 +30,6 @@ namespace backend.Models
 
         public CandidateProfile? CandidateProfile { get; set; }
 
-        
         public string FullName => $"{FirstName} {LastName}";
     }
 }

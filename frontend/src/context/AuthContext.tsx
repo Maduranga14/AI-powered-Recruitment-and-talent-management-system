@@ -99,7 +99,8 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
     setUser({
       name: res.data.fullName,
       email: res.data.email,
-      title: res.data.role === 'Admin' ? 'Super Administrator' : 'Platform Staff',
+      // store role in title so the routing logic in App.tsx can read it
+      title: res.data.role,
       location: 'Office',
       bio: 'Workspace user.',
       skills: [],

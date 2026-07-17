@@ -27,6 +27,7 @@ namespace backend.Data
                 Email = "admin@talentportal.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@12345"),
                 Role = UserRole.Admin,
+                Status = UserStatus.Active,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                 UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -204,6 +205,8 @@ namespace backend.Data
                     Email = "recruiter@talentportal.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("Recruiter@12345"),
                     Role = UserRole.Recruiter,
+                    Status = UserStatus.Active,
+                    OrganizationName = "Northwind Labs",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -222,6 +225,8 @@ namespace backend.Data
                     Email = "manager@talentportal.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("Manager@12345"),
                     Role = UserRole.HiringManager,
+                    Status = UserStatus.Active,
+                    OrganizationName = "Northwind Labs",
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -240,6 +245,7 @@ namespace backend.Data
                     Email = "alex.morgan@example.com",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("demo1234"),
                     Role = UserRole.Candidate,
+                    Status = UserStatus.Active,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow

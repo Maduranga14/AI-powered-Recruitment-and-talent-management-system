@@ -1,4 +1,4 @@
-﻿namespace backend.DTOs.Admin
+namespace backend.DTOs.Admin
 {
     public class UserListDto
     {
@@ -9,6 +9,10 @@
         public string Email { get; set; } = string.Empty;
 
         public string Role { get; set; } = string.Empty;
+
+        public string Status { get; set; } = string.Empty;
+
+        public string? OrganizationName { get; set; }
 
         public bool IsActive { get; set; }
 

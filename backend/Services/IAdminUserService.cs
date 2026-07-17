@@ -1,4 +1,5 @@
-﻿using backend.DTOs.Admin;
+using backend.DTOs.Admin;
+using backend.DTOs.Auth;
 using backend.Models.Enums;
 
 namespace backend.Services
@@ -10,5 +11,10 @@ namespace backend.Services
         Task<UserListDto?> GetUserByIdAsync(Guid id);
         Task<bool> ToggleUserActiveAsync(Guid id);
         Task ResetUserPasswordAsync(Guid id, string newPassword);
+
+        // Recruiter approval workflow
+        Task<List<PendingRecruiterDto>> GetPendingRecruitersAsync();
+        Task ApproveRecruiterAsync(Guid id);
+        Task RejectRecruiterAsync(Guid id);
     }
 }
