@@ -66,7 +66,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const authApi = {
-  // Candidate
+  
   login: (payload: { email: string; password: string }) =>
     request<ApiResponse<AuthResponse>>('/auth/login', {
       method: 'POST',
@@ -85,7 +85,7 @@ export const authApi = {
       body: JSON.stringify(payload),
     }),
 
-  // Recruiter self-registration (returns message only, no token)
+  
   registerRecruiter: (payload: {
     firstName: string;
     lastName: string;
@@ -99,7 +99,7 @@ export const authApi = {
       body: JSON.stringify(payload),
     }),
 
-  // Hiring Manager invite flow
+  
   inviteHiringManager: (payload: { email: string }) =>
     request<InviteResponse>('/auth/invite-hiring-manager', {
       method: 'POST',
@@ -161,7 +161,97 @@ export const adminApi = {
   },
 };
 
+
+
+export interface JobPostingDetail {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  employmentType: string;
+  status: string;
+  departmentName: string | null;
+  departmentId: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string;
+  experienceRequired: string | null;
+  requiredSkills: string | null;
+  deadline: string | null;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  createdByRecruiterId: string;
+  recruiterName: string;
+}
+
+export interface JobPostingListItem {
+  id: string;
+  title: string;
+  location: string;
+  employmentType: string;
+  status: string;
+  departmentName: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string;
+  deadline: string | null;
+  createdAt: string;
+  publishedAt: string | null;
+  recruiterName: string;
+}
+
+export interface PagedJobsResult {
+  items: JobPostingListItem[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface CreateJobPostingPayload {
+  title: string;
+  description: string;
+  location: string;
+  employmentType: number;
+  status: number; // 0=Draft, 1=Published
+  salaryMin?: number;
+  salaryMax?: number;
+  salaryCurrency?: string;
+  experienceRequired?: string;
+  requiredSkills?: string;
+  deadline?: string;
+  departmentId?: string;
+  postedBy?: string;
+}
+
+// Employment type enum values matching the backend
+export const EmploymentTypeMap: Record<string, number> = {
+  FullTime: 0,
+  PartTime: 1,
+  Contract: 2,
+  Internship: 3,
+  Remote: 4,
+};
+
 export const recruiterApi = {
   inviteHiringManager: (payload: { email: string }) =>
     authApi.inviteHiringManager(payload),
+
+  createJob: (payload: CreateJobPostingPayload) =>
+    request<ApiResponse<JobPostingDetail>>('/recruiter/jobs', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getMyJobs: (status?: string, page = 1, pageSize = 20) => {
+    const statusParam = status ? `&status=${encodeURIComponent(status)}` : '';
+    return request<PagedJobsResult>(`/recruiter/jobs?page=${page}&pageSize=${pageSize}${statusParam}`);
+  },
+
+  updateJobStatus: (id: string, status: number) =>
+    request<ApiResponse<JobPostingDetail>>(`/recruiter/jobs/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 };
