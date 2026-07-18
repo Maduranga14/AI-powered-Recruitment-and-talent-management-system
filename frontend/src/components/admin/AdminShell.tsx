@@ -24,6 +24,7 @@ export type AdminView =
 'overview' |
 'people' |
 'organizations' |
+'departments' |
 'moderation' |
 'pending-approvals' |
 'audit-settings';
@@ -59,6 +60,11 @@ const navigation: NavigationItem[] = [
 {
   id: 'organizations',
   label: 'Organizations',
+  icon: Building2Icon
+},
+{
+  id: 'departments',
+  label: 'Departments',
   icon: Building2Icon
 },
 {

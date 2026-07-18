@@ -5,6 +5,7 @@ import type { AdminOrganization } from '../../data/admin';
 import { ORGANIZATION_TONES } from '../../data/admin';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { RecruiterDepartments } from '../recruiter/RecruiterDepartments';
 interface AdminOrganizationDrawerProps {
   organization: AdminOrganization | null;
   onClose: () => void;
@@ -119,6 +120,9 @@ export function AdminOrganizationDrawer({
                   Usage is shown for operational context only.
                 </p>
               </section>
+              <div className="mt-7 border-t border-slate-100 pt-6">
+                <RecruiterDepartments organizationName={organization.name} />
+              </div>
               <Button
               fullWidth
               variant="outline"

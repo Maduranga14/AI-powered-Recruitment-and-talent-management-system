@@ -8,6 +8,9 @@ namespace backend.Data
     {
         public static async Task SeedAsync(AppDbContext db)
         {
+            // Dynamically alter schema to add OrganizationName column if it does not exist
+            await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Departments]') AND name = 'OrganizationName') BEGIN ALTER TABLE [dbo].[Departments] ADD [OrganizationName] NVARCHAR(MAX) NULL; END");
+
             await SeedAdminAsync(db);
             await SeedDepartmentDashboardAsync(db);
             await SeedRolesAndPermissionsAsync(db);
@@ -44,40 +47,17 @@ namespace backend.Data
             
             // Default organization (TalentAI Global Holding) is not seeded anymore
 
-            
-            if (!await db.Departments.AnyAsync())
+            var defaultDepts = await db.Departments.Where(d =>
+                d.Name == "Engineering" ||
+                d.Name == "Sales & Marketing" ||
+                d.Name == "Product Management"
+            ).ToListAsync();
+
+            if (defaultDepts.Any())
             {
-                db.Departments.AddRange(
-                    new Department
-                    {
-                        Name = "Engineering",
-                        Badge = "HIGH VOLUME",
-                        BadgeColor = "#f59e0b",
-                        Head = "Sarah Jenkins",
-                        HeadInitials = "SJ",
-                        HeadColor = "#2563EB"
-                    },
-                    new Department
-                    {
-                        Name = "Sales & Marketing",
-                        Badge = "GROWTH",
-                        BadgeColor = "#0d9488",
-                        Head = "Marcus Vane",
-                        HeadInitials = "MV",
-                        HeadColor = "#7c3aed"
-                    },
-                    new Department
-                    {
-                        Name = "Product Management",
-                        Badge = "STRATEGIC",
-                        BadgeColor = "#64748b",
-                        Head = "Elena Rodriguez",
-                        HeadInitials = "ER",
-                        HeadColor = "#ea580c"
-                    }
-                );
+                db.Departments.RemoveRange(defaultDepts);
                 await db.SaveChangesAsync();
-                Console.WriteLine("Departments seeded.");
+                Console.WriteLine("Default departments removed.");
             }
 
             

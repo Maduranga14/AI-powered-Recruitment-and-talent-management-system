@@ -11,6 +11,7 @@ import { AdminPeople } from '../components/admin/AdminPeople';
 import { AdminPendingApprovals } from '../components/admin/AdminPendingApprovals';
 import { AdminPersonDrawer } from '../components/admin/AdminPersonDrawer';
 import { AdminShell, type AdminView } from '../components/admin/AdminShell';
+import { RecruiterDepartments } from '../components/recruiter/RecruiterDepartments';
 import {
   ADMIN_AUDIT_EVENTS,
   ADMIN_MODERATION,
@@ -214,6 +215,9 @@ export function Admin() {
                 setSelectedOrganizationId(organization.id)
               } />
 
+          }
+          {view === 'departments' &&
+            <RecruiterDepartments />
           }
           {view === 'moderation' &&
             <AdminModeration

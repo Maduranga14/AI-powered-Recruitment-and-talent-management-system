@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace backend.Models
 {
@@ -14,5 +14,6 @@ namespace backend.Models
         public string Head { get; set; } = string.Empty;     
         public string HeadInitials { get; set; } = string.Empty;
         public string HeadColor { get; set; } = "#2563EB";
+        public string? OrganizationName { get; set; }
     }
 }

@@ -17,7 +17,8 @@ import {
   XIcon,
   LogOutIcon,
   BriefcaseIcon,
-  UserCheckIcon } from
+  UserCheckIcon,
+  Building2Icon } from
 'lucide-react';
 import { Button } from '../ui/Button';
 export type RecruiterView =
@@ -26,7 +27,8 @@ export type RecruiterView =
 'candidates' |
 'schedule' |
 'inbox' |
-'hiring-managers';
+'hiring-managers' |
+'departments';
 interface RecruiterShellProps {
   activeView: RecruiterView;
   onViewChange: (view: RecruiterView) => void;
@@ -58,6 +60,11 @@ const navigation: {
   id: 'hiring-managers',
   label: 'Hiring Managers',
   icon: UserCheckIcon
+},
+{
+  id: 'departments',
+  label: 'Departments',
+  icon: Building2Icon
 },
 {
   id: 'schedule',
