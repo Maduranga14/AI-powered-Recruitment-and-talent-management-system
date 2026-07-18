@@ -1,4 +1,5 @@
-﻿using backend.DTOs.Admin;
+using System.Security.Claims;
+using backend.DTOs.Admin;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -6,19 +7,31 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
 {
-    [Route("api/admin/[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Recruiter")]
     [Produces("application/json")]
     public class DepartmentsController(IDepartmentService departmentService) : ControllerBase
     {
         private readonly IDepartmentService _departmentService = departmentService;
 
+        private Guid? GetUserId()
+        {
+            var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                   ?? User.FindFirstValue("sub");
+
+            return Guid.TryParse(raw, out var id) ? id : null;
+        }
+
         [HttpGet("dashboard")]
         [ProducesResponseType(typeof(DepartmentDashboardDto), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetDashboard()
+        public async Task<IActionResult> GetDashboard([FromQuery] string? organizationName = null)
         {
-            var result = await _departmentService.GetDepartmentDashboardAsync();
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            var result = await _departmentService.GetDepartmentDashboardAsync(userId.Value, organizationName);
             return Ok(result);
         }
 
@@ -30,7 +43,11 @@ namespace backend.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var dept = await _departmentService.CreateDepartmentAsync(dto);
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            var dept = await _departmentService.CreateDepartmentAsync(dto, userId.Value);
             return StatusCode(StatusCodes.Status201Created, dept);
         }
 

@@ -8,6 +8,7 @@ import { RecruiterJobs } from '../components/recruiter/RecruiterJobs';
 import { RecruiterOverview } from '../components/recruiter/RecruiterOverview';
 import { RecruiterSchedule } from '../components/recruiter/RecruiterSchedule';
 import { RecruiterHiringManagers } from '../components/recruiter/RecruiterHiringManagers';
+import { RecruiterDepartments } from '../components/recruiter/RecruiterDepartments';
 import {
   RecruiterShell,
   type RecruiterView,
@@ -170,6 +171,9 @@ export function Recruiter() {
       {view === 'hiring-managers' && (
         <RecruiterHiringManagers />
       )}
+      {view === 'departments' && (
+        <RecruiterDepartments />
+      )}
       {view === 'schedule' && (
         <RecruiterSchedule
           interviews={RECRUITER_INTERVIEWS}
@@ -229,6 +233,8 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
   const [salaryMax, setSalaryMax] = useState('');
   const [salaryCurrency, setSalaryCurrency] = useState('USD');
   const [postedBy, setPostedBy] = useState(defaultPostedBy);
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+  const [departmentId, setDepartmentId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -243,8 +249,18 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
       setSalaryMax('');
       setSalaryCurrency('USD');
       setPostedBy(defaultPostedBy);
+      setDepartmentId('');
       setError('');
       setLoading(false);
+
+      (async () => {
+        try {
+          const res = await recruiterApi.getDepartments();
+          setDepartments(res.departments);
+        } catch (e) {
+          console.error('Failed to load departments in modal:', e);
+        }
+      })();
     }
   }, [open, defaultPostedBy]);
 
@@ -278,6 +294,7 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
         salaryMax: salaryMaxNum,
         salaryCurrency: salaryCurrency.trim() || 'USD',
         postedBy: postedBy.trim() || undefined,
+        departmentId: departmentId || undefined,
       });
 
       onCreated(toRecruiterJob(res.data));
@@ -361,6 +378,18 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
                   <option value="Remote">Remote</option>
                 </Select>
               </div>
+              <Select
+                label="Department / Team (Optional)"
+                value={departmentId}
+                onChange={(e) => setDepartmentId(e.target.value)}
+              >
+                <option value="">No department (General)</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </Select>
               <Textarea
                 label="Description"
                 value={description}

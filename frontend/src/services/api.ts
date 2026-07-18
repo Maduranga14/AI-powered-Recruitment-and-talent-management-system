@@ -296,6 +296,22 @@ export const recruiterApi = {
     request<{ message: string }>(`/recruiter/hiring-managers/invitations/${id}/revoke`, {
       method: 'DELETE',
     }),
+
+  getDepartments: (organizationName?: string) => {
+    const qs = organizationName ? `?organizationName=${encodeURIComponent(organizationName)}` : '';
+    return request<DepartmentDashboardDto>(`/departments/dashboard${qs}`);
+  },
+
+  createDepartment: (payload: { name: string; head: string; badge?: string; organizationName?: string }) =>
+    request<DepartmentDto>('/departments', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteDepartment: (id: string) =>
+    request<void>(`/departments/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 export interface HiringManager {
@@ -504,3 +520,28 @@ export const candidateApi = {
       body: JSON.stringify(payload),
     }),
 };
+
+export interface DepartmentDto {
+  id: string;
+  name: string;
+  badge: string;
+  badgeColor: string;
+  head: string;
+  headInitials: string;
+  headColor: string;
+}
+
+export interface DepartmentDashboardDto {
+  corporateStructure: {
+    id: string;
+    name: string;
+    sub: string;
+  };
+  departments: DepartmentDto[];
+  globalPolicies: {
+    id: string;
+    label: string;
+    desc: string;
+    enabled: boolean;
+  }[];
+}

@@ -1,4 +1,4 @@
-﻿using backend.Data;
+using backend.Data;
 using backend.DTOs.Admin;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -9,24 +9,31 @@ namespace backend.Services
     {
         private readonly AppDbContext _db = dbContext;
 
-        public async Task<DepartmentDashboardDto> GetDepartmentDashboardAsync()
+        public async Task<DepartmentDashboardDto> GetDepartmentDashboardAsync(Guid userId, string? filterOrganizationName = null)
         {
-            
-            var org = await _db.Organizations.FirstOrDefaultAsync();
-            var orgDto = org != null ? new OrganizationDto
-            {
-                Id = org.Id,
-                Name = org.Name,
-                Sub = org.Sub
-            } : new OrganizationDto
+            var user = await _db.Users.FindAsync(userId);
+            var userOrgName = user?.OrganizationName;
+
+            // Enforce tenant isolation for non-admins
+            var activeOrgName = (user?.Role == Models.Enums.UserRole.Admin)
+                ? (filterOrganizationName ?? userOrgName)
+                : userOrgName;
+
+            var orgDto = new OrganizationDto
             {
                 Id = Guid.Empty,
-                Name = "TalentAI Global Holding",
-                Sub = "Principal Entity • NYC HQ"
+                Name = !string.IsNullOrEmpty(activeOrgName) ? activeOrgName : "TalentAI Global Holding",
+                Sub = !string.IsNullOrEmpty(activeOrgName) ? "Internal Entity" : "Principal Entity • NYC HQ"
             };
 
-            
-            var depts = await _db.Departments
+            var query = _db.Departments.AsQueryable();
+            // Filter by organization. Only global Admin (without organization) viewing no specific organization can see all.
+            if (user?.Role != Models.Enums.UserRole.Admin || !string.IsNullOrEmpty(activeOrgName))
+            {
+                query = query.Where(d => d.OrganizationName == activeOrgName);
+            }
+
+            var depts = await query
                 .Select(d => new DepartmentDto
                 {
                     Id = d.Id,
@@ -39,7 +46,6 @@ namespace backend.Services
                 })
                 .ToListAsync();
 
-            
             var policies = await _db.GlobalPolicies
                 .Select(p => new GlobalPolicyDto
                 {
@@ -58,8 +64,14 @@ namespace backend.Services
             };
         }
 
-        public async Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentDto dto)
+        public async Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentDto dto, Guid userId)
         {
+            var user = await _db.Users.FindAsync(userId);
+            // If user is Admin, use OrganizationName from DTO if provided; otherwise fall back to user's own organization
+            var userOrgName = (user?.Role == Models.Enums.UserRole.Admin && !string.IsNullOrEmpty(dto.OrganizationName))
+                ? dto.OrganizationName
+                : user?.OrganizationName;
+
             var initials = dto.HeadInitials;
             if (string.IsNullOrWhiteSpace(initials) && !string.IsNullOrWhiteSpace(dto.Head))
             {
@@ -97,7 +109,8 @@ namespace backend.Services
                 BadgeColor = badgeColor,
                 Head = dto.Head,
                 HeadInitials = initials,
-                HeadColor = headColor
+                HeadColor = headColor,
+                OrganizationName = userOrgName
             };
 
             _db.Departments.Add(dept);

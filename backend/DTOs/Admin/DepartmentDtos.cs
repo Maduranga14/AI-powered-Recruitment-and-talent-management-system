@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace backend.DTOs.Admin
 {
@@ -55,5 +55,7 @@ namespace backend.DTOs.Admin
 
         [StringLength(7, ErrorMessage = "Head color must be a valid hex color code.")]
         public string HeadColor { get; set; } = "#2563EB";
+
+        public string? OrganizationName { get; set; }
     }
 }
