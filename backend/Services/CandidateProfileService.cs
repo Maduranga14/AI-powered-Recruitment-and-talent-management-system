@@ -85,27 +85,51 @@ namespace backend.Services
             if (dto.Experiences != null)
             {
                 _db.WorkExperiences.RemoveRange(profile.Experiences);
-                profile.Experiences.Clear();
                 foreach (var exp in dto.Experiences)
-                    profile.Experiences.Add(MapExperience(exp));
+                {
+                    _db.WorkExperiences.Add(new WorkExperience
+                    {
+                        CandidateProfileId = profile.Id,
+                        Company = exp.Company.Trim(),
+                        Title = exp.Title.Trim(),
+                        StartDate = exp.StartDate,
+                        EndDate = exp.IsCurrent ? null : exp.EndDate,
+                        IsCurrent = exp.IsCurrent,
+                        Description = exp.Description?.Trim()
+                    });
+                }
             }
 
             // Replace education list if provided
             if (dto.Educations != null)
             {
                 _db.Educations.RemoveRange(profile.Educations);
-                profile.Educations.Clear();
                 foreach (var ed in dto.Educations)
-                    profile.Educations.Add(MapEducation(ed));
+                {
+                    _db.Educations.Add(new Education
+                    {
+                        CandidateProfileId = profile.Id,
+                        Institution = ed.Institution.Trim(),
+                        Degree = ed.Degree.Trim(),
+                        FieldOfStudy = ed.FieldOfStudy.Trim(),
+                        StartDate = ed.StartDate,
+                        EndDate = ed.EndDate
+                    });
+                }
             }
 
             // Replace skills if provided
             if (dto.Skills != null)
             {
                 _db.CandidateSkills.RemoveRange(profile.Skills);
-                profile.Skills.Clear();
                 foreach (var skill in dto.Skills.Select(s => s.Trim()).Where(s => s.Length > 0).Distinct())
-                    profile.Skills.Add(new CandidateSkill { Name = skill });
+                {
+                    _db.CandidateSkills.Add(new CandidateSkill
+                    {
+                        CandidateProfileId = profile.Id,
+                        Name = skill
+                    });
+                }
             }
 
             // Replace links if provided
@@ -119,7 +143,13 @@ namespace backend.Services
                 }
                 else
                 {
-                    profile.Links = MapLinks(dto.Links);
+                    _db.CandidateLinks.Add(new CandidateLinks
+                    {
+                        CandidateProfileId = profile.Id,
+                        LinkedIn = dto.Links.LinkedIn,
+                        Portfolio = dto.Links.Portfolio,
+                        GitHub = dto.Links.GitHub
+                    });
                 }
             }
 

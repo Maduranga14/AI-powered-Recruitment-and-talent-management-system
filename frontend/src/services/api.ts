@@ -40,7 +40,9 @@ export interface ApiResponse<T> {
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('tp_token');
   const headers = new Headers();
-  headers.append('Content-Type', 'application/json');
+  if (!(options.body instanceof FormData)) {
+    headers.append('Content-Type', 'application/json');
+  }
   if (token) {
     headers.append('Authorization', `Bearer ${token}`);
   }
@@ -349,4 +351,156 @@ export const publicApi = {
 
   getJobById: (id: string) =>
     publicRequest<PublicJob>(`/jobs/${id}`),
+};
+
+// ─── Candidate Profile integration types ─────────────────────────────────────
+
+export interface CandidateLinksDto {
+  linkedIn?: string | null;
+  portfolio?: string | null;
+  gitHub?: string | null;
+}
+
+export interface WorkExperienceResponseDto {
+  id: string;
+  company: string;
+  title: string;
+  startDate: string;
+  endDate?: string | null;
+  isCurrent: boolean;
+  description?: string | null;
+}
+
+export interface WorkExperienceDto {
+  company: string;
+  title: string;
+  startDate: string;
+  endDate?: string | null;
+  isCurrent: boolean;
+  description?: string | null;
+}
+
+export interface EducationResponseDto {
+  id: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy: string;
+  startDate: string;
+  endDate?: string | null;
+}
+
+export interface EducationDto {
+  institution: string;
+  degree: string;
+  fieldOfStudy: string;
+  startDate: string;
+  endDate?: string | null;
+}
+
+export interface CandidateProfileResponseDto {
+  id: string;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  location?: string | null;
+  headline?: string | null;
+  resumeUrl?: string | null;
+  photoUrl?: string | null;
+  experiences: WorkExperienceResponseDto[];
+  educations: EducationResponseDto[];
+  skills: string[];
+  links?: CandidateLinksDto | null;
+  completenessPercent: number;
+  missingFields: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateCandidateProfileDto {
+  phone?: string | null;
+  location?: string | null;
+  headline?: string | null;
+  experiences?: WorkExperienceDto[] | null;
+  educations?: EducationDto[] | null;
+  skills?: string[] | null;
+  links?: CandidateLinksDto | null;
+}
+
+export interface ApplicationResponseDto {
+  applicationId: string;
+  jobPostingId: string;
+  jobTitle: string;
+  company: string;
+  location: string;
+  employmentType: string;
+  status: string;
+  coverLetter?: string | null;
+  appliedAt: string;
+  updatedAt: string;
+}
+
+export interface CandidateProfileExportDto {
+  profileId: string;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  location?: string | null;
+  headline?: string | null;
+  resumeUrl?: string | null;
+  photoUrl?: string | null;
+  experiences: WorkExperienceResponseDto[];
+  educations: EducationResponseDto[];
+  skills: string[];
+  links?: CandidateLinksDto | null;
+  applications: ApplicationResponseDto[];
+  createdAt: string;
+  exportedAt: string;
+}
+
+export const candidateApi = {
+  getProfile: () =>
+    request<CandidateProfileResponseDto>('/candidate/profile'),
+
+  createProfile: (payload: { phone: string; location: string; headline: string }) =>
+    request<{ message: string; data: CandidateProfileResponseDto }>('/candidate/profile', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateProfile: (payload: UpdateCandidateProfileDto) =>
+    request<{ message: string; data: CandidateProfileResponseDto }>('/candidate/profile', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  uploadResume: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ message: string; resumeUrl: string }>('/candidate/profile/resume', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  deleteResume: () =>
+    request<void>('/candidate/profile/resume', {
+      method: 'DELETE',
+    }),
+
+  deleteProfile: () =>
+    request<{ message: string }>('/candidate/profile', {
+      method: 'DELETE',
+    }),
+
+  exportProfile: () =>
+    request<CandidateProfileExportDto>('/candidate/profile/export'),
+
+  getApplications: () =>
+    request<ApplicationResponseDto[]>('/candidate/profile/applications'),
+
+  applyToJob: (payload: { jobPostingId: string; coverLetter?: string }) =>
+    request<{ message: string; data: ApplicationResponseDto }>('/candidate/profile/applications', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
