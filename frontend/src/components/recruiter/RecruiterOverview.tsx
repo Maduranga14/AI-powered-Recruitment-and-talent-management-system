@@ -16,6 +16,7 @@ import type {
   RecruiterInterview,
   RecruiterJob } from
 '../../data/recruiter';
+import { useAuth } from '../../context/AuthContext';
 interface RecruiterOverviewProps {
   candidates: RecruiterCandidate[];
   jobs: RecruiterJob[];
@@ -60,6 +61,8 @@ export function RecruiterOverview({
   onViewChange,
   onCandidateSelect
 }: RecruiterOverviewProps) {
+  const { user } = useAuth();
+  const firstName = user?.name ? user.name.split(' ')[0] : 'User';
   const activities = candidates.
   filter((candidate) => candidate.stage !== 'Rejected').
   slice(0, 4);
@@ -79,7 +82,7 @@ export function RecruiterOverview({
         <div>
           <p className="text-sm font-medium text-slate-500">Tuesday, May 14</p>
           <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-slate-900">
-            Good morning, Olivia
+            Good morning, {firstName}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
             Here’s where your hiring momentum stands today.

@@ -276,7 +276,47 @@ export const recruiterApi = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
+
+  getHiringManagers: () =>
+    request<RecruiterHiringManagersResponse>('/recruiter/hiring-managers'),
+
+  toggleHiringManagerStatus: (id: string) =>
+    request<{ message: string; isActive: boolean }>(`/recruiter/hiring-managers/${id}/toggle-status`, {
+      method: 'PUT',
+    }),
+
+  resendInvitation: (id: string) =>
+    request<{ message: string }>(`/recruiter/hiring-managers/invitations/${id}/resend`, {
+      method: 'POST',
+    }),
+
+  revokeInvitation: (id: string) =>
+    request<{ message: string }>(`/recruiter/hiring-managers/invitations/${id}/revoke`, {
+      method: 'DELETE',
+    }),
 };
+
+export interface HiringManager {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface HiringManagerInvitation {
+  id: string;
+  email: string;
+  sentAt: string;
+  expiresAt: string;
+  isExpired: boolean;
+}
+
+export interface RecruiterHiringManagersResponse {
+  hiringManagers: HiringManager[];
+  pendingInvitations: HiringManagerInvitation[];
+}
 
 // ─── Public job types ─────────────────────────────────────────────────────────
 

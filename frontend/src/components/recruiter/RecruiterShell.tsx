@@ -16,7 +16,8 @@ import {
   UsersRoundIcon,
   XIcon,
   LogOutIcon,
-  BriefcaseIcon } from
+  BriefcaseIcon,
+  UserCheckIcon } from
 'lucide-react';
 import { Button } from '../ui/Button';
 export type RecruiterView =
@@ -24,7 +25,8 @@ export type RecruiterView =
 'jobs' |
 'candidates' |
 'schedule' |
-'inbox';
+'inbox' |
+'hiring-managers';
 interface RecruiterShellProps {
   activeView: RecruiterView;
   onViewChange: (view: RecruiterView) => void;
@@ -51,6 +53,11 @@ const navigation: {
   id: 'candidates',
   label: 'Candidates',
   icon: UsersRoundIcon
+},
+{
+  id: 'hiring-managers',
+  label: 'Hiring Managers',
+  icon: UserCheckIcon
 },
 {
   id: 'schedule',
@@ -171,7 +178,7 @@ export function RecruiterShell({
             </button>
             <div className="hidden min-w-0 lg:block">
               <p className="text-xs font-medium text-slate-400">
-                Northwind Labs
+                {user?.organizationName || 'Talenta Workspace'}
               </p>
               <p className="text-sm font-bold text-slate-700">
                 Recruiting workspace
@@ -210,12 +217,12 @@ export function RecruiterShell({
                   aria-expanded={menuOpen}>
                   
                   <img
-                    src={user?.avatar || "https://ui-avatars.com/api/?name=Olivia+Park&background=312e81&color=fff&bold=true&size=96"}
+                    src={user?.avatar || "https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff&bold=true&size=96"}
                     alt=""
                     className="h-8 w-8 rounded-lg" />
                   
                   <span className="hidden text-sm font-semibold text-slate-700 sm:block">
-                    {user?.name.split(' ')[0] || "Olivia"}
+                    {user?.name ? user.name.split(' ')[0] : "User"}
                   </span>
                   <ChevronDownIcon className="hidden h-4 w-4 text-slate-400 sm:block" />
                 </button>
@@ -231,10 +238,10 @@ export function RecruiterShell({
                         role="menu">
                         <div className="px-3 py-2">
                           <p className="text-sm font-semibold text-slate-900">
-                            {user?.name || "Olivia Park"}
+                            {user?.name || "User"}
                           </p>
                           <p className="truncate text-xs text-slate-500">
-                            {user?.email || "olivia@northwind.com"}
+                            {user?.email || "user@example.com"}
                           </p>
                         </div>
                         <div className="my-1 h-px bg-slate-100" />

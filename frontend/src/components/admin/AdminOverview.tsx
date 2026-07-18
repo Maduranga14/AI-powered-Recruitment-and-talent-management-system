@@ -33,15 +33,15 @@ export function AdminOverview({
   const metrics = [
   {
     label: 'People on platform',
-    value: '12,842',
-    detail: '+6.4% this month',
+    value: people.length.toLocaleString(),
+    detail: 'Registered accounts',
     icon: UsersRoundIcon,
     tone: 'brand'
   },
   {
     label: 'Active organizations',
-    value: organizations.length + 138,
-    detail: '98.8% in good standing',
+    value: organizations.length.toLocaleString(),
+    detail: 'Organizations on platform',
     icon: Building2Icon,
     tone: 'accent'
   },

@@ -7,6 +7,7 @@ import { RecruiterInbox } from '../components/recruiter/RecruiterInbox';
 import { RecruiterJobs } from '../components/recruiter/RecruiterJobs';
 import { RecruiterOverview } from '../components/recruiter/RecruiterOverview';
 import { RecruiterSchedule } from '../components/recruiter/RecruiterSchedule';
+import { RecruiterHiringManagers } from '../components/recruiter/RecruiterHiringManagers';
 import {
   RecruiterShell,
   type RecruiterView,
@@ -165,6 +166,9 @@ export function Recruiter() {
           onCandidateSelect={(c) => setSelectedCandidate(c)}
           onStageChange={updateStage}
         />
+      )}
+      {view === 'hiring-managers' && (
+        <RecruiterHiringManagers />
       )}
       {view === 'schedule' && (
         <RecruiterSchedule
