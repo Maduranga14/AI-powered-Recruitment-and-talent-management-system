@@ -86,6 +86,8 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IRecruiterService, RecruiterService>();
 builder.Services.AddScoped<IJobPostingService, JobPostingService>();
+builder.Services.AddScoped<ICandidateProfileService, CandidateProfileService>();
+builder.Services.AddHttpContextAccessor();
 
 
 builder.Services.AddOpenApi(options =>
@@ -130,6 +132,7 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+app.UseStaticFiles();   // serves wwwroot/uploads/* for resume/photo downloads
 app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
