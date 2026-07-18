@@ -52,10 +52,38 @@ export function Dashboard() {
   if (!isAuthenticated || !user) {
     return <Navigate to="/login?redirect=/dashboard" replace />;
   }
-  const recommended = [...JOBS].
-  sort((a, b) => b.matchScore - a.matchScore).
-  slice(0, 6);
-  const saved = JOBS.filter((j) => savedJobs.includes(j.id));
+  const recommended = [...JOBS].sort((a, b) => b.matchScore - a.matchScore).slice(0, 6);
+
+  // Static saved jobs (mock data)
+  const staticSaved = JOBS.filter((j) => savedJobs.some((s) => s.jobId === j.id));
+
+  // Backend saved jobs (not in static JOBS) — build Job-compatible shape from stored metadata
+  const backendSaved = savedJobs
+    .filter((s) => !JOBS.some((j) => j.id === s.jobId))
+    .map((s) => ({
+      id: s.jobId,
+      title: s.jobTitle,
+      company: s.jobCompany,
+      companyLogo: s.jobCompanyLogo,
+      location: s.jobLocation,
+      workMode: 'On-site' as const,
+      type: 'Full-time' as const,
+      level: 'Mid' as const,
+      salaryMin: -1,
+      salaryMax: -1,
+      postedDaysAgo: 1,
+      category: 'General',
+      skills: [],
+      shortDescription: '',
+      responsibilities: [],
+      requirements: [],
+      benefits: [],
+      applicants: 0,
+      matchScore: 75,
+      featured: false,
+    }));
+
+  const allSaved = [...staticSaved, ...backendSaved];
   const interviews = applications.filter((a) => a.status === 'Interview').length;
   return (
     <div className="w-full bg-slate-50">
@@ -129,7 +157,6 @@ export function Dashboard() {
               label="Saved jobs"
               value={savedJobs.length}
               tone="blue" />
-            
               <StatCard
               icon={TrophyIcon}
               label="Top match"
@@ -211,11 +238,11 @@ export function Dashboard() {
               <h2 className="font-display text-xl font-extrabold text-slate-900">
                 Saved jobs
               </h2>
-              <Badge tone="slate">{saved.length}</Badge>
+              <Badge tone="slate">{allSaved.length}</Badge>
             </div>
-            {saved.length > 0 ?
+            {allSaved.length > 0 ?
           <div className="grid gap-6 sm:grid-cols-2">
-                {saved.map((job) =>
+                {allSaved.map((job) =>
             <JobCard key={job.id} job={job} showMatch />
             )}
               </div> :

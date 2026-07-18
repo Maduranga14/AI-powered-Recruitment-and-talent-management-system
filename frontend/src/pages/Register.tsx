@@ -11,7 +11,7 @@ import {
   BuildingIcon,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { Input, PasswordInput } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../services/api';
 
@@ -264,10 +264,9 @@ export function Register() {
               error={errors.email}
             />
 
-            <Input
+            <PasswordInput
               label="Password"
               name="password"
-              type="password"
               placeholder="At least 8 characters"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -284,10 +283,9 @@ export function Register() {
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-4 overflow-hidden"
                 >
-                  <Input
+                  <PasswordInput
                     label="Confirm Password"
                     name="confirmPassword"
-                    type="password"
                     placeholder="Re-enter your password"
                     value={form.confirmPassword}
                     onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}

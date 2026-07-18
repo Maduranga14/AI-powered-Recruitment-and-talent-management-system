@@ -19,8 +19,8 @@ interface JobCardProps {
   showMatch?: boolean;
 }
 export function JobCard({ job, showMatch = false }: JobCardProps) {
-  const { savedJobs, toggleSaveJob, isAuthenticated } = useAuth();
-  const saved = savedJobs.includes(job.id);
+  const { isSaved, toggleSaveJob, isAuthenticated } = useAuth();
+  const saved = isSaved(job.id);
   const isNew = job.postedDaysAgo <= 2;
   const topLabel = job.featured ?
   'Featured role' :
@@ -140,14 +140,19 @@ export function JobCard({ job, showMatch = false }: JobCardProps) {
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
               Estimated salary
             </p>
-            <p className="mt-1 font-display text-lg font-bold text-slate-900">
-              {formatSalary(job.salaryMin, job.salaryMax)}
+            <p className={`mt-1 font-display text-lg font-bold ${job.salaryMin <= 0 && job.salaryMax <= 0 ? 'text-slate-400' : 'text-slate-900'}`}>
+              {formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => toggleSaveJob(job.id)}
+              onClick={() => toggleSaveJob(job.id, {
+                title: job.title,
+                company: job.company,
+                logo: job.companyLogo,
+                location: job.location,
+              })}
               disabled={!isAuthenticated}
               title={
               isAuthenticated ?

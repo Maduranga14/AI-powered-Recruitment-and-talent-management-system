@@ -17,8 +17,7 @@ import {
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { JobCard } from '../components/JobCard';
-import { JOBS, type Job } from '../data/jobs';
-import { publicApi } from '../services/api';
+import { type Job } from '../data/jobs';import { publicApi } from '../services/api';
 
 // reuse the same converter from Jobs.tsx inline
 const EMPLOYMENT_TYPE_LABEL: Record<string, string> = {
@@ -158,8 +157,9 @@ export function Landing() {
               workMode: (p.employmentType === 'Remote' ? 'Remote' : 'On-site') as any,
               type: (EMPLOYMENT_TYPE_LABEL[p.employmentType] ?? 'Full-time') as any,
               level: 'Mid' as any,
-              salaryMin: p.salaryMin ?? 0,
-              salaryMax: p.salaryMax ?? 0,
+              salaryMin: p.salaryMin ?? -1,
+              salaryMax: p.salaryMax ?? -1,
+              salaryCurrency: p.salaryCurrency || 'USD',
               postedDaysAgo,
               category: p.departmentName ?? 'General',
               skills: p.requiredSkills,
@@ -182,12 +182,8 @@ export function Landing() {
     navigate(`/jobs?q=${encodeURIComponent(query)}`);
   };
 
-  // Live jobs first, then static featured, capped at 4 total
-  const featured = [
-    ...liveJobs,
-    ...JOBS.filter((j) => j.featured),
-    ...JOBS.filter((j) => !j.featured),
-  ].slice(0, 4);
+  // Show live jobs only, capped at 4
+  const featured = liveJobs.slice(0, 4);
   return (
     <div className="w-full bg-slate-50">
       {/* Hero */}

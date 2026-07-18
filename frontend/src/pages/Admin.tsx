@@ -14,25 +14,25 @@ import { AdminShell, type AdminView } from '../components/admin/AdminShell';
 import {
   ADMIN_AUDIT_EVENTS,
   ADMIN_MODERATION,
-  ADMIN_ORGANIZATIONS,
-  ADMIN_PEOPLE,
   type AdminPerson,
+  type AdminOrganization,
   type ModerationItem,
   type AdminRole,
-  type AccountStatus } from
-'../data/admin';
+  type AccountStatus
+} from
+  '../data/admin';
 import { adminApi } from '../services/api';
 export function Admin() {
   const [view, setView] = useState<AdminView>('overview');
-  const [people, setPeople] = useState(ADMIN_PEOPLE);
-  const [organizations, setOrganizations] = useState(ADMIN_ORGANIZATIONS);
+  const [people, setPeople] = useState<AdminPerson[]>([]);
+  const [organizations, setOrganizations] = useState<AdminOrganization[]>([]);
   const [moderation, setModeration] = useState(ADMIN_MODERATION);
   const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
   const [selectedOrganizationId, setSelectedOrganizationId] = useState<
     string | null>(
-    null);
+      null);
   const [selectedModeration, setSelectedModeration] =
-  useState<ModerationItem | null>(null);
+    useState<ModerationItem | null>(null);
   const [settings, setSettings] = useState({
     reviewAlerts: true,
     strictSafeguards: true
@@ -70,16 +70,7 @@ export function Admin() {
           };
         });
 
-        // Combine backend users with existing mock users, filtering out duplicates by email
-        setPeople((prev) => {
-          const combined = [...prev];
-          backendPeople.forEach((bp) => {
-            if (!combined.some((p) => p.email.toLowerCase() === bp.email.toLowerCase())) {
-              combined.push(bp);
-            }
-          });
-          return combined;
-        });
+        setPeople(backendPeople);
 
         // 2. Extract organizations from backend users
         const orgNames = new Set<string>();
@@ -89,38 +80,27 @@ export function Admin() {
           }
         });
 
-        // Combine backend organizations with existing mock organizations
-        setOrganizations((prev) => {
-          const combined = [...prev];
-          Array.from(orgNames).forEach((orgName) => {
-            if (!combined.some((o) => o.name.toLowerCase() === orgName.toLowerCase())) {
-              const initials = orgName.split(' ').map((w) => w[0]).join('').toUpperCase().substring(0, 3);
-              combined.push({
-                id: `org-${orgName.toLowerCase().replace(/\s+/g, '-')}`,
-                name: orgName,
-                initials: initials || 'ORG',
-                plan: 'Starter',
-                members: res.items.filter((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase()).length,
-                activeJobs: 1, // mock count
-                status: 'Healthy',
-                owner: res.items.find((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase() && u.role === 'Recruiter')?.fullName || 'Unknown',
-                joined: new Date().toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                }),
-                monthlyUsage: '$0'
-              });
-            } else {
-              // Update members count of existing organization if needed
-              const org = combined.find((o) => o.name.toLowerCase() === orgName.toLowerCase());
-              if (org) {
-                org.members = res.items.filter((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase()).length;
-              }
-            }
-          });
-          return combined;
+        const backendOrgs: AdminOrganization[] = Array.from(orgNames).map((orgName) => {
+          const initials = orgName.split(' ').map((w) => w[0]).join('').toUpperCase().substring(0, 3);
+          return {
+            id: `org-${orgName.toLowerCase().replace(/\s+/g, '-')}`,
+            name: orgName,
+            initials: initials || 'ORG',
+            plan: 'Starter',
+            members: res.items.filter((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase()).length,
+            activeJobs: 1, // mock count
+            status: 'Healthy',
+            owner: res.items.find((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase() && u.role === 'Recruiter')?.fullName || 'Unknown',
+            joined: new Date().toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            }),
+            monthlyUsage: '0%'
+          };
         });
+
+        setOrganizations(backendOrgs);
 
       } catch (err) {
         console.error('Failed to load live admin data:', err);
@@ -135,48 +115,47 @@ export function Admin() {
   const togglePersonStatus = (person: AdminPerson) => {
     const nextStatus = person.status === 'Suspended' ? 'Active' : 'Suspended';
     setPeople((current) =>
-    current.map((item) =>
-    item.id === person.id ?
-    {
-      ...item,
-      status: nextStatus
-    } :
-    item
-    )
+      current.map((item) =>
+        item.id === person.id ?
+          {
+            ...item,
+            status: nextStatus
+          } :
+          item
+      )
     );
     setSelectedPerson((current) =>
-    current?.id === person.id ?
-    {
-      ...current,
-      status: nextStatus
-    } :
-    current
+      current?.id === person.id ?
+        {
+          ...current,
+          status: nextStatus
+        } :
+        current
     );
     showFeedback(
       `${person.name} ${nextStatus === 'Active' ? 'reactivated' : 'suspended'} locally.`
     );
   };
   const decideModeration = (
-  item: ModerationItem,
-  status: 'Approved' | 'Declined') =>
-  {
+    item: ModerationItem,
+    status: 'Approved' | 'Declined') => {
     setModeration((current) =>
-    current.map((entry) =>
-    entry.id === item.id ?
-    {
-      ...entry,
-      status
-    } :
-    entry
-    )
+      current.map((entry) =>
+        entry.id === item.id ?
+          {
+            ...entry,
+            status
+          } :
+          entry
+      )
     );
     setSelectedModeration((current) =>
-    current?.id === item.id ?
-    {
-      ...current,
-      status
-    } :
-    current
+      current?.id === item.id ?
+        {
+          ...current,
+          status
+        } :
+        current
     );
     showFeedback(`${item.title} ${status.toLowerCase()} locally.`);
   };
@@ -190,8 +169,8 @@ export function Admin() {
     );
   };
   const selectedOrganization =
-  organizations.find((item) => item.id === selectedOrganizationId) ??
-  null;
+    organizations.find((item) => item.id === selectedOrganizationId) ??
+    null;
   const pendingCount = moderation.filter(
     (item) => item.status === 'Pending'
   ).length;
@@ -200,7 +179,7 @@ export function Admin() {
       activeView={view}
       moderationCount={pendingCount}
       onViewChange={setView}>
-      
+
       <AnimatePresence mode="wait">
         <motion.div
           key={view}
@@ -216,38 +195,38 @@ export function Admin() {
           transition={{
             duration: 0.16
           }}>
-          
+
           {view === 'overview' &&
-          <AdminOverview
-            people={people}
-            organizations={organizations}
-            moderation={moderation}
-            onViewChange={setView} />
+            <AdminOverview
+              people={people}
+              organizations={organizations}
+              moderation={moderation}
+              onViewChange={setView} />
 
           }
           {view === 'people' &&
-          <AdminPeople people={people} onPersonSelect={setSelectedPerson} />
+            <AdminPeople people={people} onPersonSelect={setSelectedPerson} />
           }
           {view === 'organizations' &&
-          <AdminOrganizations
-            organizations={organizations}
-            onOrganizationSelect={(organization) =>
-            setSelectedOrganizationId(organization.id)
-            } />
+            <AdminOrganizations
+              organizations={organizations}
+              onOrganizationSelect={(organization) =>
+                setSelectedOrganizationId(organization.id)
+              } />
 
           }
           {view === 'moderation' &&
-          <AdminModeration
-            moderation={moderation}
-            onItemSelect={setSelectedModeration} />
+            <AdminModeration
+              moderation={moderation}
+              onItemSelect={setSelectedModeration} />
 
           }
           {view === 'pending-approvals' && <AdminPendingApprovals />}
           {view === 'audit-settings' &&
-          <AdminAuditSettings
-            auditEvents={ADMIN_AUDIT_EVENTS}
-            settings={settings}
-            onToggle={toggleSetting} />
+            <AdminAuditSettings
+              auditEvents={ADMIN_AUDIT_EVENTS}
+              settings={settings}
+              onToggle={toggleSetting} />
 
           }
         </motion.div>
@@ -256,34 +235,34 @@ export function Admin() {
         person={selectedPerson}
         onClose={() => setSelectedPerson(null)}
         onToggleStatus={togglePersonStatus} />
-      
+
       <AdminOrganizationDrawer
         organization={selectedOrganization}
         onClose={() => setSelectedOrganizationId(null)} />
-      
+
       <AdminModerationDrawer
         item={selectedModeration}
         onClose={() => setSelectedModeration(null)}
         onDecision={decideModeration} />
-      
+
       <AnimatePresence>
         {feedback &&
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 12
-          }}
-          animate={{
-            opacity: 1,
-            y: 0
-          }}
-          exit={{
-            opacity: 0,
-            y: 12
-          }}
-          role="status"
-          className="fixed bottom-20 left-4 right-4 z-[60] flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl sm:bottom-6 sm:left-auto sm:right-6 sm:w-auto">
-          
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 12
+            }}
+            animate={{
+              opacity: 1,
+              y: 0
+            }}
+            exit={{
+              opacity: 0,
+              y: 12
+            }}
+            role="status"
+            className="fixed bottom-20 left-4 right-4 z-[60] flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl sm:bottom-6 sm:left-auto sm:right-6 sm:w-auto">
+
             <CheckCircle2Icon className="h-4 w-4 text-accent-400" />
             {feedback}
           </motion.div>

@@ -15,9 +15,10 @@ import { Input } from '../ui/Input';
 interface Props {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function InviteHiringManagerModal({ open, onClose }: Props) {
+export function InviteHiringManagerModal({ open, onClose, onSuccess }: Props) {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,6 +60,9 @@ export function InviteHiringManagerModal({ open, onClose }: Props) {
     try {
       const res = await authApi.inviteHiringManager({ email: email.trim() });
       setResult(res);
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to send invitation. Please try again.');
     } finally {

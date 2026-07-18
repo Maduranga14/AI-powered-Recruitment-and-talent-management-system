@@ -11,7 +11,7 @@ namespace backend.Data
             await SeedAdminAsync(db);
             await SeedDepartmentDashboardAsync(db);
             await SeedRolesAndPermissionsAsync(db);
-            await SeedDemoAccountsAsync(db);
+            // Default demo accounts (Recruiter, Manager, Candidate) are not seeded anymore
         }
 
         private static async Task SeedAdminAsync(AppDbContext db)
@@ -42,16 +42,7 @@ namespace backend.Data
         private static async Task SeedDepartmentDashboardAsync(AppDbContext db)
         {
             
-            if (!await db.Organizations.AnyAsync())
-            {
-                db.Organizations.Add(new Organization
-                {
-                    Name = "TalentAI Global Holding",
-                    Sub = "Principal Entity • NYC HQ"
-                });
-                await db.SaveChangesAsync();
-                Console.WriteLine("Organization seeded.");
-            }
+            // Default organization (TalentAI Global Holding) is not seeded anymore
 
             
             if (!await db.Departments.AnyAsync())

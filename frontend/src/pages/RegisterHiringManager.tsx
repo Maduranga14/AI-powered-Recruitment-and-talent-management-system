@@ -9,7 +9,7 @@ import {
   BuildingIcon,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { Input, PasswordInput } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 import { authApi, type InviteInfo } from '../services/api';
 
@@ -206,20 +206,18 @@ export function RegisterHiringManager() {
               />
             </div>
 
-            <Input
+            <PasswordInput
               label="Password"
               name="password"
-              type="password"
               placeholder="At least 8 characters"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               error={errors.password}
             />
 
-            <Input
+            <PasswordInput
               label="Confirm Password"
               name="confirmPassword"
-              type="password"
               placeholder="Re-enter your password"
               value={form.confirmPassword}
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}

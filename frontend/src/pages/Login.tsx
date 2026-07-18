@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SparklesIcon } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import { Input, PasswordInput } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 export function Login() {
   const { login } = useAuth();
@@ -49,13 +49,7 @@ export function Login() {
       }
     })();
   };
-  const demoLogin = () => {
-    setLoading(true);
-    setTimeout(() => {
-      login('alex.morgan@example.com', 'demo1234');
-      navigate(redirect);
-    }, 500);
-  };
+
   return (
     <div className="flex w-full flex-1 items-center justify-center bg-slate-50 px-4 py-12">
       <motion.div
@@ -106,19 +100,14 @@ export function Login() {
             error={errors.email} />
           
           <div>
-            <Input
+            <PasswordInput
               label="Password"
               name="password"
-              type="password"
               placeholder="Your password"
               value={form.password}
-              onChange={(e) =>
-              setForm({
-                ...form,
-                password: e.target.value
-              })
-              }
-              error={errors.password} />
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              error={errors.password}
+            />
             
             <div className="mt-1.5 text-right">
               <Link
@@ -134,12 +123,7 @@ export function Login() {
           </Button>
         </form>
 
-        <button
-          onClick={demoLogin}
-          className="mt-3 w-full rounded-xl border border-dashed border-brand-200 bg-brand-50/50 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50">
-          
-          Try the demo account
-        </button>
+
 
         <p className="mt-6 text-center text-sm text-slate-500">
           New to Talenta?{' '}

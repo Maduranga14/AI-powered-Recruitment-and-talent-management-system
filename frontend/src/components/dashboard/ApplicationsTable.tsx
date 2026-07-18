@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { FileSearchIcon } from 'lucide-react';
@@ -78,7 +77,9 @@ export function ApplicationsTable({
         <tbody className="divide-y divide-slate-100">
           {applications.map((app) => {
             const job = getJob(app.jobId);
-            if (!job) return null;
+            const title = job?.title ?? app.jobTitle ?? 'Unknown role';
+            const company = job?.company ?? app.jobCompany ?? 'Unknown company';
+            const logo = job?.companyLogo ?? app.jobCompanyLogo ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(company)}&background=4f46e5&color=fff&bold=true&size=96`;
             return (
               <tr
                 key={app.jobId}
@@ -87,15 +88,15 @@ export function ApplicationsTable({
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
                     <img
-                      src={job.companyLogo}
+                      src={logo}
                       alt=""
                       className="h-9 w-9 rounded-lg" />
                     
                     <div>
                       <p className="text-sm font-semibold text-slate-900">
-                        {job.title}
+                        {title}
                       </p>
-                      <p className="text-xs text-slate-500">{job.company}</p>
+                      <p className="text-xs text-slate-500">{company}</p>
                     </div>
                   </div>
                 </td>
@@ -106,20 +107,17 @@ export function ApplicationsTable({
                   <Badge tone={statusTone[app.status]}>{app.status}</Badge>
                 </td>
                 <td className="px-5 py-4 text-sm text-slate-500">
-                  {formatDistanceToNow(app.appliedAt, {
-                    addSuffix: true
-                  })}
+                  {formatDistanceToNow(app.appliedAt, { addSuffix: true })}
                 </td>
                 <td className="px-5 py-4 text-right">
                   <Link
-                    to={`/jobs/${job.id}`}
+                    to={`/jobs/${app.jobId}`}
                     className="text-sm font-semibold text-brand-600 hover:underline">
-                    
                     View
                   </Link>
                 </td>
-              </tr>);
-
+              </tr>
+            );
           })}
         </tbody>
       </table>
@@ -128,30 +126,25 @@ export function ApplicationsTable({
       <div className="divide-y divide-slate-100 sm:hidden">
         {applications.map((app) => {
           const job = getJob(app.jobId);
-          if (!job) return null;
+          const title = job?.title ?? app.jobTitle ?? 'Unknown role';
+          const company = job?.company ?? app.jobCompany ?? 'Unknown company';
+          const logo = job?.companyLogo ?? app.jobCompanyLogo ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(company)}&background=4f46e5&color=fff&bold=true&size=96`;
           return (
             <Link
               key={app.jobId}
-              to={`/jobs/${job.id}`}
+              to={`/jobs/${app.jobId}`}
               className="flex items-center gap-3 p-4">
-              
-              <img
-                src={job.companyLogo}
-                alt=""
-                className="h-10 w-10 rounded-lg" />
-              
+              <img src={logo} alt="" className="h-10 w-10 rounded-lg" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900">
-                  {job.title}
-                </p>
-                <p className="text-xs text-slate-500">{job.company}</p>
+                <p className="truncate text-sm font-semibold text-slate-900">{title}</p>
+                <p className="text-xs text-slate-500">{company}</p>
                 <div className="mt-2">
                   <Stepper status={app.status} />
                 </div>
               </div>
               <Badge tone={statusTone[app.status]}>{app.status}</Badge>
-            </Link>);
-
+            </Link>
+          );
         })}
       </div>
     </div>);

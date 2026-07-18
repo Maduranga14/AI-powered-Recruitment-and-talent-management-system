@@ -15,6 +15,7 @@ import type {
 import { DECISION_TONES } from '../../data/hiringManager';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { useAuth } from '../../context/AuthContext';
 interface HiringManagerOverviewProps {
   candidates: ManagerCandidate[];
   interviews: ManagerInterview[];
@@ -29,6 +30,8 @@ export function HiringManagerOverview({
   onViewChange,
   onCandidateSelect
 }: HiringManagerOverviewProps) {
+  const { user } = useAuth();
+  const firstName = user?.name ? user.name.split(' ')[0] : 'User';
   const awaiting = candidates.filter(
     (candidate) => candidate.decisionStatus === 'Awaiting feedback'
   );
@@ -81,7 +84,7 @@ export function HiringManagerOverview({
         <div>
           <p className="text-sm font-medium text-slate-500">Tuesday, May 14</p>
           <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
-            Good morning, Samantha
+            Good morning, {firstName}
           </h1>
           <p className="mt-2 max-w-xl text-sm text-slate-500">
             Keep the team aligned with clear, timely interview decisions.
