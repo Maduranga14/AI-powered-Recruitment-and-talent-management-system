@@ -33,17 +33,21 @@ export function ApplyModal({
 
   const matchScore = (job as Job).matchScore ?? 75;
 
-  const submit = () => {
+  const submit = async () => {
     setSubmitting(true);
-    setTimeout(() => {
-      applyToJob(job.id, {
+    try {
+      await applyToJob(job.id, {
         title: job.title,
         company: job.company,
         logo: job.companyLogo,
+        coverLetter: note,
       });
-      setSubmitting(false);
       setDone(true);
-    }, 900);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to submit application');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const close = () => {
