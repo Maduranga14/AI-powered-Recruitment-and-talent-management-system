@@ -8,11 +8,13 @@ namespace backend.Services
     public class CandidateProfileService(
         AppDbContext db,
         IWebHostEnvironment env,
-        IHttpContextAccessor httpContextAccessor) : ICandidateProfileService
+        IHttpContextAccessor httpContextAccessor,
+        ICloudStorageService cloudStorage) : ICandidateProfileService
     {
         private readonly AppDbContext _db = db;
         private readonly IWebHostEnvironment _env = env;
         private readonly IHttpContextAccessor _http = httpContextAccessor;
+        private readonly ICloudStorageService _cloudStorage = cloudStorage;
 
         // Allowed resume file extensions and size limit (5 MB)
         private static readonly string[] AllowedExtensions = [".pdf", ".doc", ".docx"];
@@ -176,26 +178,15 @@ namespace backend.Services
 
             // Remove old file if present
             if (!string.IsNullOrEmpty(profile.ResumeUrl))
-                DeleteFileFromDisk(profile.ResumeUrl);
+                await _cloudStorage.DeleteFileAsync(profile.ResumeUrl);
 
-            // Save new file
-            var uploadsDir = Path.Combine(_env.WebRootPath, "uploads", "resumes");
-            Directory.CreateDirectory(uploadsDir);
-
+            // Save new file via Cloud Storage (or local fallback)
             var fileName = $"{profile.Id}_{Guid.NewGuid():N}{ext}";
-            var filePath = Path.Combine(uploadsDir, fileName);
-
-            await using (var stream = new FileStream(filePath, FileMode.Create))
+            string fileUrl;
+            using (var stream = file.OpenReadStream())
             {
-                await file.CopyToAsync(stream);
+                fileUrl = await _cloudStorage.UploadFileAsync(stream, fileName, file.ContentType);
             }
-
-            // Build URL relative to the host
-            var relativePath = $"/uploads/resumes/{fileName}";
-            var request = _http.HttpContext?.Request;
-            var fileUrl = request != null
-                ? $"{request.Scheme}://{request.Host}{relativePath}"
-                : relativePath;
 
             profile.ResumeUrl = fileUrl;
             profile.UpdatedAt = DateTime.UtcNow;
@@ -212,7 +203,7 @@ namespace backend.Services
             if (string.IsNullOrEmpty(profile.ResumeUrl))
                 throw new InvalidOperationException("No resume is currently uploaded.");
 
-            DeleteFileFromDisk(profile.ResumeUrl);
+            await _cloudStorage.DeleteFileAsync(profile.ResumeUrl);
             profile.ResumeUrl = null;
             profile.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
