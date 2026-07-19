@@ -19,6 +19,8 @@ namespace backend.Models
 
         public bool IsUsed { get; set; } = false;
 
+        public Guid? DepartmentId { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

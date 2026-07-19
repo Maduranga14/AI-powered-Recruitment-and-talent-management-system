@@ -159,6 +159,13 @@ namespace backend.Services
             if (emailExists)
                 throw new InvalidOperationException("A user account already exists with this email address.");
 
+            if (dto.DepartmentId.HasValue)
+            {
+                var deptExists = await _db.Departments.AnyAsync(d => d.Id == dto.DepartmentId.Value);
+                if (!deptExists)
+                    throw new KeyNotFoundException("The specified department does not exist.");
+            }
+
             var token = Guid.NewGuid().ToString("N"); // 32-char hex token
             var expiry = DateTime.UtcNow.AddHours(72);
 
@@ -170,6 +177,7 @@ namespace backend.Services
                 CreatedByRecruiterId = recruiterId,
                 ExpiresAt = expiry,
                 IsUsed = false,
+                DepartmentId = dto.DepartmentId,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -267,6 +275,16 @@ namespace backend.Services
             };
 
             _db.Users.Add(user);
+
+            if (invite.DepartmentId.HasValue)
+            {
+                var dept = await _db.Departments.FindAsync(invite.DepartmentId.Value);
+                if (dept != null)
+                {
+                    dept.Head = user.FullName;
+                    dept.HeadInitials = $"{user.FirstName[0]}{user.LastName[0]}".ToUpper();
+                }
+            }
 
             // Mark the token as used
             invite.IsUsed = true;

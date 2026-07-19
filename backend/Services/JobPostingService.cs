@@ -197,8 +197,8 @@ namespace backend.Services
                 .FirstOrDefaultAsync(j => j.Id == id && j.CreatedByRecruiterId == recruiterId)
                 ?? throw new KeyNotFoundException("Job posting not found or you do not have access.");
 
-            if (posting.Status == JobStatus.Published || posting.Status == JobStatus.Closed)
-                throw new InvalidOperationException("Published or closed postings cannot be deleted. Archive it first.");
+            var applications = _db.JobApplications.Where(a => a.JobPostingId == id);
+            _db.JobApplications.RemoveRange(applications);
 
             _db.JobPostings.Remove(posting);
             await _db.SaveChangesAsync();
@@ -408,7 +408,11 @@ namespace backend.Services
                 AppliedAt = a.AppliedAt,
                 Skills = profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList(),
                 ExperienceSummary = experienceSummary,
-                ResumeUrl = profile.ResumeUrl
+                ResumeUrl = profile.ResumeUrl,
+                Feedback = a.Feedback,
+                Recommendation = a.Recommendation,
+                OverallRating = a.OverallRating,
+                SkillRatings = a.SkillRatings
             };
         }
 
@@ -460,6 +464,86 @@ namespace backend.Services
                 throw new InvalidOperationException(
                     $"Cannot transition from '{current}' to '{next}'. " +
                     $"Allowed: {(allowed.Length > 0 ? string.Join(", ", allowed.Select(s => s.ToString())) : "none")}.");
+        }
+
+        public async Task<List<JobApplicantDto>> GetManagerApplicantsAsync(Guid managerUserId)
+        {
+            var manager = await _db.Users.FindAsync(managerUserId);
+            if (manager == null || manager.Role != UserRole.HiringManager)
+                throw new KeyNotFoundException("Hiring manager user not found.");
+
+            var managerName = manager.FullName;
+
+            // Find all departments headed by this manager in the manager's organization
+            var departments = await _db.Departments
+                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
+                .Select(d => d.Id)
+                .ToListAsync();
+
+            if (departments.Count == 0)
+                return new List<JobApplicantDto>();
+
+            // Query applications for postings in those departments where status != Applied (once shortlisted/under review)
+            var applications = await _db.JobApplications
+                .Include(a => a.JobPosting)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Experiences)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Skills)
+                .Where(a => a.JobPosting.DepartmentId != null &&
+                            departments.Contains(a.JobPosting.DepartmentId.Value) &&
+                            a.Status != ApplicationStatus.Applied)
+                .OrderByDescending(a => a.AppliedAt)
+                .ToListAsync();
+
+            return applications.Select(a => MapApplicant(a, a.JobPosting.Title)).ToList();
+        }
+
+        public async Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId)
+        {
+            var manager = await _db.Users.FindAsync(managerUserId);
+            if (manager == null || manager.Role != UserRole.HiringManager)
+                throw new KeyNotFoundException("Hiring manager user not found.");
+
+            var managerName = manager.FullName;
+
+            // Find all departments headed by this manager
+            var departments = await _db.Departments
+                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
+                .Select(d => d.Id)
+                .ToListAsync();
+
+            var application = await _db.JobApplications
+                .Include(a => a.JobPosting)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Experiences)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Skills)
+                .FirstOrDefaultAsync(a => a.Id == applicationId);
+
+            if (application == null)
+                throw new KeyNotFoundException("Application not found.");
+
+            if (application.JobPosting.DepartmentId == null || !departments.Contains(application.JobPosting.DepartmentId.Value))
+                throw new UnauthorizedAccessException("You are not authorized to review this application.");
+
+            // Update feedback and recommendation
+            application.Feedback = feedback;
+            application.Recommendation = recommendation;
+            application.OverallRating = overallRating;
+            application.SkillRatings = skillRatings;
+
+            // Transition status to Reviewed so the recruiter knows the manager completed their review
+            application.Status = ApplicationStatus.Reviewed;
+
+            application.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            return MapApplicant(application, application.JobPosting.Title);
         }
     }
 }

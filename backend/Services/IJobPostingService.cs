@@ -38,5 +38,11 @@ namespace backend.Services
         /// <summary>Update an application's pipeline status (must belong to recruiter's job).</summary>
         Task<JobApplicantDto> UpdateApplicationStatusAsync(
             Guid jobId, Guid applicationId, ApplicationStatus status, Guid recruiterId);
+
+        /// <summary>List candidates who applied to jobs headed by this hiring manager's departments.</summary>
+        Task<List<JobApplicantDto>> GetManagerApplicantsAsync(Guid managerUserId);
+
+        /// <summary>Submit manager feedback and advance/reject the application.</summary>
+        Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId);
     }
 }

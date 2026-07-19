@@ -3,7 +3,7 @@ export type ManagerDecisionStatus =
 'Feedback submitted' |
 'Decision shared';
 
-export type ManagerRecommendation = 'Advance' | 'Hold' | 'Decline';
+export type ManagerRecommendation = 'Strong Yes' | 'Yes' | 'Maybe' | 'No' | 'Strong No';
 
 export interface ManagerCandidate {
   id: string;
@@ -23,6 +23,9 @@ export interface ManagerCandidate {
   interviewTime?: string;
   recommendation?: ManagerRecommendation;
   evidence?: string;
+  applicationId?: string;
+  overallRating?: number;
+  skillRatings?: string;
 }
 
 export interface ManagerInterview {

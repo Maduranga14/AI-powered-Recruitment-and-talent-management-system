@@ -31,5 +31,15 @@ namespace backend.Models
         /// <summary>Optional cover letter text submitted with the application.</summary>
         [MaxLength(3000)]
         public string? CoverLetter { get; set; }
+
+        [MaxLength(2000)]
+        public string? Feedback { get; set; }
+
+        [MaxLength(50)]
+        public string? Recommendation { get; set; }
+
+        public int? OverallRating { get; set; }
+
+        public string? SkillRatings { get; set; }
     }
 }

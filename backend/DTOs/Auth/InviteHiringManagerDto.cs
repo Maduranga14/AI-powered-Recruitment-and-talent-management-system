@@ -10,5 +10,7 @@ namespace backend.DTOs.Auth
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
+
+        public Guid? DepartmentId { get; set; }
     }
 }

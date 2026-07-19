@@ -187,6 +187,112 @@ export function CandidateDrawer({
                   {candidate.rationale}
                 </p>
               </section>
+
+              {candidate.recommendation && (
+                <section className="mt-7 rounded-2xl border border-slate-200 bg-slate-50/50 p-5 shadow-soft">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BrainCircuitIcon className="h-5 w-5 text-brand-600" />
+                      <h3 className="font-display text-sm font-bold text-slate-900">
+                        Hiring Manager Review
+                      </h3>
+                    </div>
+                    {candidate.overallRating && (
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span key={star}>
+                            <svg
+                              className={`h-4 w-4 ${
+                                (candidate.overallRating || 0) >= star
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-slate-300'
+                              }`}
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-3.5 space-y-3">
+                    <div>
+                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Recommendation</span>
+                      <div className="mt-1">
+                        <span
+                          className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-bold ${
+                            candidate.recommendation === 'Strong Yes' || candidate.recommendation === 'Yes'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : candidate.recommendation === 'Maybe'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-red-50 text-red-700 border border-red-200'
+                          }`}
+                        >
+                          {candidate.recommendation}
+                        </span>
+                      </div>
+                    </div>
+
+                    {candidate.feedback && (
+                      <div>
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-display">Manager Comments</span>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-700 whitespace-pre-line bg-white rounded-xl p-3 border border-slate-100">
+                          {candidate.feedback}
+                        </p>
+                      </div>
+                    )}
+
+                    {candidate.skillRatings && (() => {
+                      try {
+                        const parsed = JSON.parse(candidate.skillRatings);
+                        const skills = Object.keys(parsed);
+                        if (skills.length === 0) return null;
+                        return (
+                          <div>
+                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Skill Ratings</span>
+                            <div className="mt-2 grid grid-cols-3 gap-2">
+                              {skills.map((skill) => (
+                                <div key={skill} className="rounded-lg bg-white border border-slate-200 p-2.5 text-center">
+                                  <p className="text-[10px] font-semibold text-slate-500 truncate">{skill}</p>
+                                  <p className="mt-1 text-base font-extrabold text-slate-800">{parsed[skill]} / 5</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  </div>
+
+                  {/* Recruiter Action Buttons */}
+                  <div className="mt-5 flex gap-2 border-t border-slate-100 pt-4">
+                    <Button
+                      onClick={() => onSchedule(candidate)}
+                      fullWidth
+                      size="sm"
+                      className="bg-brand-600 hover:bg-brand-700 text-white font-bold"
+                    >
+                      <CalendarPlusIcon className="h-4 w-4" /> Proceed to Interview
+                    </Button>
+                    <Button
+                      onClick={() => onStageChange(candidate.id, 'Rejected')}
+                      variant="outline"
+                      fullWidth
+                      size="sm"
+                      className="border-red-200 text-red-600 hover:bg-red-50 font-bold"
+                    >
+                      <XIcon className="h-4 w-4" /> Reject Candidate
+                    </Button>
+                  </div>
+                </section>
+              )}
+
               <section className="mt-7">
                 <h3 className="font-display text-base font-bold">Skills</h3>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -229,10 +335,11 @@ export function CandidateDrawer({
                 <div className="mt-3 flex flex-wrap gap-2">
                   {(
                 [
-                'Screening',
-                'Interview',
-                'Offer',
-                'Rejected'] as
+                  'Screening',
+                  'Reviewed',
+                  'Interview',
+                  'Offer',
+                  'Rejected'] as
                 RecruiterStage[]).
                 map((stage) =>
                 <button
