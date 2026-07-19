@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   XIcon,
@@ -8,7 +8,7 @@ import {
   CheckCircleIcon,
   CopyIcon,
 } from 'lucide-react';
-import { authApi, type InviteResponse } from '../../services/api';
+import { authApi, recruiterApi, type InviteResponse } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
@@ -21,13 +21,26 @@ interface Props {
 export function InviteHiringManagerModal({ open, onClose, onSuccess }: Props) {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<InviteResponse | null>(null);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (open) {
+      recruiterApi.getDepartments().then((res) => {
+        setDepartments(res.departments || []);
+      }).catch((err) => {
+        console.error('Failed to load departments in invite modal:', err);
+      });
+    }
+  }, [open]);
+
   const reset = () => {
     setEmail('');
+    setDepartmentId('');
     setEmailError('');
     setError('');
     setResult(null);
@@ -58,7 +71,10 @@ export function InviteHiringManagerModal({ open, onClose, onSuccess }: Props) {
     setLoading(true);
 
     try {
-      const res = await authApi.inviteHiringManager({ email: email.trim() });
+      const res = await authApi.inviteHiringManager({
+        email: email.trim(),
+        departmentId: departmentId || undefined,
+      });
       setResult(res);
       if (onSuccess) {
         onSuccess();
@@ -177,6 +193,22 @@ export function InviteHiringManagerModal({ open, onClose, onSuccess }: Props) {
                     onChange={(e) => setEmail(e.target.value)}
                     error={emailError}
                   />
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Department (Optional)</label>
+                    <select
+                      value={departmentId}
+                      onChange={(e) => setDepartmentId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                    >
+                      <option value="">Select a department...</option>
+                      {departments.map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   <p className="text-xs text-slate-500">
                     They'll receive a registration link using your organization. The link expires in

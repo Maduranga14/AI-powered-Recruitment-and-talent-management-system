@@ -293,6 +293,55 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>List candidates who applied to jobs headed by the logged-in manager's departments</summary>
+        [HttpGet("api/manager/applicants")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(List<JobApplicantDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetManagerApplicants()
+        {
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.GetManagerApplicantsAsync(managerId.Value);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>Submit notes/feedback and move application status for an applicant</summary>
+        [HttpPatch("api/manager/applications/{applicationId:guid}/feedback")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(JobApplicantDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SubmitManagerFeedback(Guid applicationId, [FromBody] SubmitFeedbackDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.SubmitManagerFeedbackAsync(applicationId, dto.Recommendation, dto.Feedback, dto.OverallRating, dto.SkillRatings, managerId.Value);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
         private Guid? GetRecruiterId()
         {
             var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)

@@ -120,6 +120,10 @@ namespace backend.DTOs.Jobs
         public List<string> Skills { get; set; } = [];
         public string? ExperienceSummary { get; set; }
         public string? ResumeUrl { get; set; }
+        public string? Feedback { get; set; }
+        public string? Recommendation { get; set; }
+        public int? OverallRating { get; set; }
+        public string? SkillRatings { get; set; }
     }
 
     public class JobApplicantsResultDto
@@ -181,5 +185,20 @@ namespace backend.DTOs.Jobs
         public int Page { get; set; }
         public int PageSize { get; set; }
         public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+    }
+
+    public class SubmitFeedbackDto
+    {
+        [Required(ErrorMessage = "Recommendation is required.")]
+        public string Recommendation { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Feedback is required.")]
+        [MaxLength(2000)]
+        public string Feedback { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Overall rating is required.")]
+        public int OverallRating { get; set; }
+
+        public string? SkillRatings { get; set; }
     }
 }

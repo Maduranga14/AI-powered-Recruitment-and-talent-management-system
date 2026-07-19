@@ -2,6 +2,7 @@ export type RecruiterStage =
 'New' |
 'Screening' |
 'Shortlisted' |
+'Reviewed' |
 'Interview' |
 'Offer' |
 'Rejected';
@@ -27,6 +28,10 @@ export interface RecruiterCandidate {
   jobId?: string;
   resumeUrl?: string | null;
   candidateProfileId?: string;
+  recommendation?: string | null;
+  feedback?: string | null;
+  overallRating?: number | null;
+  skillRatings?: string | null;
 }
 
 export interface RecruiterJob {
@@ -344,6 +349,7 @@ export const STAGE_ORDER: RecruiterStage[] = [
 'New',
 'Screening',
 'Shortlisted',
+'Reviewed',
 'Interview',
 'Offer',
 'Rejected'];
@@ -356,6 +362,7 @@ export const STAGE_TONES: Record<
   New: 'blue',
   Screening: 'amber',
   Shortlisted: 'brand',
+  Reviewed: 'green',
   Interview: 'accent',
   Offer: 'green',
   Rejected: 'red'

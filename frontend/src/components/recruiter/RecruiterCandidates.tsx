@@ -150,6 +150,7 @@ export function RecruiterCandidates({
               'New',
               'Screening',
               'Shortlisted',
+              'Reviewed',
               'Interview',
               'Offer',
               'Rejected'] as

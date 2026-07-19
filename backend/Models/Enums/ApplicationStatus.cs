@@ -6,6 +6,7 @@ namespace backend.Models.Enums
         UnderReview,
         Interview,
         Rejected,
-        Hired
+        Hired,
+        Reviewed
     }
 }

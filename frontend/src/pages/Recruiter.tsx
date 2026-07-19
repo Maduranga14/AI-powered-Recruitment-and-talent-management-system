@@ -38,6 +38,8 @@ function statusToStage(status: string): RecruiterStage {
   switch (status) {
     case 'UnderReview':
       return 'Shortlisted';
+    case 'Reviewed':
+      return 'Reviewed';
     case 'Interview':
       return 'Interview';
     case 'Hired':
@@ -56,6 +58,8 @@ function stageToStatus(stage: RecruiterStage): number {
     case 'Screening':
     case 'Shortlisted':
       return 1; // UnderReview
+    case 'Reviewed':
+      return 5; // Reviewed status index 5 in backend
     case 'Interview':
       return 2;
     case 'Rejected':
@@ -111,6 +115,10 @@ function toRecruiterCandidate(applicant: JobApplicant, jobId?: string): Recruite
     jobId: resolvedJobId,
     resumeUrl: applicant.resumeUrl,
     candidateProfileId: applicant.candidateProfileId,
+    recommendation: applicant.recommendation,
+    feedback: applicant.feedback,
+    overallRating: applicant.overallRating,
+    skillRatings: applicant.skillRatings,
   };
 }
 

@@ -10,6 +10,11 @@ namespace backend.Data
         {
             // Dynamically alter schema to add OrganizationName column if it does not exist
             await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Departments]') AND name = 'OrganizationName') BEGIN ALTER TABLE [dbo].[Departments] ADD [OrganizationName] NVARCHAR(MAX) NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[JobApplications]') AND name = 'Feedback') BEGIN ALTER TABLE [dbo].[JobApplications] ADD [Feedback] NVARCHAR(2000) NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[JobApplications]') AND name = 'Recommendation') BEGIN ALTER TABLE [dbo].[JobApplications] ADD [Recommendation] NVARCHAR(50) NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[HiringManagerInvitations]') AND name = 'DepartmentId') BEGIN ALTER TABLE [dbo].[HiringManagerInvitations] ADD [DepartmentId] UNIQUEIDENTIFIER NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[JobApplications]') AND name = 'OverallRating') BEGIN ALTER TABLE [dbo].[JobApplications] ADD [OverallRating] INT NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[JobApplications]') AND name = 'SkillRatings') BEGIN ALTER TABLE [dbo].[JobApplications] ADD [SkillRatings] NVARCHAR(MAX) NULL; END");
 
             await SeedAdminAsync(db);
             await SeedDepartmentDashboardAsync(db);

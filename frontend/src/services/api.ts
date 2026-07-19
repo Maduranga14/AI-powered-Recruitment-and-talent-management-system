@@ -124,7 +124,7 @@ export const authApi = {
     }),
 
   
-  inviteHiringManager: (payload: { email: string }) =>
+  inviteHiringManager: (payload: { email: string; departmentId?: string }) =>
     request<InviteResponse>('/auth/invite-hiring-manager', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -246,6 +246,10 @@ export interface JobApplicant {
   skills: string[];
   experienceSummary: string | null;
   resumeUrl: string | null;
+  feedback?: string | null;
+  recommendation?: string | null;
+  overallRating?: number | null;
+  skillRatings?: string | null;
 }
 
 export interface JobApplicantsResult {
@@ -289,7 +293,7 @@ export const EmploymentTypeMap: Record<string, number> = {
 };
 
 export const recruiterApi = {
-  inviteHiringManager: (payload: { email: string }) =>
+  inviteHiringManager: (payload: { email: string; departmentId?: string }) =>
     authApi.inviteHiringManager(payload),
 
   createJob: (payload: CreateJobPostingPayload) =>
@@ -373,6 +377,25 @@ export const recruiterApi = {
   deleteDepartment: (id: string) =>
     request<void>(`/departments/${id}`, {
       method: 'DELETE',
+    }),
+};
+
+export const managerApi = {
+  getApplicants: () =>
+    request<JobApplicant[]>('/manager/applicants'),
+
+  submitFeedback: (
+    applicationId: string,
+    payload: {
+      recommendation: string;
+      feedback: string;
+      overallRating: number;
+      skillRatings?: string;
+    }
+  ) =>
+    request<JobApplicant>(`/manager/applications/${applicationId}/feedback`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
     }),
 };
 
