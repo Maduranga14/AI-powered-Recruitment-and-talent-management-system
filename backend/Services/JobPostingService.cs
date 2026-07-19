@@ -675,6 +675,7 @@ namespace backend.Services
             string candidateName,
             string candidateEmail)
         {
+            var posting = application.JobPosting;
             return new InterviewDto
             {
                 Id = interview.Id,
@@ -684,6 +685,8 @@ namespace backend.Services
                 CandidateEmail = candidateEmail,
                 PhotoUrl = application.CandidateProfile?.PhotoUrl,
                 JobTitle = jobTitle,
+                Company = posting?.PostedBy,
+                JobLocation = posting?.Location,
                 ScheduledAt = interview.ScheduledAt,
                 DurationMinutes = interview.DurationMinutes,
                 InterviewType = interview.InterviewType,

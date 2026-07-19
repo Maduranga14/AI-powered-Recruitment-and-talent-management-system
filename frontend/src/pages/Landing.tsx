@@ -427,8 +427,22 @@ export function Landing() {
           </Button>
         </div>
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
-          {featured.map((job) =>
-          <JobCard key={job.id} job={job} />
+          {featured.length > 0 ? (
+            featured.map((job) => <JobCard key={job.id} job={job} />)
+          ) : (
+            <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white py-14 text-center">
+              <p className="font-semibold text-slate-900">No live roles yet</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Published openings from recruiters will show up here.
+              </p>
+              <Button
+                className="mt-5"
+                variant="outline"
+                onClick={() => navigate('/jobs')}
+              >
+                Browse jobs
+              </Button>
+            </div>
           )}
         </div>
       </section>

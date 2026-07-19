@@ -236,6 +236,8 @@ namespace backend.DTOs.Jobs
         public string CandidateEmail { get; set; } = string.Empty;
         public string? PhotoUrl { get; set; }
         public string JobTitle { get; set; } = string.Empty;
+        public string? Company { get; set; }
+        public string? JobLocation { get; set; }
         public DateTime ScheduledAt { get; set; }
         public int DurationMinutes { get; set; }
         public string InterviewType { get; set; } = string.Empty;

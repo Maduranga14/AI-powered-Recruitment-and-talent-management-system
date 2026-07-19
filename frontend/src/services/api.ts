@@ -270,6 +270,8 @@ export interface InterviewDto {
   candidateEmail: string;
   photoUrl: string | null;
   jobTitle: string;
+  company?: string | null;
+  jobLocation?: string | null;
   scheduledAt: string;
   durationMinutes: number;
   interviewType: string;
@@ -642,6 +644,9 @@ export const candidateApi = {
 
   getApplications: () =>
     request<ApplicationResponseDto[]>('/candidate/profile/applications'),
+
+  getInterviews: () =>
+    request<InterviewDto[]>('/candidate/profile/interviews'),
 
   applyToJob: (payload: { jobPostingId: string; coverLetter?: string }) =>
     request<{ message: string; data: ApplicationResponseDto }>('/candidate/profile/applications', {

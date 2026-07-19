@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using backend.DTOs.Candidate;
+using backend.DTOs.Jobs;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -210,6 +211,28 @@ namespace backend.Controllers
             try
             {
                 var result = await _profileService.GetApplicationsAsync(userId.Value);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>List interviews scheduled for the logged-in candidate.</summary>
+        [HttpGet("interviews")]
+        [ProducesResponseType(typeof(List<InterviewDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetInterviews()
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var result = await _profileService.GetInterviewsAsync(userId.Value);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)
