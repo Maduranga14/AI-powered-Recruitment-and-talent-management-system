@@ -197,8 +197,8 @@ namespace backend.Services
                 .FirstOrDefaultAsync(j => j.Id == id && j.CreatedByRecruiterId == recruiterId)
                 ?? throw new KeyNotFoundException("Job posting not found or you do not have access.");
 
-            if (posting.Status == JobStatus.Published || posting.Status == JobStatus.Closed)
-                throw new InvalidOperationException("Published or closed postings cannot be deleted. Archive it first.");
+            var applications = _db.JobApplications.Where(a => a.JobPostingId == id);
+            _db.JobApplications.RemoveRange(applications);
 
             _db.JobPostings.Remove(posting);
             await _db.SaveChangesAsync();
