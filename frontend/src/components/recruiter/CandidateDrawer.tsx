@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BrainCircuitIcon,
@@ -127,6 +128,12 @@ export function CandidateDrawer({
                   <CalendarPlusIcon className="h-4 w-4" /> Schedule
                 </Button>
               </div>
+              <Link
+                to={`/candidate-profile/${candidate.candidateProfileId || 'manager-candidate-1'}`}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white py-2.5 text-sm font-semibold shadow-sm transition"
+              >
+                <BrainCircuitIcon className="h-4 w-4" /> View Full Profile
+              </Link>
               <button
               onClick={queueEmail}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
@@ -145,6 +152,30 @@ export function CandidateDrawer({
                   {candidate.experience}
                 </p>
               </section>
+              {candidate.resumeUrl && (
+                <section className="mt-7">
+                  <h3 className="font-display text-base font-bold">Resume / CV</h3>
+                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 p-3 bg-slate-50">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                      <FileTextIcon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {candidate.name}’s Resume
+                      </p>
+                      <p className="text-xs text-slate-500">Resume / CV Document</p>
+                    </div>
+                    <a
+                      href={candidate.resumeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg bg-white border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                    >
+                      View Document
+                    </a>
+                  </div>
+                </section>
+              )}
               <section className="mt-7 rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
                 <div className="flex items-center gap-2">
                   <BrainCircuitIcon className="h-5 w-5 text-brand-600" />

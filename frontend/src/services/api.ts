@@ -223,6 +223,36 @@ export interface JobPostingListItem {
   createdAt: string;
   publishedAt: string | null;
   recruiterName: string;
+  applicantCount?: number;
+  screenedCount?: number;
+  shortlistedCount?: number;
+  interviewCount?: number;
+}
+
+export interface JobApplicant {
+  applicationId: string;
+  jobPostingId: string;
+  candidateProfileId: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  headline: string | null;
+  location: string | null;
+  photoUrl: string | null;
+  jobTitle: string;
+  status: string;
+  coverLetter: string | null;
+  appliedAt: string;
+  skills: string[];
+  experienceSummary: string | null;
+  resumeUrl: string | null;
+}
+
+export interface JobApplicantsResult {
+  jobId: string;
+  jobTitle: string;
+  jobStatus: string;
+  applicants: JobApplicant[];
 }
 
 export interface PagedJobsResult {
@@ -268,10 +298,42 @@ export const recruiterApi = {
       body: JSON.stringify(payload),
     }),
 
+  getJobDetails: (id: string) =>
+    request<JobPostingDetail>(`/recruiter/jobs/${id}`),
+
+  updateJob: (id: string, payload: Partial<CreateJobPostingPayload>) =>
+    request<ApiResponse<JobPostingDetail>>(`/recruiter/jobs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteJob: (id: string) =>
+    request<void>(`/recruiter/jobs/${id}`, {
+      method: 'DELETE',
+    }),
+
   getMyJobs: (status?: string, page = 1, pageSize = 20) => {
     const statusParam = status ? `&status=${encodeURIComponent(status)}` : '';
     return request<PagedJobsResult>(`/recruiter/jobs?page=${page}&pageSize=${pageSize}${statusParam}`);
   },
+
+  getJobApplicants: (jobId: string) =>
+    request<JobApplicantsResult>(`/recruiter/jobs/${jobId}/applicants`),
+
+  getAllApplicants: () =>
+    request<JobApplicant[]>('/recruiter/applicants'),
+
+  getCandidateProfile: (profileId: string) =>
+    request<CandidateProfileResponseDto>(`/recruiter/candidates/${profileId}/profile`),
+
+  updateApplicantStatus: (jobId: string, applicationId: string, status: number) =>
+    request<ApiResponse<JobApplicant>>(
+      `/recruiter/jobs/${jobId}/applicants/${applicationId}/status`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }
+    ),
 
   updateJobStatus: (id: string, status: number) =>
     request<ApiResponse<JobPostingDetail>>(`/recruiter/jobs/${id}/status`, {
@@ -519,6 +581,72 @@ export const candidateApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+};
+
+// ── AI Chat Assistant ────────────────────────────────────────────────────────
+
+export interface ChatMessageDto {
+  id: string;
+  role: 'user' | 'assistant' | 'system' | string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ChatConversationSummary {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  lastMessagePreview: string | null;
+}
+
+export interface ChatConversationDetail {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: ChatMessageDto[];
+}
+
+export interface SendChatResponse {
+  conversationId: string;
+  conversationTitle: string;
+  userMessage: ChatMessageDto;
+  assistantMessage: ChatMessageDto;
+  usedFallback: boolean;
+}
+
+export interface ChatSuggestions {
+  suggestions: string[];
+  greeting: string;
+  assistantName: string;
+}
+
+export const chatApi = {
+  getSuggestions: () => request<ChatSuggestions>('/chat/suggestions'),
+
+  listConversations: () =>
+    request<ChatConversationSummary[]>('/chat/conversations'),
+
+  getConversation: (id: string) =>
+    request<ChatConversationDetail>(`/chat/conversations/${id}`),
+
+  deleteConversation: (id: string) =>
+    request<void>(`/chat/conversations/${id}`, { method: 'DELETE' }),
+
+  sendMessage: async (payload: { message: string; conversationId?: string | null }) => {
+    const body: { message: string; conversationId?: string } = {
+      message: payload.message,
+    };
+    if (payload.conversationId) {
+      body.conversationId = payload.conversationId;
+    }
+    return request<SendChatResponse>('/chat/messages', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
 };
 
 export interface DepartmentDto {

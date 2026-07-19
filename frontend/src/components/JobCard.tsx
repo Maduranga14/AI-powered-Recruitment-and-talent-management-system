@@ -19,8 +19,11 @@ interface JobCardProps {
   showMatch?: boolean;
 }
 export function JobCard({ job, showMatch = false }: JobCardProps) {
-  const { isSaved, toggleSaveJob, isAuthenticated } = useAuth();
+  const { isSaved, toggleSaveJob, isAuthenticated, user } = useAuth();
   const saved = isSaved(job.id);
+  const role = (user?.title ?? '').toLowerCase();
+  const hideCandidateActions =
+    role === 'admin' || role === 'recruiter' || role === 'hiringmanager';
   const isNew = job.postedDaysAgo <= 2;
   const topLabel = job.featured ?
   'Featured role' :
@@ -145,30 +148,32 @@ export function JobCard({ job, showMatch = false }: JobCardProps) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => toggleSaveJob(job.id, {
-                title: job.title,
-                company: job.company,
-                logo: job.companyLogo,
-                location: job.location,
-              })}
-              disabled={!isAuthenticated}
-              title={
-              isAuthenticated ?
-              saved ?
-              'Remove saved job' :
-              'Save job' :
-              'Sign in to save'
-              }
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label={saved ? 'Remove saved job' : 'Save job'}
-              aria-pressed={saved}>
-              
-              <BookmarkIcon
-                className={`h-[18px] w-[18px] ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
-              
-            </button>
+            {!hideCandidateActions && (
+              <button
+                type="button"
+                onClick={() => toggleSaveJob(job.id, {
+                  title: job.title,
+                  company: job.company,
+                  logo: job.companyLogo,
+                  location: job.location,
+                })}
+                disabled={!isAuthenticated}
+                title={
+                isAuthenticated ?
+                saved ?
+                'Remove saved job' :
+                'Save job' :
+                'Sign in to save'
+                }
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label={saved ? 'Remove saved job' : 'Save job'}
+                aria-pressed={saved}>
+                
+                <BookmarkIcon
+                  className={`h-[18px] w-[18px] ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
+                
+              </button>
+            )}
             <Link
               to={`/jobs/${job.id}`}
               className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">

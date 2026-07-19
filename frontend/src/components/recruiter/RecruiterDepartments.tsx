@@ -1,24 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Building2Icon, 
-  PlusIcon, 
-  Trash2Icon, 
-  UserIcon, 
-  ShieldCheckIcon, 
-  Loader2Icon, 
-  XIcon 
+import {
+  Building2Icon,
+  PlusIcon,
+  Trash2Icon,
+  UserIcon,
+  ShieldCheckIcon,
+  Loader2Icon,
+  XIcon
 } from 'lucide-react';
 import { recruiterApi, type DepartmentDto, type DepartmentDashboardDto } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
+import type { RecruiterJob } from '../../data/recruiter';
 
 interface RecruiterDepartmentsProps {
   organizationName?: string;
+  jobs?: RecruiterJob[];
 }
 
-export function RecruiterDepartments({ organizationName }: RecruiterDepartmentsProps = {}) {
+export function RecruiterDepartments({ organizationName, jobs }: RecruiterDepartmentsProps = {}) {
   const [dashboard, setDashboard] = useState<DepartmentDashboardDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,6 +32,7 @@ export function RecruiterDepartments({ organizationName }: RecruiterDepartmentsP
   const [submitError, setSubmitError] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
 
   const fetchDashboard = async () => {
     setLoading(true);
@@ -185,11 +188,16 @@ export function RecruiterDepartments({ organizationName }: RecruiterDepartmentsP
           <div className={organizationName ? "mt-4 space-y-3" : "mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}>
             {departments.map((dept) => {
               if (organizationName) {
+                const isSelected = selectedDeptId === dept.id;
                 return (
                   <motion.div
                     key={dept.id}
                     layout
-                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 shadow-soft transition-all hover:bg-slate-50"
+                    onClick={() => setSelectedDeptId(isSelected ? null : dept.id)}
+                    className={`flex items-center justify-between gap-3 rounded-xl border p-3 shadow-soft transition-all cursor-pointer ${isSelected
+                        ? 'border-brand-600 ring-2 ring-brand-100 bg-brand-50/5'
+                        : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <span
@@ -218,7 +226,10 @@ export function RecruiterDepartments({ organizationName }: RecruiterDepartmentsP
                         </span>
                       )}
                       <button
-                        onClick={() => setDeleteConfirmId(dept.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmId(dept.id);
+                        }}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 focus:opacity-100"
                         title="Delete Department"
                       >
@@ -229,11 +240,16 @@ export function RecruiterDepartments({ organizationName }: RecruiterDepartmentsP
                 );
               }
 
+              const isSelected = selectedDeptId === dept.id;
               return (
                 <motion.div
                   key={dept.id}
                   layout
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-soft transition-all hover:border-slate-300 hover:shadow-md"
+                  onClick={() => setSelectedDeptId(isSelected ? null : dept.id)}
+                  className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-5 shadow-soft transition-all cursor-pointer hover:shadow-md ${isSelected
+                      ? 'border-brand-600 ring-2 ring-brand-100 bg-brand-50/5'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3">
@@ -241,7 +257,10 @@ export function RecruiterDepartments({ organizationName }: RecruiterDepartmentsP
                         {dept.name}
                       </h3>
                       <button
-                        onClick={() => setDeleteConfirmId(dept.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmId(dept.id);
+                        }}
                         className="rounded-lg p-1.5 text-slate-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-600 focus:opacity-100 group-hover:opacity-100"
                         title="Delete Department"
                       >
@@ -280,6 +299,78 @@ export function RecruiterDepartments({ organizationName }: RecruiterDepartmentsP
         )}
       </div>
 
+      {(() => {
+        const selectedDept = departments.find((d) => d.id === selectedDeptId);
+        if (!selectedDept) return null;
+
+        const assignedJobs = (jobs || []).filter(
+          (job) => job.team.toLowerCase() === selectedDept.name.toLowerCase()
+        );
+
+        return (
+          <motion.section
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-soft"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="font-display text-lg font-bold text-slate-900">
+                  Jobs Assigned to "{selectedDept.name}"
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  {assignedJobs.length} active openings in this department.
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedDeptId(null)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                aria-label="Clear selection"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            {assignedJobs.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-sm font-medium text-slate-500 italic">
+                  No jobs currently assigned to this department.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 divide-y divide-slate-100">
+                {assignedJobs.map((job) => (
+                  <div key={job.id} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 text-sm">{job.title}</span>
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${job.status === 'Active' ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                          {job.status}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {job.location} · {job.posted}
+                      </p>
+                    </div>
+                    <div className="flex gap-6 text-center text-xs text-slate-500">
+                      <div>
+                        <span className="block font-display font-bold text-slate-800 text-sm">{job.applicants}</span>
+                        <span className="text-[10px] font-medium text-slate-400">Applicants</span>
+                      </div>
+                      <div>
+                        <span className="block font-display font-bold text-slate-800 text-sm">{job.interviews}</span>
+                        <span className="text-[10px] font-medium text-slate-400">Interviews</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.section>
+        );
+      })()}
+
       {/* Global Policies Section */}
       {!organizationName && globalPolicies.length > 0 && (
         <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
@@ -310,6 +401,9 @@ export function RecruiterDepartments({ organizationName }: RecruiterDepartmentsP
           </div>
         </div>
       )}
+
+      {/* Assigned Jobs Section */}
+
 
       {/* Create Modal */}
       <AnimatePresence>

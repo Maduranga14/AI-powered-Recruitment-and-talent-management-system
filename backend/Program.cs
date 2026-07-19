@@ -78,6 +78,7 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.Configure<backend.Models.SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.Configure<backend.Models.OpenAiSettings>(builder.Configuration.GetSection("OpenAI"));
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -88,7 +89,23 @@ builder.Services.AddScoped<IRecruiterService, RecruiterService>();
 builder.Services.AddScoped<IJobPostingService, JobPostingService>();
 builder.Services.AddScoped<ICandidateProfileService, CandidateProfileService>();
 builder.Services.AddScoped<ICloudStorageService, AzureBlobStorageService>();
+builder.Services.AddScoped<IAiChatService, AiChatService>();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient("OpenAI", (sp, client) =>
+{
+    var settings = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<backend.Models.OpenAiSettings>>().Value;
+    var baseUrl = string.IsNullOrWhiteSpace(settings.BaseUrl)
+        ? "https://api.openai.com/v1/"
+        : settings.BaseUrl.TrimEnd('/') + "/";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(60);
+    if (!string.IsNullOrWhiteSpace(settings.ApiKey))
+    {
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", settings.ApiKey);
+    }
+});
 
 
 builder.Services.AddOpenApi(options =>

@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ScrollToTop } from './components/ScrollToTop';
+import { AiAssistant } from './components/ai/AiAssistant';
 import { Landing } from './pages/Landing';
 import { Jobs } from './pages/Jobs';
 import { JobDetail } from './pages/JobDetail';
@@ -14,6 +15,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Recruiter } from './pages/Recruiter';
 import { HiringManager } from './pages/HiringManager';
 import { Admin } from './pages/Admin';
+import { CandidateProfileView } from './pages/CandidateProfileView';
 
 function Layout() {
   const { pathname } = useLocation();
@@ -24,7 +26,8 @@ function Layout() {
     pathname === '/recruiter' ||
     pathname === '/hiring-manager' ||
     pathname === '/admin' ||
-    pathname === '/dashboard';
+    pathname === '/dashboard' ||
+    pathname.startsWith('/candidate-profile/');
 
   // Role is stored in user.title from the backend JWT response
   const getRole = (user: { title?: string; email?: string } | null) => {
@@ -60,16 +63,36 @@ function Layout() {
     if (pathname === '/dashboard' && role !== 'candidate') {
       return <Navigate to={role === 'admin' ? '/admin' : role === 'recruiter' ? '/recruiter' : '/hiring-manager'} replace />;
     }
+    if (pathname.startsWith('/candidate-profile/')) {
+      if (role !== 'recruiter' && role !== 'hiringmanager' && role !== 'admin') {
+        return <Navigate to="/dashboard" replace />;
+      }
+    }
   }
 
   if (pathname === '/recruiter') {
-    return <Recruiter />;
+    return (
+      <>
+        <Recruiter />
+        <AiAssistant />
+      </>
+    );
   }
   if (pathname === '/hiring-manager') {
-    return <HiringManager />;
+    return (
+      <>
+        <HiringManager />
+        <AiAssistant />
+      </>
+    );
   }
   if (pathname === '/admin') {
-    return <Admin />;
+    return (
+      <>
+        <Admin />
+        <AiAssistant />
+      </>
+    );
   }
 
   return (
@@ -88,10 +111,12 @@ function Layout() {
           <Route path="/recruiter" element={<Recruiter />} />
           <Route path="/hiring-manager" element={<HiringManager />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/candidate-profile/:profileId" element={<CandidateProfileView />} />
           <Route path="*" element={<Landing />} />
         </Routes>
       </main>
       {!isAuthPage && !isInternalWorkspace && <Footer />}
+      {!isAuthPage && <AiAssistant />}
     </div>
   );
 }

@@ -14,13 +14,19 @@ import { Button } from '../ui/Button';
 import { MatchScore } from '../ui/MatchScore';
 interface RecruiterCandidatesProps {
   candidates: RecruiterCandidate[];
+  loading?: boolean;
+  jobTitle?: string | null;
   onCandidateSelect: (candidate: RecruiterCandidate) => void;
   onStageChange: (candidateId: string, stage: RecruiterStage) => void;
+  onClearJobFilter?: () => void;
 }
 export function RecruiterCandidates({
   candidates,
+  loading,
+  jobTitle,
   onCandidateSelect,
-  onStageChange
+  onStageChange,
+  onClearJobFilter
 }: RecruiterCandidatesProps) {
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All roles');
@@ -71,8 +77,17 @@ export function RecruiterCandidates({
             Candidates
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Review top-fit talent and keep every conversation moving.
+            {jobTitle
+              ? `Applicants for “${jobTitle}”.`
+              : 'Review top-fit talent and keep every conversation moving.'}
           </p>
+          {jobTitle && onClearJobFilter && (
+            <button
+              onClick={onClearJobFilter}
+              className="mt-2 text-sm font-semibold text-brand-600 hover:underline">
+              Show all candidates
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Badge tone="accent">
@@ -80,6 +95,15 @@ export function RecruiterCandidates({
           </Badge>
         </div>
       </div>
+      {loading ? (
+        <div className="mt-7 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-16 text-center">
+          <p className="font-semibold text-slate-900">Loading applicants…</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Fetching candidates who applied to this role.
+          </p>
+        </div>
+      ) : (
+      <>
       <section
         className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5"
         aria-label="Candidate filters">
@@ -243,13 +267,23 @@ export function RecruiterCandidates({
       <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-16 text-center">
           <SearchIcon className="mx-auto h-9 w-9 text-slate-300" />
           <p className="mt-3 font-semibold text-slate-900">
-            No candidates match these filters
+            {jobTitle
+              ? 'No applicants yet'
+              : candidates.length === 0
+                ? 'No applicants yet'
+                : 'No candidates match these filters'}
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Try broadening your search or clearing a filter.
+            {jobTitle
+              ? 'When candidates apply to this job, they will appear here.'
+              : candidates.length === 0
+                ? 'No one has applied to your jobs yet.'
+                : 'Try broadening your search or clearing a filter.'}
           </p>
         </div>
       }
+      </>
+      )}
     </motion.div>);
 
 }

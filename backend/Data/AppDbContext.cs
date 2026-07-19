@@ -23,6 +23,8 @@ namespace backend.Data
         public DbSet<CandidateSkill> CandidateSkills { get; set; }
         public DbSet<CandidateLinks> CandidateLinks { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
+        public DbSet<ChatConversation> ChatConversations { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -198,6 +200,34 @@ namespace backend.Data
                 entity.Property(i => i.Token).IsRequired().HasMaxLength(100);
                 entity.Property(i => i.InvitedEmail).IsRequired().HasMaxLength(256);
                 entity.Property(i => i.OrganizationName).IsRequired().HasMaxLength(200);
+            });
+
+            // ── AI Chat ───────────────────────────────────────────────────────
+            modelBuilder.Entity<ChatConversation>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Title).IsRequired().HasMaxLength(200);
+                entity.HasIndex(c => c.UserId);
+                entity.HasIndex(c => c.UpdatedAt);
+
+                entity.HasOne(c => c.User)
+                      .WithMany()
+                      .HasForeignKey(c => c.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(c => c.Messages)
+                      .WithOne(m => m.Conversation)
+                      .HasForeignKey(m => m.ConversationId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ChatMessage>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+                entity.Property(m => m.Role).IsRequired().HasMaxLength(20);
+                entity.Property(m => m.Content).IsRequired();
+                entity.HasIndex(m => m.ConversationId);
+                entity.HasIndex(m => m.CreatedAt);
             });
         }
     }
