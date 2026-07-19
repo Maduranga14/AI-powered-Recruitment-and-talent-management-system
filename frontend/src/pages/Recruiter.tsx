@@ -16,7 +16,6 @@ import {
 import { Button } from '../components/ui/Button';
 import { Input, Select, Textarea } from '../components/ui/Input';
 import {
-  RECRUITER_CANDIDATES,
   RECRUITER_INTERVIEWS,
   RECRUITER_MESSAGES,
   type RecruiterCandidate,
@@ -26,10 +25,91 @@ import {
 import {
   recruiterApi,
   EmploymentTypeMap,
+  type JobApplicant,
   type JobPostingListItem,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+const API_ORIGIN = 'http://localhost:5073';
+
+/** Backend ApplicationStatus enum → pipeline stage */
+function statusToStage(status: string): RecruiterStage {
+  switch (status) {
+    case 'UnderReview':
+      return 'Shortlisted';
+    case 'Interview':
+      return 'Interview';
+    case 'Hired':
+      return 'Offer';
+    case 'Rejected':
+      return 'Rejected';
+    case 'Applied':
+    default:
+      return 'New';
+  }
+}
+
+/** Pipeline stage → backend ApplicationStatus numeric value */
+function stageToStatus(stage: RecruiterStage): number {
+  switch (stage) {
+    case 'Screening':
+    case 'Shortlisted':
+      return 1; // UnderReview
+    case 'Interview':
+      return 2;
+    case 'Rejected':
+      return 3;
+    case 'Offer':
+      return 4; // Hired
+    case 'New':
+    default:
+      return 0; // Applied
+  }
+}
+
+function formatAppliedAt(iso: string): string {
+  const applied = new Date(iso);
+  const diffMs = Date.now() - applied.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return applied.toLocaleDateString();
+}
+
+function avatarFor(name: string, photoUrl?: string | null): string {
+  if (photoUrl) {
+    if (photoUrl.startsWith('http')) return photoUrl;
+    return `${API_ORIGIN}${photoUrl.startsWith('/') ? '' : '/'}${photoUrl}`;
+  }
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0d9488&color=fff&bold=true&size=128&format=png`;
+}
+
+function toRecruiterCandidate(applicant: JobApplicant, jobId?: string): RecruiterCandidate {
+  const name = applicant.fullName || 'Candidate';
+  const resolvedJobId = jobId || applicant.jobPostingId;
+  return {
+    id: applicant.applicationId,
+    name,
+    title: applicant.headline || 'Applicant',
+    location: applicant.location || '—',
+    avatar: avatarFor(name, applicant.photoUrl),
+    role: applicant.jobTitle,
+    stage: statusToStage(applicant.status),
+    matchScore: 0,
+    skills: applicant.skills ?? [],
+    experience: applicant.experienceSummary || 'No experience listed',
+    applied: formatAppliedAt(applicant.appliedAt),
+    rationale: applicant.coverLetter?.trim()
+      ? applicant.coverLetter.trim()
+      : 'Application submitted through TalentPortal.',
+    summary: applicant.headline || `${name} applied for ${applicant.jobTitle}.`,
+    notes: '',
+    email: applicant.email,
+    applicationId: applicant.applicationId,
+    jobId: resolvedJobId,
+  };
+}
 
 function toRecruiterJob(item: JobPostingListItem): RecruiterJob {
   const postedDate = item.publishedAt ?? item.createdAt;
@@ -48,10 +128,10 @@ function toRecruiterJob(item: JobPostingListItem): RecruiterJob {
     team: item.departmentName ?? 'General',
     location: item.location,
     status: item.status === 'Published' ? 'Active' : 'Paused',
-    applicants: 0,
-    screened: 0,
-    shortlisted: 0,
-    interviews: 0,
+    applicants: item.applicantCount ?? 0,
+    screened: item.screenedCount ?? 0,
+    shortlisted: item.shortlistedCount ?? 0,
+    interviews: item.interviewCount ?? 0,
     target: 1,
     posted,
   };
@@ -59,9 +139,14 @@ function toRecruiterJob(item: JobPostingListItem): RecruiterJob {
 
 export function Recruiter() {
   const [view, setView] = useState<RecruiterView>('overview');
-  const [candidates, setCandidates] = useState(RECRUITER_CANDIDATES);
+  const [candidates, setCandidates] = useState<RecruiterCandidate[]>([]);
   const [jobs, setJobs] = useState<RecruiterJob[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
+  const [applicantsLoading, setApplicantsLoading] = useState(false);
+  const [selectedJobFilter, setSelectedJobFilter] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const [selectedCandidate, setSelectedCandidate] =
     useState<RecruiterCandidate | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -80,23 +165,87 @@ export function Recruiter() {
     }
   }, []);
 
+  const fetchAllApplicants = useCallback(async () => {
+    setApplicantsLoading(true);
+    try {
+      const applicants = await recruiterApi.getAllApplicants();
+      setCandidates(applicants.map((a) => toRecruiterCandidate(a)));
+    } catch {
+      setCandidates([]);
+    } finally {
+      setApplicantsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
+
+  // Load real applicants whenever the Candidates tab is opened (no job filter)
+  useEffect(() => {
+    if (view === 'candidates' && !selectedJobFilter) {
+      fetchAllApplicants();
+    }
+  }, [view, selectedJobFilter, fetchAllApplicants]);
 
   const showFeedback = (message: string) => {
     setFeedback(message);
     window.setTimeout(() => setFeedback(''), 2800);
   };
 
-  const updateStage = (candidateId: string, stage: RecruiterStage) => {
+  const viewApplicantsForJob = async (jobId: string) => {
+    const job = jobs.find((item) => item.id === jobId);
+    setSelectedJobFilter({ id: jobId, title: job?.title ?? 'this role' });
+    setView('candidates');
+    setApplicantsLoading(true);
+    try {
+      const res = await recruiterApi.getJobApplicants(jobId);
+      setCandidates(res.applicants.map((a) => toRecruiterCandidate(a, jobId)));
+      setSelectedJobFilter({ id: res.jobId, title: res.jobTitle });
+      showFeedback(
+        res.applicants.length
+          ? `Showing ${res.applicants.length} applicant${res.applicants.length === 1 ? '' : 's'} for “${res.jobTitle}”.`
+          : `No applicants yet for “${res.jobTitle}”.`
+      );
+    } catch (err: unknown) {
+      setCandidates([]);
+      showFeedback(
+        err instanceof Error ? err.message : 'Failed to load applicants.'
+      );
+    } finally {
+      setApplicantsLoading(false);
+    }
+  };
+
+  const clearJobFilter = () => {
+    setSelectedJobFilter(null);
+    // fetchAllApplicants runs via useEffect when selectedJobFilter becomes null
+  };
+
+  const updateStage = async (candidateId: string, stage: RecruiterStage) => {
+    const candidate = candidates.find((item) => item.id === candidateId);
+
     setCandidates((current) =>
       current.map((c) => (c.id === candidateId ? { ...c, stage } : c))
     );
     setSelectedCandidate((current) =>
       current?.id === candidateId ? { ...current, stage } : current
     );
-    const candidate = candidates.find((item) => item.id === candidateId);
+
+    if (candidate?.applicationId && candidate.jobId) {
+      try {
+        await recruiterApi.updateApplicantStatus(
+          candidate.jobId,
+          candidate.applicationId,
+          stageToStatus(stage)
+        );
+        fetchJobs();
+      } catch {
+        showFeedback('Could not save stage change. Please try again.');
+        return;
+      }
+    }
+
     showFeedback(`${candidate?.name ?? 'Candidate'} moved to ${stage}.`);
   };
 
@@ -105,7 +254,7 @@ export function Recruiter() {
     showFeedback(
       candidate
         ? `Scheduling flow opened for ${candidate.name}.`
-        : 'Scheduling flow opened ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â choose a candidate and time.'
+        : 'Scheduling flow opened — choose a candidate and time.'
     );
   };
 
@@ -136,7 +285,12 @@ export function Recruiter() {
   return (
     <RecruiterShell
       activeView={view}
-      onViewChange={setView}
+      onViewChange={(next) => {
+        if (next !== 'candidates') {
+          setSelectedJobFilter(null);
+        }
+        setView(next);
+      }}
       onCreateJob={() => setCreateOpen(true)}
     >
       {view === 'overview' && (
@@ -155,17 +309,17 @@ export function Recruiter() {
           onCreateJob={() => setCreateOpen(true)}
           onSchedule={() => openSchedule()}
           onStatusChange={toggleJobStatus}
-          onViewApplicants={() => {
-            setView('candidates');
-            showFeedback('Showing candidates across your open roles.');
-          }}
+          onViewApplicants={viewApplicantsForJob}
         />
       )}
       {view === 'candidates' && (
         <RecruiterCandidates
           candidates={candidates}
+          loading={applicantsLoading}
+          jobTitle={selectedJobFilter?.title}
           onCandidateSelect={(c) => setSelectedCandidate(c)}
           onStageChange={updateStage}
+          onClearJobFilter={selectedJobFilter ? clearJobFilter : undefined}
         />
       )}
       {view === 'hiring-managers' && (

@@ -223,6 +223,36 @@ export interface JobPostingListItem {
   createdAt: string;
   publishedAt: string | null;
   recruiterName: string;
+  applicantCount?: number;
+  screenedCount?: number;
+  shortlistedCount?: number;
+  interviewCount?: number;
+}
+
+export interface JobApplicant {
+  applicationId: string;
+  jobPostingId: string;
+  candidateProfileId: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  headline: string | null;
+  location: string | null;
+  photoUrl: string | null;
+  jobTitle: string;
+  status: string;
+  coverLetter: string | null;
+  appliedAt: string;
+  skills: string[];
+  experienceSummary: string | null;
+  resumeUrl: string | null;
+}
+
+export interface JobApplicantsResult {
+  jobId: string;
+  jobTitle: string;
+  jobStatus: string;
+  applicants: JobApplicant[];
 }
 
 export interface PagedJobsResult {
@@ -272,6 +302,21 @@ export const recruiterApi = {
     const statusParam = status ? `&status=${encodeURIComponent(status)}` : '';
     return request<PagedJobsResult>(`/recruiter/jobs?page=${page}&pageSize=${pageSize}${statusParam}`);
   },
+
+  getJobApplicants: (jobId: string) =>
+    request<JobApplicantsResult>(`/recruiter/jobs/${jobId}/applicants`),
+
+  getAllApplicants: () =>
+    request<JobApplicant[]>('/recruiter/applicants'),
+
+  updateApplicantStatus: (jobId: string, applicationId: string, status: number) =>
+    request<ApiResponse<JobApplicant>>(
+      `/recruiter/jobs/${jobId}/applicants/${applicationId}/status`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }
+    ),
 
   updateJobStatus: (id: string, status: number) =>
     request<ApiResponse<JobPostingDetail>>(`/recruiter/jobs/${id}/status`, {

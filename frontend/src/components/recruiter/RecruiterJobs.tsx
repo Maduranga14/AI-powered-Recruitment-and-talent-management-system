@@ -17,7 +17,7 @@ interface RecruiterJobsProps {
   onCreateJob: () => void;
   onSchedule: () => void;
   onStatusChange: (jobId: string) => void;
-  onViewApplicants: () => void;
+  onViewApplicants: (jobId: string) => void;
 }
 export function RecruiterJobs({
   jobs,
@@ -202,7 +202,7 @@ export function RecruiterJobs({
                     {job.status === 'Active' ? 'Pause job' : 'Resume job'}
                   </button>
                   <button
-                    onClick={onViewApplicants}
+                    onClick={() => onViewApplicants(job.id)}
                     className="text-sm font-bold text-slate-600 hover:underline">
                     
                     View applicants

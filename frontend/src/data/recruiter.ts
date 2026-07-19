@@ -22,6 +22,9 @@ export interface RecruiterCandidate {
   summary: string;
   notes: string;
   email: string;
+  /** Present when loaded from a real job application */
+  applicationId?: string;
+  jobId?: string;
 }
 
 export interface RecruiterJob {
