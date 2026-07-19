@@ -566,6 +566,72 @@ export const candidateApi = {
     }),
 };
 
+// ── AI Chat Assistant ────────────────────────────────────────────────────────
+
+export interface ChatMessageDto {
+  id: string;
+  role: 'user' | 'assistant' | 'system' | string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ChatConversationSummary {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  lastMessagePreview: string | null;
+}
+
+export interface ChatConversationDetail {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: ChatMessageDto[];
+}
+
+export interface SendChatResponse {
+  conversationId: string;
+  conversationTitle: string;
+  userMessage: ChatMessageDto;
+  assistantMessage: ChatMessageDto;
+  usedFallback: boolean;
+}
+
+export interface ChatSuggestions {
+  suggestions: string[];
+  greeting: string;
+  assistantName: string;
+}
+
+export const chatApi = {
+  getSuggestions: () => request<ChatSuggestions>('/chat/suggestions'),
+
+  listConversations: () =>
+    request<ChatConversationSummary[]>('/chat/conversations'),
+
+  getConversation: (id: string) =>
+    request<ChatConversationDetail>(`/chat/conversations/${id}`),
+
+  deleteConversation: (id: string) =>
+    request<void>(`/chat/conversations/${id}`, { method: 'DELETE' }),
+
+  sendMessage: async (payload: { message: string; conversationId?: string | null }) => {
+    const body: { message: string; conversationId?: string } = {
+      message: payload.message,
+    };
+    if (payload.conversationId) {
+      body.conversationId = payload.conversationId;
+    }
+    return request<SendChatResponse>('/chat/messages', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+};
+
 export interface DepartmentDto {
   id: string;
   name: string;

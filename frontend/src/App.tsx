@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ScrollToTop } from './components/ScrollToTop';
+import { AiAssistant } from './components/ai/AiAssistant';
 import { Landing } from './pages/Landing';
 import { Jobs } from './pages/Jobs';
 import { JobDetail } from './pages/JobDetail';
@@ -63,13 +64,28 @@ function Layout() {
   }
 
   if (pathname === '/recruiter') {
-    return <Recruiter />;
+    return (
+      <>
+        <Recruiter />
+        <AiAssistant />
+      </>
+    );
   }
   if (pathname === '/hiring-manager') {
-    return <HiringManager />;
+    return (
+      <>
+        <HiringManager />
+        <AiAssistant />
+      </>
+    );
   }
   if (pathname === '/admin') {
-    return <Admin />;
+    return (
+      <>
+        <Admin />
+        <AiAssistant />
+      </>
+    );
   }
 
   return (
@@ -92,6 +108,7 @@ function Layout() {
         </Routes>
       </main>
       {!isAuthPage && !isInternalWorkspace && <Footer />}
+      {!isAuthPage && <AiAssistant />}
     </div>
   );
 }
