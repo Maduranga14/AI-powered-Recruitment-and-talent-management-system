@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   CalendarDaysIcon,
@@ -18,6 +18,8 @@ interface RecruiterJobsProps {
   onSchedule: () => void;
   onStatusChange: (jobId: string) => void;
   onViewApplicants: (jobId: string) => void;
+  onEditJob: (job: RecruiterJob) => void;
+  onDeleteJob: (jobId: string) => void;
 }
 export function RecruiterJobs({
   jobs,
@@ -25,8 +27,11 @@ export function RecruiterJobs({
   onCreateJob,
   onSchedule,
   onStatusChange,
-  onViewApplicants
+  onViewApplicants,
+  onEditJob,
+  onDeleteJob
 }: RecruiterJobsProps) {
+  const [activeMenuJobId, setActiveMenuJobId] = useState<string | null>(null);
   return (
     <motion.div
       initial={{
@@ -145,13 +150,42 @@ export function RecruiterJobs({
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 relative">
                     <button
+                      onClick={() => setActiveMenuJobId(activeMenuJobId === job.id ? null : job.id)}
                       aria-label={`More actions for ${job.title}`}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50">
                       
                       <MoreHorizontalIcon className="h-5 w-5" />
                     </button>
+                    {activeMenuJobId === job.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setActiveMenuJobId(null)}
+                        />
+                        <div className="absolute right-0 top-12 z-20 w-36 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
+                          <button
+                            onClick={() => {
+                              setActiveMenuJobId(null);
+                              onEditJob(job);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                          >
+                            Edit Job
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveMenuJobId(null);
+                              onDeleteJob(job.id);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
+                          >
+                            Delete Job
+                          </button>
+                        </div>
+                      </>
+                    )}
                     <button
                       onClick={onSchedule}
                       className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-3 text-sm font-semibold text-white hover:bg-brand-600">

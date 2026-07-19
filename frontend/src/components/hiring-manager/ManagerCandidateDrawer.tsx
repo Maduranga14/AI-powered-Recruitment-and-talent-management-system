@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRightIcon,
@@ -105,6 +106,12 @@ export function ManagerCandidateDrawer({
                   <ArrowRightIcon className="h-4 w-4" /> Back to list
                 </Button>
               </div>
+              <Link
+                to={`/candidate-profile/${candidate.id}`}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white py-2.5 text-sm font-semibold shadow-sm transition"
+              >
+                <BrainCircuitIcon className="h-4 w-4" /> View Full Profile
+              </Link>
               {candidate.interviewTime &&
             <section className="mt-6 flex gap-3 rounded-2xl border border-accent-100 bg-accent-50/60 p-4">
                   <CalendarClockIcon className="mt-0.5 h-5 w-5 shrink-0 text-accent-600" />

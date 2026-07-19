@@ -110,6 +110,7 @@ function toRecruiterCandidate(applicant: JobApplicant, jobId?: string): Recruite
     applicationId: applicant.applicationId,
     jobId: resolvedJobId,
     resumeUrl: applicant.resumeUrl,
+    candidateProfileId: applicant.candidateProfileId,
   };
 }
 
@@ -260,18 +261,64 @@ export function Recruiter() {
     );
   };
 
-  const toggleJobStatus = (jobId: string) => {
+  const toggleJobStatus = async (jobId: string) => {
     const job = jobs.find((item) => item.id === jobId);
+    if (!job) return;
+
+    // Active (Published = 1) -> Pause it to Closed (2)
+    // Paused (Closed = 2 or Draft = 0) -> Resume it to Published (1)
+    const nextStatus = job.status === 'Active' ? 2 : 1;
+
+    try {
+      await recruiterApi.updateJobStatus(jobId, nextStatus);
+      setJobs((current) =>
+        current.map((item) =>
+          item.id === jobId
+            ? { ...item, status: nextStatus === 1 ? 'Active' : 'Paused' }
+            : item
+        )
+      );
+      showFeedback(
+        `"${job.title}" status successfully changed to ${
+          nextStatus === 1 ? 'Active' : 'Paused'
+        }.`
+      );
+    } catch (err: any) {
+      showFeedback(err?.message ?? 'Failed to update job status.');
+    }
+  };
+
+  const [editingJob, setEditingJob] = useState<RecruiterJob | null>(null);
+
+  const handleJobUpdated = (updatedJob: RecruiterJob) => {
     setJobs((current) =>
-      current.map((item) =>
-        item.id === jobId
-          ? { ...item, status: item.status === 'Active' ? 'Paused' : 'Active' }
-          : item
-      )
+      current.map((j) => (j.id === updatedJob.id ? updatedJob : j))
     );
-    showFeedback(
-      `${job?.title ?? 'Job'} ${job?.status === 'Active' ? 'paused' : 'resumed'}.`
-    );
+    setEditingJob(null);
+    showFeedback(`"${updatedJob.title}" successfully updated.`);
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    const job = jobs.find((j) => j.id === jobId);
+    if (!job) return;
+
+    if (jobId.startsWith('mock-') || !jobId.includes('-')) {
+      setJobs((current) => current.filter((j) => j.id !== jobId));
+      showFeedback(`"${job.title}" successfully deleted.`);
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete the job posting "${job.title}"?`)) {
+      return;
+    }
+
+    try {
+      await recruiterApi.deleteJob(jobId);
+      setJobs((current) => current.filter((j) => j.id !== jobId));
+      showFeedback(`"${job.title}" successfully deleted.`);
+    } catch (err: any) {
+      showFeedback(err?.message ?? 'Failed to delete job.');
+    }
   };
 
   const handleJobCreated = (newJob: RecruiterJob) => {
@@ -312,6 +359,8 @@ export function Recruiter() {
           onSchedule={() => openSchedule()}
           onStatusChange={toggleJobStatus}
           onViewApplicants={viewApplicantsForJob}
+          onEditJob={(j) => setEditingJob(j)}
+          onDeleteJob={handleDeleteJob}
         />
       )}
       {view === 'candidates' && (
@@ -328,7 +377,7 @@ export function Recruiter() {
         <RecruiterHiringManagers />
       )}
       {view === 'departments' && (
-        <RecruiterDepartments />
+        <RecruiterDepartments jobs={jobs} />
       )}
       {view === 'schedule' && (
         <RecruiterSchedule
@@ -346,10 +395,15 @@ export function Recruiter() {
       />
 
       <CreateJobModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        open={createOpen || editingJob !== null}
+        onClose={() => {
+          setCreateOpen(false);
+          setEditingJob(null);
+        }}
         onCreated={handleJobCreated}
+        onUpdated={handleJobUpdated}
         defaultPostedBy={user?.organizationName ?? ''}
+        editingJob={editingJob}
       />
 
       <AnimatePresence>
@@ -370,17 +424,23 @@ export function Recruiter() {
   );
 }
 
-
-
-
 interface CreateJobModalProps {
   open: boolean;
   onClose: () => void;
   onCreated: (job: RecruiterJob) => void;
+  onUpdated?: (job: RecruiterJob) => void;
   defaultPostedBy?: string;
+  editingJob?: RecruiterJob | null;
 }
 
-function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: CreateJobModalProps) {
+function CreateJobModal({
+  open,
+  onClose,
+  onCreated,
+  onUpdated,
+  defaultPostedBy = '',
+  editingJob = null
+}: CreateJobModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
 
   // Step 1
@@ -431,8 +491,69 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
       }).catch((err) => {
         console.error('Failed to load departments:', err);
       });
+
+      if (editingJob) {
+        setLoading(true);
+        if (editingJob.id.startsWith('mock-') || !editingJob.id.includes('-')) {
+          setTimeout(() => {
+            setTitle(editingJob.title);
+            setLocationType('remote');
+            setLocation('');
+            setEmploymentType('FullTime');
+            setDepartmentId('');
+            setDescription('This is a mock job posting for testing purposes.');
+            setRequirements('Mock requirements list.');
+            setSkills('React, TypeScript');
+            setSalaryMin('80000');
+            setSalaryMax('120000');
+            setSalaryCurrency('USD');
+            setSalaryPublic(true);
+            setLoading(false);
+          }, 300);
+          return;
+        }
+
+        recruiterApi.getJobDetails(editingJob.id)
+          .then((detail) => {
+            setTitle(detail.title);
+            setPostedBy(detail.recruiterName || defaultPostedBy);
+            
+            // Map location back
+            if (detail.location === 'Remote') {
+              setLocationType('remote');
+              setLocation('');
+            } else if (detail.location.endsWith(' - Hybrid') || detail.location === 'Hybrid') {
+              setLocationType('hybrid');
+              setLocation(detail.location.replace(' - Hybrid', ''));
+            } else {
+              setLocationType('onsite');
+              setLocation(detail.location === 'On-site' ? '' : detail.location);
+            }
+
+            setEmploymentType(detail.employmentType || 'FullTime');
+            setDepartmentId(detail.departmentId || '');
+            
+            // Parse description and requirements
+            const parts = (detail.description || '').split('\n\nRequirements:\n');
+            setDescription(parts[0] || '');
+            setRequirements(parts[1] || '');
+            
+            setSkills(detail.requiredSkills || '');
+            setSalaryMin(detail.salaryMin !== null ? detail.salaryMin.toString() : '');
+            setSalaryMax(detail.salaryMax !== null ? detail.salaryMax.toString() : '');
+            setSalaryCurrency(detail.salaryCurrency || 'USD');
+            setSalaryPublic(detail.salaryMin !== null || detail.salaryMax !== null);
+            setDeadline(detail.deadline ? detail.deadline.split('T')[0] : '');
+            
+            setLoading(false);
+          })
+          .catch((err) => {
+            setError(err?.message ?? 'Failed to load job details.');
+            setLoading(false);
+          });
+      }
     }
-  }, [open, defaultPostedBy]);
+  }, [open, defaultPostedBy, editingJob]);
 
   const locationString =
     locationType === 'remote'
@@ -464,23 +585,41 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
       : description.trim();
 
     try {
-      const res = await recruiterApi.createJob({
-        title: title.trim(),
-        description: fullDescription,
-        location: locationString,
-        employmentType: EmploymentTypeMap[employmentType] ?? 0,
-        status: 1,
-        requiredSkills: skills.trim() || undefined,
-        salaryMin: salaryPublic ? salaryMinNum : undefined,
-        salaryMax: salaryPublic ? salaryMaxNum : undefined,
-        salaryCurrency: salaryCurrency.trim() || 'USD',
-        postedBy: postedBy.trim() || undefined,
-        departmentId: departmentId || undefined,
-        deadline: deadline || undefined,
-      });
-      onCreated(toRecruiterJob(res.data));
+      if (editingJob) {
+        const res = await recruiterApi.updateJob(editingJob.id, {
+          title: title.trim(),
+          description: fullDescription,
+          location: locationString,
+          employmentType: EmploymentTypeMap[employmentType] ?? 0,
+          status: editingJob.status === 'Active' ? 1 : 2,
+          requiredSkills: skills.trim() || undefined,
+          salaryMin: salaryPublic ? salaryMinNum : undefined,
+          salaryMax: salaryPublic ? salaryMaxNum : undefined,
+          salaryCurrency: salaryCurrency.trim() || 'USD',
+          postedBy: postedBy.trim() || undefined,
+          departmentId: departmentId || undefined,
+          deadline: deadline || undefined,
+        });
+        onUpdated?.(toRecruiterJob(res.data));
+      } else {
+        const res = await recruiterApi.createJob({
+          title: title.trim(),
+          description: fullDescription,
+          location: locationString,
+          employmentType: EmploymentTypeMap[employmentType] ?? 0,
+          status: 1,
+          requiredSkills: skills.trim() || undefined,
+          salaryMin: salaryPublic ? salaryMinNum : undefined,
+          salaryMax: salaryPublic ? salaryMaxNum : undefined,
+          salaryCurrency: salaryCurrency.trim() || 'USD',
+          postedBy: postedBy.trim() || undefined,
+          departmentId: departmentId || undefined,
+          deadline: deadline || undefined,
+        });
+        onCreated(toRecruiterJob(res.data));
+      }
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to create job. Please try again.');
+      setError(err?.message ?? 'Failed to save job. Please try again.');
       setLoading(false);
     }
   };
@@ -517,7 +656,7 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
               <div>
                 <h2 id="create-job-title" className="font-display text-xl font-extrabold text-slate-900">
-                  Create a job
+                  {editingJob ? 'Edit job opening' : 'Create a job'}
                 </h2>
                 <p className="mt-0.5 text-sm text-slate-500">
                   Step {step} of 2 &mdash; {step === 1 ? 'Basic details' : 'Description & requirements'}
@@ -554,72 +693,84 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Senior Product Designer"
-                    autoFocus
                   />
 
-                  {/* 2. Posted by */}
+                  {/* 2. Department Assignment */}
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                      Department
+                    </label>
+                    <Select
+                      value={departmentId}
+                      onChange={(e) => setDepartmentId(e.target.value)}
+                    >
+                      <option value="">Select a department...</option>
+                      {departments.map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  {/* 3. Posted By (Locked Organization) */}
                   <Input
                     label="Posted by"
                     value={postedBy}
                     disabled
-                    placeholder="e.g. Northwind Labs"
-                    hint="Your organization name (configured in profile)"
+                    onChange={(e) => setPostedBy(e.target.value)}
                   />
 
-                  <Select
-                    label="Employment type"
-                    value={employmentType}
-                    onChange={(e) => setEmploymentType(e.target.value)}
-                  >
-                    <option value="FullTime">Full-time</option>
-                    <option value="PartTime">Part-time</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Internship">Internship</option>
-                  </Select>
-
-                  <Select
-                    label="Department"
-                    value={departmentId}
-                    onChange={(e) => setDepartmentId(e.target.value)}
-                  >
-                    <option value="">Select a Department (Optional)</option>
-                    {departments.map((dept) => (
-                      <option key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </option>
-                    ))}
-                  </Select>
-
-                  {/* 4. Location Ã¢â‚¬â€ work arrangement toggle */}
+                  {/* 4. Employment Type */}
                   <div>
-                    <p className="mb-2 text-sm font-medium text-slate-700">Work arrangement</p>
-                    <div className="flex gap-2">
-                      {locationTypes.map(({ value, label }) => (
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                      Employment type
+                    </label>
+                    <Select
+                      value={employmentType}
+                      onChange={(e) => setEmploymentType(e.target.value)}
+                    >
+                      <option value="FullTime">Full-time</option>
+                      <option value="PartTime">Part-time</option>
+                      <option value="Contract">Contract</option>
+                      <option value="Internship">Internship</option>
+                      <option value="Remote">Remote</option>
+                    </Select>
+                  </div>
+
+                  {/* 5. Location */}
+                  <div>
+                    <span className="block text-sm font-medium text-slate-700">Location</span>
+                    <div className="mt-2 flex rounded-xl border border-slate-200 p-1">
+                      {locationTypes.map((t) => (
                         <button
-                          key={value}
+                          key={t.value}
                           type="button"
-                          onClick={() => setLocationType(value)}
-                          className={`flex-1 rounded-xl border-2 py-2.5 text-sm font-semibold transition-all ${
-                            locationType === value
-                              ? 'border-brand-600 bg-brand-50 text-brand-700'
-                              : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                          onClick={() => setLocationType(t.value)}
+                          className={`flex-1 rounded-lg py-2 text-center text-xs font-bold transition ${
+                            locationType === t.value
+                              ? 'bg-slate-900 text-white'
+                              : 'text-slate-500 hover:text-slate-800'
                           }`}
                         >
-                          {label}
+                          {t.label}
                         </button>
                       ))}
                     </div>
+                    {locationType !== 'remote' && (
+                      <div className="mt-3">
+                        <Input
+                          placeholder={
+                            locationType === 'hybrid'
+                              ? 'e.g. London, UK (or remote/office distribution details)'
+                              : 'e.g. London, UK'
+                          }
+                          value={location}
+                          onChange={(e) => setLocation(e.target.value)}
+                        />
+                      </div>
+                    )}
                   </div>
-
-                  {/* City input Ã¢â‚¬â€ hidden when Remote */}
-                  {locationType !== 'remote' && (
-                    <Input
-                      label={locationType === 'hybrid' ? 'City / Office location' : 'Location'}
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="e.g. New York, NY"
-                    />
-                  )}
                 </div>
               )}
 
@@ -627,77 +778,72 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
               {step === 2 && (
                 <div className="space-y-5">
 
-                  {/* 6. Job Description */}
+                  {/* 1. Job Description */}
                   <div>
-                    <Textarea
-                      label="Job description"
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                      Job description
+                    </label>
+                    <textarea
+                      rows={5}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Describe the role, responsibilities, and what success looks like..."
-                      className="min-h-[140px]"
+                      placeholder="Describe the role, day-to-day operations, and what they will do..."
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     />
-                    <p className="mt-1 text-xs text-slate-400">
-                      Cover the overview, day-to-day responsibilities, and team context.
-                    </p>
                   </div>
 
-                  {/* 7. Requirements / Qualifications */}
+                  {/* 2. Key Requirements */}
                   <div>
-                    <Textarea
-                      label="Requirements & qualifications"
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                      Key requirements
+                      <span className="ml-1.5 font-normal text-slate-400">(optional)</span>
+                    </label>
+                    <textarea
+                      rows={4}
                       value={requirements}
                       onChange={(e) => setRequirements(e.target.value)}
-                      placeholder={'- 3+ years of experience in...\n- Proficiency in...\n- Degree in relevant field or equivalent experience'}
-                      hint="One requirement per line. Start each with a dash for clarity."
-                      className="min-h-[120px]"
+                      placeholder="What qualifications, experience levels, or certifications are needed..."
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     />
                   </div>
 
-                  {/* Required skills */}
+                  {/* 3. Skills Tagging */}
                   <Input
                     label="Required skills"
+                    helperText="Comma separated, e.g. React, TypeScript, Figma"
+                    placeholder="e.g. React, TypeScript, Node.js"
                     value={skills}
                     onChange={(e) => setSkills(e.target.value)}
-                    placeholder="e.g. React, TypeScript, Node.js"
-                    hint="Comma-separated list of key skills"
                   />
 
-                  {/* 5. Salary Range */}
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="text-sm font-medium text-slate-700">
-                        Salary range
-                        <span className="ml-1.5 font-normal text-slate-400">(optional)</span>
-                      </p>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={salaryPublic}
-                          onChange={(e) => setSalaryPublic(e.target.checked)}
-                          className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                        />
-                        Display publicly
-                      </label>
+                  {/* 4. Salary */}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">Salary range</span>
+                      <button
+                        type="button"
+                        onClick={() => setSalaryPublic(!salaryPublic)}
+                        className={`text-xs font-semibold ${
+                          salaryPublic ? 'text-brand-600 hover:text-brand-700' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        {salaryPublic ? 'Publicly visible' : 'Hidden / Confidential'}
+                      </button>
                     </div>
-                    <div
-                      className={`grid grid-cols-[1fr_1fr_auto] gap-2 transition-opacity ${
-                        !salaryPublic ? 'pointer-events-none opacity-40' : ''
-                      }`}
-                    >
+                    <div className="mt-2 flex gap-3">
                       <Input
-                        placeholder="Min"
                         type="number"
-                        min={0}
+                        placeholder="Min"
                         value={salaryMin}
                         onChange={(e) => setSalaryMin(e.target.value)}
-                        error={!salaryRangeValid ? 'Min > Max' : undefined}
+                        className="flex-1"
                       />
                       <Input
-                        placeholder="Max"
                         type="number"
-                        min={0}
+                        placeholder="Max"
                         value={salaryMax}
                         onChange={(e) => setSalaryMax(e.target.value)}
+                        className="flex-1"
                       />
                       <Select
                         value={salaryCurrency}
@@ -720,7 +866,7 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
                     )}
                   </div>
 
-                  {/* 8. Application Deadline */}
+                  {/* 5. Application Deadline */}
                   <div>
                     <label className="mb-1.5 block text-sm font-medium text-slate-700">
                       Application deadline
@@ -763,11 +909,11 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
                     <Button fullWidth disabled={!canCreate || loading} onClick={handleCreate}>
                       {loading ? (
                         <>
-                          <Loader2Icon className="h-4 w-4 animate-spin" />
-                          Creating...
+                          <Loader2Icon className="h-4 w-4 animate-spin mr-1.5" />
+                          Saving...
                         </>
                       ) : (
-                        'Create job'
+                        editingJob ? 'Save changes' : 'Create job'
                       )}
                     </Button>
                   </>

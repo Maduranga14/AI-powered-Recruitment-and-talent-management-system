@@ -26,6 +26,7 @@ export interface RecruiterCandidate {
   applicationId?: string;
   jobId?: string;
   resumeUrl?: string | null;
+  candidateProfileId?: string;
 }
 
 export interface RecruiterJob {

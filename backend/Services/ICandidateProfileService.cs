@@ -33,5 +33,8 @@ namespace backend.Services
 
         /// <summary>Return full profile data as export DTO.</summary>
         Task<CandidateProfileExportDto> ExportProfileAsync(Guid userId);
+
+        /// <summary>Get candidate profile by its unique profile ID.</summary>
+        Task<CandidateProfileResponseDto> GetProfileByIdAsync(Guid profileId);
     }
 }

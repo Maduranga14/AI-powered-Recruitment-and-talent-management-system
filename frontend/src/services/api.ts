@@ -298,6 +298,20 @@ export const recruiterApi = {
       body: JSON.stringify(payload),
     }),
 
+  getJobDetails: (id: string) =>
+    request<JobPostingDetail>(`/recruiter/jobs/${id}`),
+
+  updateJob: (id: string, payload: Partial<CreateJobPostingPayload>) =>
+    request<ApiResponse<JobPostingDetail>>(`/recruiter/jobs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteJob: (id: string) =>
+    request<void>(`/recruiter/jobs/${id}`, {
+      method: 'DELETE',
+    }),
+
   getMyJobs: (status?: string, page = 1, pageSize = 20) => {
     const statusParam = status ? `&status=${encodeURIComponent(status)}` : '';
     return request<PagedJobsResult>(`/recruiter/jobs?page=${page}&pageSize=${pageSize}${statusParam}`);
@@ -308,6 +322,9 @@ export const recruiterApi = {
 
   getAllApplicants: () =>
     request<JobApplicant[]>('/recruiter/applicants'),
+
+  getCandidateProfile: (profileId: string) =>
+    request<CandidateProfileResponseDto>(`/recruiter/candidates/${profileId}/profile`),
 
   updateApplicantStatus: (jobId: string, applicationId: string, status: number) =>
     request<ApiResponse<JobApplicant>>(

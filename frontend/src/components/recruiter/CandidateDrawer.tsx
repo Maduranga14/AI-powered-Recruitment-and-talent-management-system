@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BrainCircuitIcon,
@@ -127,6 +128,12 @@ export function CandidateDrawer({
                   <CalendarPlusIcon className="h-4 w-4" /> Schedule
                 </Button>
               </div>
+              <Link
+                to={`/candidate-profile/${candidate.candidateProfileId || 'manager-candidate-1'}`}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white py-2.5 text-sm font-semibold shadow-sm transition"
+              >
+                <BrainCircuitIcon className="h-4 w-4" /> View Full Profile
+              </Link>
               <button
               onClick={queueEmail}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">

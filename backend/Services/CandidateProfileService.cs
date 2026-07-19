@@ -73,6 +73,20 @@ namespace backend.Services
             return await BuildResponseAsync(profile.Id, user);
         }
 
+        public async Task<CandidateProfileResponseDto> GetProfileByIdAsync(Guid profileId)
+        {
+            var profile = await _db.CandidateProfiles
+                .Include(cp => cp.User)
+                .Include(cp => cp.Experiences)
+                .Include(cp => cp.Educations)
+                .Include(cp => cp.Skills)
+                .Include(cp => cp.Links)
+                .FirstOrDefaultAsync(cp => cp.Id == profileId && !cp.IsDeleted)
+                ?? throw new KeyNotFoundException("Candidate profile not found.");
+
+            return await BuildResponseAsync(profile.Id, profile.User);
+        }
+
         // ── Update ────────────────────────────────────────────────────────────
         public async Task<CandidateProfileResponseDto> UpdateProfileAsync(
             Guid userId, UpdateCandidateProfileDto dto)

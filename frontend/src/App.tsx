@@ -15,6 +15,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Recruiter } from './pages/Recruiter';
 import { HiringManager } from './pages/HiringManager';
 import { Admin } from './pages/Admin';
+import { CandidateProfileView } from './pages/CandidateProfileView';
 
 function Layout() {
   const { pathname } = useLocation();
@@ -25,7 +26,8 @@ function Layout() {
     pathname === '/recruiter' ||
     pathname === '/hiring-manager' ||
     pathname === '/admin' ||
-    pathname === '/dashboard';
+    pathname === '/dashboard' ||
+    pathname.startsWith('/candidate-profile/');
 
   // Role is stored in user.title from the backend JWT response
   const getRole = (user: { title?: string; email?: string } | null) => {
@@ -60,6 +62,11 @@ function Layout() {
     }
     if (pathname === '/dashboard' && role !== 'candidate') {
       return <Navigate to={role === 'admin' ? '/admin' : role === 'recruiter' ? '/recruiter' : '/hiring-manager'} replace />;
+    }
+    if (pathname.startsWith('/candidate-profile/')) {
+      if (role !== 'recruiter' && role !== 'hiringmanager' && role !== 'admin') {
+        return <Navigate to="/dashboard" replace />;
+      }
     }
   }
 
@@ -104,6 +111,7 @@ function Layout() {
           <Route path="/recruiter" element={<Recruiter />} />
           <Route path="/hiring-manager" element={<HiringManager />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/candidate-profile/:profileId" element={<CandidateProfileView />} />
           <Route path="*" element={<Landing />} />
         </Routes>
       </main>

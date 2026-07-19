@@ -9,9 +9,10 @@ namespace backend.Controllers
 {
     [ApiController]
     [Produces("application/json")]
-    public class JobPostingsController(IJobPostingService jobService) : ControllerBase
+    public class JobPostingsController(IJobPostingService jobService, ICandidateProfileService profileService) : ControllerBase
     {
         private readonly IJobPostingService _jobService = jobService;
+        private readonly ICandidateProfileService _profileService = profileService;
 
         // RECRUITER ENDPOINTS  —  /api/recruiter/jobs
 
@@ -274,7 +275,24 @@ namespace backend.Controllers
             }
         }
 
-        
+        /// <summary>Get a candidate's profile by ID (Recruiters/Managers only)</summary>
+        [HttpGet("api/recruiter/candidates/{id:guid}/profile")]
+        [Authorize(Roles = "Recruiter,HiringManager")]
+        [ProducesResponseType(typeof(backend.DTOs.Candidate.CandidateProfileResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCandidateProfile(Guid id)
+        {
+            try
+            {
+                var result = await _profileService.GetProfileByIdAsync(id);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         private Guid? GetRecruiterId()
         {
             var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
