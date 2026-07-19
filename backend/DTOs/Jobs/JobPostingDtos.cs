@@ -201,4 +201,48 @@ namespace backend.DTOs.Jobs
 
         public string? SkillRatings { get; set; }
     }
+
+    public class ScheduleInterviewDto
+    {
+        [Required]
+        public DateTime ScheduledAt { get; set; }
+
+        [Range(15, 480)]
+        public int DurationMinutes { get; set; } = 60;
+
+        /// <summary>Video | Phone | Onsite</summary>
+        [Required, MaxLength(30)]
+        public string InterviewType { get; set; } = "Video";
+
+        [MaxLength(500)]
+        public string? MeetingLink { get; set; }
+
+        [MaxLength(300)]
+        public string? Location { get; set; }
+
+        [Required, MaxLength(150)]
+        public string InterviewerName { get; set; } = string.Empty;
+
+        [MaxLength(1000)]
+        public string? Notes { get; set; }
+    }
+
+    public class InterviewDto
+    {
+        public Guid Id { get; set; }
+        public Guid ApplicationId { get; set; }
+        public Guid JobPostingId { get; set; }
+        public string CandidateName { get; set; } = string.Empty;
+        public string CandidateEmail { get; set; } = string.Empty;
+        public string? PhotoUrl { get; set; }
+        public string JobTitle { get; set; } = string.Empty;
+        public DateTime ScheduledAt { get; set; }
+        public int DurationMinutes { get; set; }
+        public string InterviewType { get; set; } = string.Empty;
+        public string? MeetingLink { get; set; }
+        public string? Location { get; set; }
+        public string InterviewerName { get; set; } = string.Empty;
+        public string? Notes { get; set; }
+        public string ApplicationStatus { get; set; } = string.Empty;
+    }
 }

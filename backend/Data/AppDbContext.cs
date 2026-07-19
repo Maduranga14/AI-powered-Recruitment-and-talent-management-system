@@ -23,6 +23,7 @@ namespace backend.Data
         public DbSet<CandidateSkill> CandidateSkills { get; set; }
         public DbSet<CandidateLinks> CandidateLinks { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
+        public DbSet<Interview> Interviews { get; set; }
         public DbSet<ChatConversation> ChatConversations { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
 
@@ -143,6 +144,29 @@ namespace backend.Data
                 entity.HasOne(a => a.JobPosting)
                       .WithMany()
                       .HasForeignKey(a => a.JobPostingId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── Interview ─────────────────────────────────────────────────────
+            modelBuilder.Entity<Interview>(entity =>
+            {
+                entity.HasKey(i => i.Id);
+                entity.Property(i => i.InterviewType).IsRequired().HasMaxLength(30);
+                entity.Property(i => i.InterviewerName).IsRequired().HasMaxLength(150);
+                entity.Property(i => i.MeetingLink).HasMaxLength(500);
+                entity.Property(i => i.Location).HasMaxLength(300);
+                entity.Property(i => i.Notes).HasMaxLength(1000);
+                entity.HasIndex(i => i.ScheduledAt);
+                entity.HasIndex(i => i.CreatedByRecruiterId);
+
+                entity.HasOne(i => i.JobApplication)
+                      .WithMany()
+                      .HasForeignKey(i => i.JobApplicationId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(i => i.CreatedByRecruiter)
+                      .WithMany()
+                      .HasForeignKey(i => i.CreatedByRecruiterId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 

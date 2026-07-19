@@ -342,6 +342,58 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>Schedule an interview for an applicant (sets status to Interview and emails the candidate)</summary>
+        [HttpPost("api/recruiter/jobs/{id:guid}/applicants/{applicationId:guid}/interview")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ScheduleInterview(
+            Guid id, Guid applicationId, [FromBody] ScheduleInterviewDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var result = await _jobService.ScheduleInterviewAsync(id, applicationId, dto, recruiterId.Value);
+                return StatusCode(StatusCodes.Status201Created, new
+                {
+                    message = "Interview scheduled successfully.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>List interviews for the logged-in recruiter's jobs</summary>
+        [HttpGet("api/recruiter/interviews")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(List<InterviewDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetInterviews()
+        {
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            var result = await _jobService.GetInterviewsAsync(recruiterId.Value);
+            return Ok(result);
+        }
+
         private Guid? GetRecruiterId()
         {
             var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)

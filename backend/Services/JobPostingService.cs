@@ -6,9 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services
 {
-    public class JobPostingService(AppDbContext db) : IJobPostingService
+    public class JobPostingService(AppDbContext db, IEmailService emailService) : IJobPostingService
     {
         private readonly AppDbContext _db = db;
+        private readonly IEmailService _emailService = emailService;
 
         // ─── Create ───────────────────────────────────────────────────────────
         public async Task<JobPostingDetailDto> CreateAsync(CreateJobPostingDto dto, Guid recruiterId)
@@ -544,6 +545,154 @@ namespace backend.Services
             await _db.SaveChangesAsync();
 
             return MapApplicant(application, application.JobPosting.Title);
+        }
+
+        public async Task<InterviewDto> ScheduleInterviewAsync(
+            Guid jobId, Guid applicationId, ScheduleInterviewDto dto, Guid recruiterId)
+        {
+            var job = await _db.JobPostings
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.CreatedByRecruiterId == recruiterId)
+                ?? throw new KeyNotFoundException("Job posting not found or you do not have access.");
+
+            var application = await _db.JobApplications
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .FirstOrDefaultAsync(a => a.Id == applicationId && a.JobPostingId == jobId)
+                ?? throw new KeyNotFoundException("Application not found for this job.");
+
+            if (application.Status is ApplicationStatus.Rejected or ApplicationStatus.Hired)
+                throw new InvalidOperationException(
+                    $"Cannot schedule an interview when application status is '{application.Status}'.");
+
+            var interviewType = dto.InterviewType.Trim();
+            var allowedTypes = new[] { "Video", "Phone", "Onsite" };
+            if (!allowedTypes.Contains(interviewType, StringComparer.OrdinalIgnoreCase))
+                throw new ArgumentException("Interview type must be Video, Phone, or Onsite.");
+
+            interviewType = allowedTypes.First(t =>
+                t.Equals(interviewType, StringComparison.OrdinalIgnoreCase));
+
+            var scheduledAt = dto.ScheduledAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(dto.ScheduledAt, DateTimeKind.Utc)
+                : dto.ScheduledAt.ToUniversalTime();
+
+            if (scheduledAt < DateTime.UtcNow.AddMinutes(-5))
+                throw new ArgumentException("Interview time must be in the future.");
+
+            if (interviewType == "Video" && string.IsNullOrWhiteSpace(dto.MeetingLink))
+                throw new ArgumentException("A meeting link is required for video interviews.");
+
+            if (interviewType == "Onsite" && string.IsNullOrWhiteSpace(dto.Location))
+                throw new ArgumentException("A location is required for onsite interviews.");
+
+            var interview = new Interview
+            {
+                JobApplicationId = application.Id,
+                ScheduledAt = scheduledAt,
+                DurationMinutes = dto.DurationMinutes > 0 ? dto.DurationMinutes : 60,
+                InterviewType = interviewType,
+                MeetingLink = string.IsNullOrWhiteSpace(dto.MeetingLink) ? null : dto.MeetingLink.Trim(),
+                Location = string.IsNullOrWhiteSpace(dto.Location) ? null : dto.Location.Trim(),
+                InterviewerName = dto.InterviewerName.Trim(),
+                Notes = string.IsNullOrWhiteSpace(dto.Notes) ? null : dto.Notes.Trim(),
+                CreatedByRecruiterId = recruiterId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            application.Status = ApplicationStatus.Interview;
+            application.UpdatedAt = DateTime.UtcNow;
+
+            _db.Interviews.Add(interview);
+            await _db.SaveChangesAsync();
+
+            var candidate = application.CandidateProfile.User;
+            var candidateName = $"{candidate.FirstName} {candidate.LastName}".Trim();
+            var localTime = scheduledAt.ToLocalTime();
+            var when = localTime.ToString("dddd, MMM d yyyy 'at' h:mm tt");
+            var details = interviewType switch
+            {
+                "Video" => $"Join link: {interview.MeetingLink}",
+                "Onsite" => $"Location: {interview.Location}",
+                _ => "The interviewer will contact you by phone."
+            };
+
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    candidate.Email,
+                    $"Interview scheduled — {job.Title}",
+                    $"""
+                    <p>Hi {candidateName},</p>
+                    <p>You've been invited to interview for <strong>{job.Title}</strong>.</p>
+                    <ul>
+                      <li><strong>When:</strong> {when} ({interview.DurationMinutes} minutes)</li>
+                      <li><strong>Type:</strong> {interviewType}</li>
+                      <li><strong>Interviewer:</strong> {interview.InterviewerName}</li>
+                      <li><strong>Details:</strong> {details}</li>
+                    </ul>
+                    {(string.IsNullOrWhiteSpace(interview.Notes) ? "" : $"<p><strong>Notes:</strong> {interview.Notes}</p>")}
+                    <p>Good luck!</p>
+                    """);
+            }
+            catch
+            {
+                // Scheduling succeeded even if email fails
+            }
+
+            return MapInterview(interview, application, job.Title, candidateName, candidate.Email);
+        }
+
+        public async Task<List<InterviewDto>> GetInterviewsAsync(Guid recruiterId)
+        {
+            var interviews = await _db.Interviews
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.JobPosting)
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.CandidateProfile)
+                        .ThenInclude(cp => cp.User)
+                .Where(i => i.CreatedByRecruiterId == recruiterId
+                         || i.JobApplication.JobPosting.CreatedByRecruiterId == recruiterId)
+                .OrderBy(i => i.ScheduledAt)
+                .ToListAsync();
+
+            return interviews.Select(i =>
+            {
+                var user = i.JobApplication.CandidateProfile.User;
+                var name = $"{user.FirstName} {user.LastName}".Trim();
+                return MapInterview(
+                    i,
+                    i.JobApplication,
+                    i.JobApplication.JobPosting.Title,
+                    name,
+                    user.Email);
+            }).ToList();
+        }
+
+        private static InterviewDto MapInterview(
+            Interview interview,
+            JobApplication application,
+            string jobTitle,
+            string candidateName,
+            string candidateEmail)
+        {
+            return new InterviewDto
+            {
+                Id = interview.Id,
+                ApplicationId = application.Id,
+                JobPostingId = application.JobPostingId,
+                CandidateName = candidateName,
+                CandidateEmail = candidateEmail,
+                PhotoUrl = application.CandidateProfile?.PhotoUrl,
+                JobTitle = jobTitle,
+                ScheduledAt = interview.ScheduledAt,
+                DurationMinutes = interview.DurationMinutes,
+                InterviewType = interview.InterviewType,
+                MeetingLink = interview.MeetingLink,
+                Location = interview.Location,
+                InterviewerName = interview.InterviewerName,
+                Notes = interview.Notes,
+                ApplicationStatus = application.Status.ToString()
+            };
         }
     }
 }

@@ -44,5 +44,11 @@ namespace backend.Services
 
         /// <summary>Submit manager feedback and advance/reject the application.</summary>
         Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId);
+
+        /// <summary>Schedule an interview for an applicant and set status to Interview.</summary>
+        Task<InterviewDto> ScheduleInterviewAsync(Guid jobId, Guid applicationId, ScheduleInterviewDto dto, Guid recruiterId);
+
+        /// <summary>List interviews for jobs owned by this recruiter (upcoming first).</summary>
+        Task<List<InterviewDto>> GetInterviewsAsync(Guid recruiterId);
     }
 }
