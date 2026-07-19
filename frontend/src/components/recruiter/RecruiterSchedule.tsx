@@ -16,6 +16,7 @@ interface RecruiterScheduleProps {
   interviews: RecruiterInterview[];
   loading?: boolean;
   onSchedule: () => void;
+  onReschedule: (interview: RecruiterInterview) => void;
 }
 
 function TypeIcon({ type }: { type: string }) {
@@ -28,6 +29,7 @@ export function RecruiterSchedule({
   interviews,
   loading = false,
   onSchedule,
+  onReschedule,
 }: RecruiterScheduleProps) {
   const now = new Date();
   const weekStart = new Date(now);
@@ -123,16 +125,19 @@ export function RecruiterSchedule({
               {interviewsByDay[index].map((interview) => (
                 <button
                   key={interview.id}
-                  onClick={onSchedule}
+                  onClick={() => onReschedule(interview)}
                   className={`mb-2 w-full rounded-lg p-2 text-left text-[10px] font-semibold hover:opacity-90 ${
-                    index % 2 === 0
-                      ? 'bg-brand-50 text-brand-700'
-                      : 'bg-accent-50 text-accent-700'
+                    interview.rescheduleRequested
+                      ? 'bg-amber-50 text-amber-800'
+                      : index % 2 === 0
+                        ? 'bg-brand-50 text-brand-700'
+                        : 'bg-accent-50 text-accent-700'
                   }`}
                 >
                   <span className="block truncate">{interview.time}</span>
                   <span className="mt-0.5 block truncate opacity-80">
                     {interview.candidate.split(' ')[0]}
+                    {interview.rescheduleRequested ? ' · reschedule' : ''}
                   </span>
                 </button>
               ))}
@@ -197,6 +202,11 @@ export function RecruiterSchedule({
                       <TypeIcon type={interview.type} />
                       {interview.type} with {interview.interviewer}
                     </p>
+                    {interview.rescheduleReason && (
+                      <p className="mt-1 text-xs text-amber-700">
+                        HM: {interview.rescheduleReason}
+                      </p>
+                    )}
                     {interview.meetingLink && (
                       <a
                         href={
@@ -218,8 +228,15 @@ export function RecruiterSchedule({
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge tone="accent">Confirmed</Badge>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {interview.rescheduleRequested ? (
+                      <Badge tone="amber">Needs reschedule</Badge>
+                    ) : (
+                      <Badge tone="accent">Confirmed</Badge>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => onReschedule(interview)}>
+                      Reschedule
+                    </Button>
                   </div>
                 </article>
               ))}

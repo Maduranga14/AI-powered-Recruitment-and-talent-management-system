@@ -184,6 +184,12 @@ function toRecruiterInterview(item: InterviewDto): RecruiterInterview {
     scheduledAt: item.scheduledAt,
     meetingLink: item.meetingLink,
     location: item.location,
+    jobPostingId: item.jobPostingId,
+    applicationId: item.applicationId,
+    durationMinutes: item.durationMinutes,
+    notes: item.notes,
+    rescheduleRequested: item.rescheduleRequested,
+    rescheduleReason: item.rescheduleReason,
   };
 }
 
@@ -204,6 +210,8 @@ export function Recruiter() {
   const [scheduleCandidate, setScheduleCandidate] =
     useState<RecruiterCandidate | null>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [rescheduleInterview, setRescheduleInterview] =
+    useState<RecruiterInterview | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
 
@@ -327,6 +335,7 @@ export function Recruiter() {
   };
 
   const openSchedule = async (candidate?: RecruiterCandidate) => {
+    setRescheduleInterview(null);
     setScheduleCandidate(candidate ?? null);
     if (!candidate && candidates.length === 0) {
       await fetchAllApplicants();
@@ -337,21 +346,35 @@ export function Recruiter() {
     }
   };
 
+  const openReschedule = (interview: RecruiterInterview) => {
+    setScheduleCandidate(null);
+    setRescheduleInterview(interview);
+    setScheduleOpen(true);
+  };
+
   const handleInterviewScheduled = (candidateId: string) => {
+    const wasReschedule = !!rescheduleInterview;
     setCandidates((current) =>
       current.map((c) =>
-        c.id === candidateId ? { ...c, stage: 'Interview' as RecruiterStage } : c
+        c.id === candidateId || c.applicationId === candidateId
+          ? { ...c, stage: 'Interview' as RecruiterStage }
+          : c
       )
     );
     setSelectedCandidate((current) =>
-      current?.id === candidateId
+      current?.id === candidateId || current?.applicationId === candidateId
         ? { ...current, stage: 'Interview' }
         : current
     );
+    setRescheduleInterview(null);
     fetchInterviews();
     fetchJobs();
     setView('schedule');
-    showFeedback('Interview scheduled — candidate notified by email.');
+    showFeedback(
+      wasReschedule
+        ? 'Interview rescheduled — candidate notified by email.'
+        : 'Interview scheduled — candidate notified by email.'
+    );
   };
 
   const toggleJobStatus = async (jobId: string) => {
@@ -478,6 +501,7 @@ export function Recruiter() {
           interviews={interviews}
           loading={interviewsLoading}
           onSchedule={() => openSchedule()}
+          onReschedule={openReschedule}
         />
       )}
       {view === 'inbox' && <RecruiterInbox messages={RECRUITER_MESSAGES} />}
@@ -493,10 +517,12 @@ export function Recruiter() {
         open={scheduleOpen}
         candidate={scheduleCandidate}
         candidates={candidates}
+        rescheduleInterview={rescheduleInterview}
         defaultInterviewer={user?.name ?? ''}
         onClose={() => {
           setScheduleOpen(false);
           setScheduleCandidate(null);
+          setRescheduleInterview(null);
         }}
         onScheduled={handleInterviewScheduled}
       />

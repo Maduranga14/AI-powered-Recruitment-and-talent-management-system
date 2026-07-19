@@ -37,6 +37,17 @@ namespace backend.Models
         [MaxLength(1000)]
         public string? Notes { get; set; }
 
+        /// <summary>True when the hiring manager asked the recruiter to pick a new time.</summary>
+        public bool RescheduleRequested { get; set; }
+
+        [MaxLength(1000)]
+        public string? RescheduleReason { get; set; }
+
+        public DateTime? RescheduleRequestedAt { get; set; }
+
+        /// <summary>Set when the recruiter confirms a new interview time.</summary>
+        public DateTime? LastRescheduledAt { get; set; }
+
         public Guid CreatedByRecruiterId { get; set; }
 
         [ForeignKey(nameof(CreatedByRecruiterId))]

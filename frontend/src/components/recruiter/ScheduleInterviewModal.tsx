@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarPlusIcon, Loader2Icon, XIcon } from 'lucide-react';
-import type { RecruiterCandidate } from '../../data/recruiter';
+import type {
+  RecruiterCandidate,
+  RecruiterInterview,
+} from '../../data/recruiter';
 import {
   recruiterApi,
   type ScheduleInterviewPayload,
 } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input, Select, Textarea } from '../ui/Input';
+import { Badge } from '../ui/Badge';
 
 type InterviewType = ScheduleInterviewPayload['interviewType'];
 
@@ -15,6 +19,8 @@ interface ScheduleInterviewModalProps {
   open: boolean;
   candidate: RecruiterCandidate | null;
   candidates: RecruiterCandidate[];
+  /** When set, modal updates this existing interview instead of creating one. */
+  rescheduleInterview?: RecruiterInterview | null;
   defaultInterviewer?: string;
   onClose: () => void;
   onScheduled: (candidateId: string) => void;
@@ -34,10 +40,13 @@ export function ScheduleInterviewModal({
   open,
   candidate,
   candidates,
+  rescheduleInterview = null,
   defaultInterviewer = '',
   onClose,
   onScheduled,
 }: ScheduleInterviewModalProps) {
+  const isReschedule = !!rescheduleInterview;
+
   const schedulable = useMemo(
     () =>
       candidates.filter(
@@ -67,40 +76,73 @@ export function ScheduleInterviewModal({
   useEffect(() => {
     if (!open) return;
 
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(10, 0, 0, 0);
+    if (rescheduleInterview) {
+      const at = rescheduleInterview.scheduledAt
+        ? new Date(rescheduleInterview.scheduledAt)
+        : new Date(Date.now() + 24 * 60 * 60 * 1000);
+      setDate(toLocalDateValue(at));
+      setTime(toLocalTimeValue(at));
+      setDuration(String(rescheduleInterview.durationMinutes || 60));
+      setInterviewType(
+        (rescheduleInterview.type as InterviewType) || 'Video'
+      );
+      setMeetingLink(rescheduleInterview.meetingLink || '');
+      setLocation(rescheduleInterview.location || '');
+      setInterviewerName(
+        rescheduleInterview.interviewer || defaultInterviewer
+      );
+      setNotes(rescheduleInterview.notes || '');
+      setSelectedId(rescheduleInterview.applicationId || '');
+    } else {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(10, 0, 0, 0);
+      setDate(toLocalDateValue(tomorrow));
+      setTime(toLocalTimeValue(tomorrow));
+      setDuration('60');
+      setInterviewType('Video');
+      setMeetingLink('');
+      setLocation('');
+      setInterviewerName(defaultInterviewer);
+      setNotes('');
+      setSelectedId(candidate?.id ?? schedulable[0]?.id ?? '');
+    }
 
-    setDate(toLocalDateValue(tomorrow));
-    setTime(toLocalTimeValue(tomorrow));
-    setDuration('60');
-    setInterviewType('Video');
-    setMeetingLink('');
-    setLocation('');
-    setInterviewerName(defaultInterviewer);
-    setNotes('');
     setError('');
     setLoading(false);
-    setSelectedId(candidate?.id ?? schedulable[0]?.id ?? '');
-  }, [open, candidate, defaultInterviewer, schedulable]);
+  }, [
+    open,
+    candidate,
+    defaultInterviewer,
+    schedulable,
+    rescheduleInterview,
+  ]);
 
   const selected =
-    candidate ??
-    schedulable.find((c) => c.id === selectedId) ??
-    candidates.find((c) => c.id === selectedId) ??
-    null;
+    isReschedule
+      ? null
+      : candidate ??
+        schedulable.find((c) => c.id === selectedId) ??
+        candidates.find((c) => c.id === selectedId) ??
+        null;
 
-  const canSubmit =
-    !!selected?.applicationId &&
-    !!selected?.jobId &&
-    !!date &&
-    !!time &&
-    interviewerName.trim().length > 1 &&
-    (interviewType !== 'Video' || meetingLink.trim().length > 0) &&
-    (interviewType !== 'Onsite' || location.trim().length > 0);
+  const canSubmit = isReschedule
+    ? !!rescheduleInterview?.id &&
+      !!date &&
+      !!time &&
+      interviewerName.trim().length > 1 &&
+      (interviewType !== 'Video' || meetingLink.trim().length > 0) &&
+      (interviewType !== 'Onsite' || location.trim().length > 0)
+    : !!selected?.applicationId &&
+      !!selected?.jobId &&
+      !!date &&
+      !!time &&
+      interviewerName.trim().length > 1 &&
+      (interviewType !== 'Video' || meetingLink.trim().length > 0) &&
+      (interviewType !== 'Onsite' || location.trim().length > 0);
 
   const handleSubmit = async () => {
-    if (!selected?.applicationId || !selected.jobId || !canSubmit) return;
+    if (!canSubmit) return;
 
     setLoading(true);
     setError('');
@@ -123,16 +165,27 @@ export function ScheduleInterviewModal({
     };
 
     try {
-      await recruiterApi.scheduleInterview(
-        selected.jobId,
-        selected.applicationId,
-        payload
-      );
-      onScheduled(selected.id);
+      if (isReschedule && rescheduleInterview) {
+        await recruiterApi.rescheduleInterview(rescheduleInterview.id, payload);
+        onScheduled(
+          rescheduleInterview.applicationId || rescheduleInterview.candidateId
+        );
+      } else if (selected?.applicationId && selected.jobId) {
+        await recruiterApi.scheduleInterview(
+          selected.jobId,
+          selected.applicationId,
+          payload
+        );
+        onScheduled(selected.id);
+      }
       onClose();
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : 'Failed to schedule interview.'
+        err instanceof Error
+          ? err.message
+          : isReschedule
+            ? 'Failed to reschedule interview.'
+            : 'Failed to schedule interview.'
       );
     } finally {
       setLoading(false);
@@ -167,10 +220,12 @@ export function ScheduleInterviewModal({
                   id="schedule-interview-title"
                   className="font-display text-xl font-extrabold text-slate-900"
                 >
-                  Schedule interview
+                  {isReschedule ? 'Reschedule interview' : 'Schedule interview'}
                 </h2>
                 <p className="mt-0.5 text-sm text-slate-500">
-                  Set a time and notify the candidate.
+                  {isReschedule
+                    ? 'Pick a new time — the candidate will be notified.'
+                    : 'Set a time and notify the candidate.'}
                 </p>
               </div>
               <button
@@ -183,7 +238,27 @@ export function ScheduleInterviewModal({
             </div>
 
             <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-5">
-              {candidate ? (
+              {isReschedule && rescheduleInterview ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-bold text-slate-900">
+                      {rescheduleInterview.candidate}
+                    </p>
+                    {rescheduleInterview.rescheduleRequested && (
+                      <Badge tone="amber">Requested by HM</Badge>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {rescheduleInterview.role} · currently{' '}
+                    {rescheduleInterview.time}
+                  </p>
+                  {rescheduleInterview.rescheduleReason && (
+                    <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
+                      HM note: {rescheduleInterview.rescheduleReason}
+                    </p>
+                  )}
+                </div>
+              ) : candidate ? (
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <img
                     src={candidate.avatar}
@@ -309,11 +384,14 @@ export function ScheduleInterviewModal({
                   {loading ? (
                     <>
                       <Loader2Icon className="mr-1.5 h-4 w-4 animate-spin" />
-                      Scheduling…
+                      {isReschedule ? 'Saving…' : 'Scheduling…'}
                     </>
                   ) : (
                     <>
-                      <CalendarPlusIcon className="h-4 w-4" /> Confirm interview
+                      <CalendarPlusIcon className="h-4 w-4" />
+                      {isReschedule
+                        ? 'Confirm new time'
+                        : 'Confirm interview'}
                     </>
                   )}
                 </Button>

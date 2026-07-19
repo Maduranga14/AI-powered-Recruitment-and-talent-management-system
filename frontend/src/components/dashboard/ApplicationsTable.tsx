@@ -4,6 +4,7 @@ import { FileSearchIcon } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import type { Application, ApplicationStatus } from '../../context/AuthContext';
+import type { InterviewDto } from '../../services/api';
 
 const statusTone: Record<
   ApplicationStatus,
@@ -56,10 +57,27 @@ function appDisplay(app: Application) {
   return { title, company, logo };
 }
 
+function interviewHint(
+  app: Application,
+  interviews: InterviewDto[]
+): { label: string; tone: 'amber' | 'green' | 'brand' } | null {
+  const match = interviews.find((i) => i.jobPostingId === app.jobId);
+  if (!match) return null;
+  if (match.rescheduleRequested) {
+    return { label: 'Reschedule pending', tone: 'amber' };
+  }
+  if (match.lastRescheduledAt) {
+    return { label: 'Interview updated', tone: 'green' };
+  }
+  return { label: 'Interview scheduled', tone: 'brand' };
+}
+
 export function ApplicationsTable({
   applications,
+  interviews = [],
 }: {
   applications: Application[];
+  interviews?: InterviewDto[];
 }) {
   if (applications.length === 0) {
     return (
@@ -90,6 +108,7 @@ export function ApplicationsTable({
         <tbody className="divide-y divide-slate-100">
           {applications.map((app) => {
             const { title, company, logo } = appDisplay(app);
+            const hint = interviewHint(app, interviews);
             return (
               <tr
                 key={app.jobId}
@@ -110,7 +129,12 @@ export function ApplicationsTable({
                   <Stepper status={app.status} />
                 </td>
                 <td className="px-5 py-4">
-                  <Badge tone={statusTone[app.status]}>{app.status}</Badge>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge tone={statusTone[app.status]}>{app.status}</Badge>
+                    {hint && hint.label !== app.status && (
+                      <Badge tone={hint.tone}>{hint.label}</Badge>
+                    )}
+                  </div>
                 </td>
                 <td className="px-5 py-4 text-sm text-slate-500">
                   {formatDistanceToNow(app.appliedAt, { addSuffix: true })}
@@ -132,6 +156,7 @@ export function ApplicationsTable({
       <div className="divide-y divide-slate-100 sm:hidden">
         {applications.map((app) => {
           const { title, company, logo } = appDisplay(app);
+          const hint = interviewHint(app, interviews);
           return (
             <Link
               key={app.jobId}
@@ -148,7 +173,12 @@ export function ApplicationsTable({
                   <Stepper status={app.status} />
                 </div>
               </div>
-              <Badge tone={statusTone[app.status]}>{app.status}</Badge>
+              <div className="flex flex-col items-end gap-1">
+                <Badge tone={statusTone[app.status]}>{app.status}</Badge>
+                {hint && hint.label !== app.status && (
+                  <Badge tone={hint.tone}>{hint.label}</Badge>
+                )}
+              </div>
             </Link>
           );
         })}

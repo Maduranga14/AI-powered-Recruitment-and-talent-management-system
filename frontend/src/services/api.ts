@@ -280,6 +280,10 @@ export interface InterviewDto {
   interviewerName: string;
   notes: string | null;
   applicationStatus: string;
+  rescheduleRequested?: boolean;
+  rescheduleReason?: string | null;
+  rescheduleRequestedAt?: string | null;
+  lastRescheduledAt?: string | null;
 }
 
 export interface JobApplicantsResult {
@@ -385,6 +389,12 @@ export const recruiterApi = {
   getInterviews: () =>
     request<InterviewDto[]>('/recruiter/interviews'),
 
+  rescheduleInterview: (interviewId: string, payload: ScheduleInterviewPayload) =>
+    request<ApiResponse<InterviewDto>>(`/recruiter/interviews/${interviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
   updateJobStatus: (id: string, status: number) =>
     request<ApiResponse<JobPostingDetail>>(`/recruiter/jobs/${id}/status`, {
       method: 'PATCH',
@@ -432,6 +442,15 @@ export const managerApi = {
 
   getInterviews: () =>
     request<InterviewDto[]>('/manager/interviews'),
+
+  requestReschedule: (interviewId: string, reason?: string) =>
+    request<ApiResponse<InterviewDto>>(
+      `/manager/interviews/${interviewId}/request-reschedule`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason || undefined }),
+      }
+    ),
 
   submitFeedback: (
     applicationId: string,

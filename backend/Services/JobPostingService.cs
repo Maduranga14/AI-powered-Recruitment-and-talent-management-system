@@ -733,8 +733,138 @@ namespace backend.Services
                 Location = interview.Location,
                 InterviewerName = interview.InterviewerName,
                 Notes = interview.Notes,
-                ApplicationStatus = application.Status.ToString()
+                ApplicationStatus = application.Status.ToString(),
+                RescheduleRequested = interview.RescheduleRequested,
+                RescheduleReason = interview.RescheduleReason,
+                RescheduleRequestedAt = interview.RescheduleRequestedAt,
+                LastRescheduledAt = interview.LastRescheduledAt
             };
+        }
+
+        public async Task<InterviewDto> RequestRescheduleAsync(
+            Guid interviewId, string? reason, Guid managerUserId)
+        {
+            var manager = await _db.Users.FindAsync(managerUserId);
+            if (manager == null || manager.Role != UserRole.HiringManager)
+                throw new KeyNotFoundException("Hiring manager user not found.");
+
+            var departments = await _db.Departments
+                .Where(d => d.Head == manager.FullName && d.OrganizationName == manager.OrganizationName)
+                .Select(d => d.Id)
+                .ToListAsync();
+
+            var interview = await _db.Interviews
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.JobPosting)
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.CandidateProfile)
+                        .ThenInclude(cp => cp.User)
+                .FirstOrDefaultAsync(i => i.Id == interviewId)
+                ?? throw new KeyNotFoundException("Interview not found.");
+
+            var posting = interview.JobApplication.JobPosting;
+            if (posting.DepartmentId == null || !departments.Contains(posting.DepartmentId.Value))
+                throw new UnauthorizedAccessException("You are not authorized to reschedule this interview.");
+
+            interview.RescheduleRequested = true;
+            interview.RescheduleReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+            interview.RescheduleRequestedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            var user = interview.JobApplication.CandidateProfile.User;
+            var name = $"{user.FirstName} {user.LastName}".Trim();
+            return MapInterview(interview, interview.JobApplication, posting.Title, name, user.Email);
+        }
+
+        public async Task<InterviewDto> RescheduleInterviewAsync(
+            Guid interviewId, ScheduleInterviewDto dto, Guid recruiterId)
+        {
+            var interview = await _db.Interviews
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.JobPosting)
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.CandidateProfile)
+                        .ThenInclude(cp => cp.User)
+                .FirstOrDefaultAsync(i => i.Id == interviewId)
+                ?? throw new KeyNotFoundException("Interview not found.");
+
+            var job = interview.JobApplication.JobPosting;
+            if (job.CreatedByRecruiterId != recruiterId && interview.CreatedByRecruiterId != recruiterId)
+                throw new UnauthorizedAccessException("You do not have access to this interview.");
+
+            var interviewType = dto.InterviewType.Trim();
+            var allowedTypes = new[] { "Video", "Phone", "Onsite" };
+            if (!allowedTypes.Contains(interviewType, StringComparer.OrdinalIgnoreCase))
+                throw new ArgumentException("Interview type must be Video, Phone, or Onsite.");
+
+            interviewType = allowedTypes.First(t =>
+                t.Equals(interviewType, StringComparison.OrdinalIgnoreCase));
+
+            var scheduledAt = dto.ScheduledAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(dto.ScheduledAt, DateTimeKind.Utc)
+                : dto.ScheduledAt.ToUniversalTime();
+
+            if (scheduledAt < DateTime.UtcNow.AddMinutes(-5))
+                throw new ArgumentException("Interview time must be in the future.");
+
+            if (interviewType == "Video" && string.IsNullOrWhiteSpace(dto.MeetingLink))
+                throw new ArgumentException("A meeting link is required for video interviews.");
+
+            if (interviewType == "Onsite" && string.IsNullOrWhiteSpace(dto.Location))
+                throw new ArgumentException("A location is required for onsite interviews.");
+
+            interview.ScheduledAt = scheduledAt;
+            interview.DurationMinutes = dto.DurationMinutes > 0 ? dto.DurationMinutes : 60;
+            interview.InterviewType = interviewType;
+            interview.MeetingLink = string.IsNullOrWhiteSpace(dto.MeetingLink) ? null : dto.MeetingLink.Trim();
+            interview.Location = string.IsNullOrWhiteSpace(dto.Location) ? null : dto.Location.Trim();
+            interview.InterviewerName = dto.InterviewerName.Trim();
+            interview.Notes = string.IsNullOrWhiteSpace(dto.Notes) ? null : dto.Notes.Trim();
+            interview.RescheduleRequested = false;
+            interview.RescheduleReason = null;
+            interview.RescheduleRequestedAt = null;
+            interview.LastRescheduledAt = DateTime.UtcNow;
+
+            interview.JobApplication.Status = ApplicationStatus.Interview;
+            interview.JobApplication.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+
+            var candidate = interview.JobApplication.CandidateProfile.User;
+            var candidateName = $"{candidate.FirstName} {candidate.LastName}".Trim();
+            var localTime = scheduledAt.ToLocalTime();
+            var when = localTime.ToString("dddd, MMM d yyyy 'at' h:mm tt");
+            var details = interviewType switch
+            {
+                "Video" => $"Join link: {interview.MeetingLink}",
+                "Onsite" => $"Location: {interview.Location}",
+                _ => "The interviewer will contact you by phone."
+            };
+
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    candidate.Email,
+                    $"Interview rescheduled — {job.Title}",
+                    $"""
+                    <p>Hi {candidateName},</p>
+                    <p>Your interview for <strong>{job.Title}</strong> has been rescheduled.</p>
+                    <ul>
+                      <li><strong>When:</strong> {when} ({interview.DurationMinutes} minutes)</li>
+                      <li><strong>Type:</strong> {interviewType}</li>
+                      <li><strong>Interviewer:</strong> {interview.InterviewerName}</li>
+                      <li><strong>Details:</strong> {details}</li>
+                    </ul>
+                    {(string.IsNullOrWhiteSpace(interview.Notes) ? "" : $"<p><strong>Notes:</strong> {interview.Notes}</p>")}
+                    <p>See you then!</p>
+                    """);
+            }
+            catch
+            {
+                // Reschedule succeeded even if email fails
+            }
+
+            return MapInterview(interview, interview.JobApplication, job.Title, candidateName, candidate.Email);
         }
     }
 }

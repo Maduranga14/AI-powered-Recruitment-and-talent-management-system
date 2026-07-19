@@ -246,5 +246,15 @@ namespace backend.DTOs.Jobs
         public string InterviewerName { get; set; } = string.Empty;
         public string? Notes { get; set; }
         public string ApplicationStatus { get; set; } = string.Empty;
+        public bool RescheduleRequested { get; set; }
+        public string? RescheduleReason { get; set; }
+        public DateTime? RescheduleRequestedAt { get; set; }
+        public DateTime? LastRescheduledAt { get; set; }
+    }
+
+    public class RequestRescheduleDto
+    {
+        [MaxLength(1000)]
+        public string? Reason { get; set; }
     }
 }

@@ -61,6 +61,12 @@ export interface RecruiterInterview {
   scheduledAt?: string;
   meetingLink?: string | null;
   location?: string | null;
+  jobPostingId?: string;
+  applicationId?: string;
+  durationMinutes?: number;
+  notes?: string | null;
+  rescheduleRequested?: boolean;
+  rescheduleReason?: string | null;
 }
 
 export interface RecruiterMessage {

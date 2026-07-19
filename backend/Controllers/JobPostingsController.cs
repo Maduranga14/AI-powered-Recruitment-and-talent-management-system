@@ -414,6 +414,75 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>Hiring manager requests a reschedule for an interview</summary>
+        [HttpPost("api/manager/interviews/{interviewId:guid}/request-reschedule")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RequestReschedule(
+            Guid interviewId, [FromBody] RequestRescheduleDto? dto)
+        {
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.RequestRescheduleAsync(
+                    interviewId, dto?.Reason, managerId.Value);
+                return Ok(new
+                {
+                    message = "Reschedule request sent to the recruiter.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        /// <summary>Recruiter reschedules an existing interview</summary>
+        [HttpPut("api/recruiter/interviews/{interviewId:guid}")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RescheduleInterview(
+            Guid interviewId, [FromBody] ScheduleInterviewDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var result = await _jobService.RescheduleInterviewAsync(interviewId, dto, recruiterId.Value);
+                return Ok(new
+                {
+                    message = "Interview rescheduled successfully.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         private Guid? GetRecruiterId()
         {
             var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)

@@ -285,7 +285,11 @@ namespace backend.Services
                     Location = i.Location,
                     InterviewerName = i.InterviewerName,
                     Notes = i.Notes,
-                    ApplicationStatus = i.JobApplication.Status.ToString()
+                    ApplicationStatus = i.JobApplication.Status.ToString(),
+                    RescheduleRequested = i.RescheduleRequested,
+                    RescheduleReason = i.RescheduleReason,
+                    RescheduleRequestedAt = i.RescheduleRequestedAt,
+                    LastRescheduledAt = i.LastRescheduledAt
                 };
             }).ToList();
         }

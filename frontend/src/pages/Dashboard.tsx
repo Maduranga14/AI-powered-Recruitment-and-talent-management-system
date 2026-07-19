@@ -248,7 +248,10 @@ export function Dashboard() {
               <h2 className="mb-4 font-display text-xl font-extrabold text-slate-900">
                 Your applications
               </h2>
-              <ApplicationsTable applications={applications} />
+              <ApplicationsTable
+                applications={applications}
+                interviews={interviews}
+              />
             </div>
 
             <div>

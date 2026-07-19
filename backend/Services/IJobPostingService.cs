@@ -53,5 +53,11 @@ namespace backend.Services
 
         /// <summary>List interviews for applications in this hiring manager's departments.</summary>
         Task<List<InterviewDto>> GetManagerInterviewsAsync(Guid managerUserId);
+
+        /// <summary>Hiring manager requests that the recruiter reschedule an interview.</summary>
+        Task<InterviewDto> RequestRescheduleAsync(Guid interviewId, string? reason, Guid managerUserId);
+
+        /// <summary>Recruiter updates an existing interview's time/details (clears reschedule request).</summary>
+        Task<InterviewDto> RescheduleInterviewAsync(Guid interviewId, ScheduleInterviewDto dto, Guid recruiterId);
     }
 }

@@ -7,6 +7,7 @@ import {
   ExternalLinkIcon,
   MapPinIcon,
   PhoneIcon,
+  RefreshCwIcon,
   UserIcon,
   VideoIcon,
 } from 'lucide-react';
@@ -46,6 +47,17 @@ function formatCountdown(iso: string): string | null {
   return `In ${days} day${days === 1 ? '' : 's'}`;
 }
 
+function formatWhen(iso: string): string {
+  const at = new Date(iso);
+  return at.toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 function DateBlock({ iso }: { iso: string }) {
   const at = new Date(iso);
   return (
@@ -83,28 +95,48 @@ function InterviewCard({
   const countdown = formatCountdown(interview.scheduledAt);
   const company = interview.company || 'Hiring team';
   const isPast = at.getTime() < Date.now() - 60 * 60 * 1000;
+  const pendingReschedule = !!interview.rescheduleRequested && !isPast;
+  const wasRescheduled = !!interview.lastRescheduledAt && !pendingReschedule;
 
   return (
     <article
       className={`relative overflow-hidden rounded-2xl border bg-white shadow-soft ${
         featured
           ? 'border-brand-200 ring-1 ring-brand-100'
-          : 'border-slate-200'
+          : pendingReschedule
+            ? 'border-amber-200 ring-1 ring-amber-100'
+            : wasRescheduled && !isPast
+              ? 'border-emerald-200 ring-1 ring-emerald-100'
+              : 'border-slate-200'
       } ${isPast ? 'opacity-75' : ''}`}
     >
       {featured && (
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-600 via-brand-500 to-accent-500" />
       )}
-      <div className={`flex flex-col gap-5 p-5 sm:flex-row sm:items-start sm:p-6 ${featured ? 'pt-6' : ''}`}>
+      <div
+        className={`flex flex-col gap-5 p-5 sm:flex-row sm:items-start sm:p-6 ${featured ? 'pt-6' : ''}`}
+      >
         <DateBlock iso={interview.scheduledAt} />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            {featured && !isPast && (
+            {featured && !isPast && !pendingReschedule && (
               <Badge tone="brand">Up next</Badge>
             )}
             {isPast && <Badge tone="slate">Completed</Badge>}
-            {countdown && !isPast && (
+            {pendingReschedule && (
+              <Badge tone="amber">
+                <RefreshCwIcon className="h-3 w-3" />
+                Reschedule pending
+              </Badge>
+            )}
+            {wasRescheduled && !isPast && (
+              <Badge tone="green">
+                <RefreshCwIcon className="h-3 w-3" />
+                Rescheduled
+              </Badge>
+            )}
+            {countdown && !isPast && !pendingReschedule && (
               <Badge tone="accent">{countdown}</Badge>
             )}
             <Badge tone="slate">
@@ -119,6 +151,62 @@ function InterviewCard({
             {interview.jobTitle}
           </h3>
           <p className="mt-0.5 text-sm font-medium text-slate-600">{company}</p>
+
+          {pendingReschedule && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+              <p className="font-semibold">Schedule change in progress</p>
+              <p className="mt-0.5 text-amber-800/90">
+                The hiring team asked to move this interview. Your current time
+                still stands until the recruiter confirms a new slot
+                {interview.rescheduleReason
+                  ? ` — reason: ${interview.rescheduleReason}`
+                  : ''}
+                .
+              </p>
+            </div>
+          )}
+
+          {wasRescheduled && !isPast && (
+            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-950">
+              <p className="font-semibold">Updated interview details</p>
+              <p className="mt-0.5 text-emerald-900/80">
+                Rescheduled{' '}
+                {interview.lastRescheduledAt
+                  ? formatWhen(interview.lastRescheduledAt)
+                  : 'recently'}
+                . Please use the new time and meeting details below.
+              </p>
+              <ul className="mt-2 space-y-1 text-emerald-900/90">
+                <li>
+                  <span className="font-medium">When:</span> {dateLabel} at{' '}
+                  {timeLabel} ({interview.durationMinutes} min)
+                </li>
+                <li>
+                  <span className="font-medium">Type:</span>{' '}
+                  {interview.interviewType}
+                </li>
+                <li>
+                  <span className="font-medium">Interviewer:</span>{' '}
+                  {interview.interviewerName}
+                </li>
+                {interview.interviewType === 'Video' && interview.meetingLink && (
+                  <li className="break-all">
+                    <span className="font-medium">Meeting link:</span>{' '}
+                    {interview.meetingLink}
+                  </li>
+                )}
+                {interview.interviewType === 'Onsite' && interview.location && (
+                  <li>
+                    <span className="font-medium">Location:</span>{' '}
+                    {interview.location}
+                  </li>
+                )}
+                {interview.interviewType === 'Phone' && (
+                  <li>The interviewer will contact you by phone.</li>
+                )}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
             <span className="inline-flex items-center gap-1.5">
@@ -148,7 +236,7 @@ function InterviewCard({
           )}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {interview.meetingLink && !isPast && (
+            {interview.meetingLink && !isPast && !pendingReschedule && (
               <Button
                 size="sm"
                 onClick={() => {
@@ -178,10 +266,16 @@ export function CandidateInterviews({ interviews }: CandidateInterviewsProps) {
   const now = Date.now();
   const upcoming = interviews
     .filter((i) => new Date(i.scheduledAt).getTime() >= now - 60 * 60 * 1000)
-    .sort(
-      (a, b) =>
+    .sort((a, b) => {
+      // Surface pending / recently rescheduled interviews first
+      const rank = (i: InterviewDto) =>
+        i.rescheduleRequested ? 0 : i.lastRescheduledAt ? 1 : 2;
+      const r = rank(a) - rank(b);
+      if (r !== 0) return r;
+      return (
         new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
-    );
+      );
+    });
   const past = interviews
     .filter((i) => new Date(i.scheduledAt).getTime() < now - 60 * 60 * 1000)
     .sort(
@@ -191,6 +285,10 @@ export function CandidateInterviews({ interviews }: CandidateInterviewsProps) {
 
   const next = upcoming[0];
   const restUpcoming = upcoming.slice(1);
+  const pendingCount = upcoming.filter((i) => i.rescheduleRequested).length;
+  const rescheduledCount = upcoming.filter(
+    (i) => i.lastRescheduledAt && !i.rescheduleRequested
+  ).length;
 
   return (
     <motion.section
@@ -208,12 +306,19 @@ export function CandidateInterviews({ interviews }: CandidateInterviewsProps) {
             Your upcoming interviews
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Prepare ahead — join links and details are ready when you are.
+            Prepare ahead — join links and details update when interviews are
+            rescheduled.
           </p>
         </div>
-        <Badge tone="brand">
-          {upcoming.length} upcoming
-        </Badge>
+        <div className="flex flex-wrap gap-2">
+          {pendingCount > 0 && (
+            <Badge tone="amber">{pendingCount} pending change</Badge>
+          )}
+          {rescheduledCount > 0 && (
+            <Badge tone="green">{rescheduledCount} updated</Badge>
+          )}
+          <Badge tone="brand">{upcoming.length} upcoming</Badge>
+        </div>
       </div>
 
       {next && <InterviewCard interview={next} featured />}
@@ -234,7 +339,9 @@ export function CandidateInterviews({ interviews }: CandidateInterviewsProps) {
 
       {past.length > 0 && (
         <div className="pt-2">
-          <h3 className="mb-3 text-sm font-bold text-slate-700">Past interviews</h3>
+          <h3 className="mb-3 text-sm font-bold text-slate-700">
+            Past interviews
+          </h3>
           <div className="space-y-3">
             {past.map((interview) => (
               <InterviewCard key={interview.id} interview={interview} />

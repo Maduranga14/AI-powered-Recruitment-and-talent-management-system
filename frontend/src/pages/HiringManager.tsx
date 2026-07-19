@@ -101,6 +101,10 @@ function toManagerInterview(item: InterviewDto): ManagerInterview {
     format: item.interviewType,
     focus: item.notes || `${item.interviewType} interview with ${item.interviewerName}`,
     avatar: avatarUrl(item.candidateName, '0d9488'),
+    meetingLink: item.meetingLink,
+    scheduledAt: item.scheduledAt,
+    rescheduleRequested: item.rescheduleRequested,
+    rescheduleReason: item.rescheduleReason,
   };
 }
 
@@ -248,6 +252,7 @@ export function HiringManager() {
               <HiringManagerCalendar
                 interviews={interviews}
                 onOpenFeedback={openFeedback}
+                onRescheduleRequested={loadData}
               />
             )}
           </motion.div>

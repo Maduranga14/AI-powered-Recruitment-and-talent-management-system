@@ -156,6 +156,7 @@ namespace backend.Data
                 entity.Property(i => i.MeetingLink).HasMaxLength(500);
                 entity.Property(i => i.Location).HasMaxLength(300);
                 entity.Property(i => i.Notes).HasMaxLength(1000);
+                entity.Property(i => i.RescheduleReason).HasMaxLength(1000);
                 entity.HasIndex(i => i.ScheduledAt);
                 entity.HasIndex(i => i.CreatedByRecruiterId);
 
