@@ -95,11 +95,22 @@ namespace backend.Services
                     RecruiterName = j.CreatedByRecruiter != null
                         ? j.CreatedByRecruiter.FirstName + " " + j.CreatedByRecruiter.LastName
                         : string.Empty,
-                    PostedBy = j.PostedBy
+                    PostedBy = j.PostedBy,
+                    ApplicantCount = _db.JobApplications.Count(a => a.JobPostingId == j.Id),
+                    ScreenedCount = _db.JobApplications.Count(a =>
+                        a.JobPostingId == j.Id && (
+                            a.Status == ApplicationStatus.UnderReview ||
+                            a.Status == ApplicationStatus.Interview ||
+                            a.Status == ApplicationStatus.Hired)),
+                    ShortlistedCount = _db.JobApplications.Count(a =>
+                        a.JobPostingId == j.Id && a.Status == ApplicationStatus.UnderReview),
+                    InterviewCount = _db.JobApplications.Count(a =>
+                        a.JobPostingId == j.Id && a.Status == ApplicationStatus.Interview)
                 })
                 .ToListAsync();
 
-            return new PagedJobsDto            {
+            return new PagedJobsDto
+            {
                 Items = items,
                 TotalCount = total,
                 Page = page,
@@ -285,6 +296,119 @@ namespace backend.Services
                 PublishedAt = job.PublishedAt!.Value,
                 OrganizationName = job.CreatedByRecruiter?.OrganizationName ?? string.Empty,
                 PostedBy = job.PostedBy
+            };
+        }
+
+        public async Task<JobApplicantsResultDto> GetApplicantsAsync(Guid jobId, Guid recruiterId)
+        {
+            var job = await _db.JobPostings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.CreatedByRecruiterId == recruiterId)
+                ?? throw new KeyNotFoundException("Job posting not found or you do not have access.");
+
+            var applications = await _db.JobApplications
+                .AsNoTracking()
+                .Where(a => a.JobPostingId == jobId)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Skills)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Experiences)
+                .Include(a => a.JobPosting)
+                .OrderByDescending(a => a.AppliedAt)
+                .ToListAsync();
+
+            return new JobApplicantsResultDto
+            {
+                JobId = job.Id,
+                JobTitle = job.Title,
+                JobStatus = job.Status.ToString(),
+                Applicants = applications.Select(a => MapApplicant(a, a.JobPosting?.Title ?? job.Title)).ToList()
+            };
+        }
+
+        public async Task<List<JobApplicantDto>> GetAllApplicantsAsync(Guid recruiterId)
+        {
+            var applications = await _db.JobApplications
+                .AsNoTracking()
+                .Where(a => a.JobPosting.CreatedByRecruiterId == recruiterId)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Skills)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Experiences)
+                .Include(a => a.JobPosting)
+                .OrderByDescending(a => a.AppliedAt)
+                .ToListAsync();
+
+            return applications
+                .Select(a => MapApplicant(a, a.JobPosting?.Title ?? string.Empty))
+                .ToList();
+        }
+
+        public async Task<JobApplicantDto> UpdateApplicationStatusAsync(
+            Guid jobId, Guid applicationId, ApplicationStatus status, Guid recruiterId)
+        {
+            var job = await _db.JobPostings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.CreatedByRecruiterId == recruiterId)
+                ?? throw new KeyNotFoundException("Job posting not found or you do not have access.");
+
+            var application = await _db.JobApplications
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Skills)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Experiences)
+                .FirstOrDefaultAsync(a => a.Id == applicationId && a.JobPostingId == jobId)
+                ?? throw new KeyNotFoundException("Application not found for this job.");
+
+            application.Status = status;
+            application.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            return MapApplicant(application, job.Title);
+        }
+
+        private static JobApplicantDto MapApplicant(JobApplication a, string jobTitle)
+        {
+            var profile = a.CandidateProfile;
+            var user = profile.User;
+            var latestExp = profile.Experiences
+                .OrderByDescending(e => e.IsCurrent)
+                .ThenByDescending(e => e.StartDate)
+                .FirstOrDefault();
+
+            string? experienceSummary = null;
+            if (latestExp != null)
+            {
+                var years = profile.Experiences.Count;
+                experienceSummary = latestExp.IsCurrent
+                    ? $"{years} role{(years == 1 ? "" : "s")} · Current: {latestExp.Title} at {latestExp.Company}"
+                    : $"{years} role{(years == 1 ? "" : "s")} · {latestExp.Title} at {latestExp.Company}";
+            }
+
+            return new JobApplicantDto
+            {
+                ApplicationId = a.Id,
+                JobPostingId = a.JobPostingId,
+                CandidateProfileId = profile.Id,
+                UserId = profile.UserId,
+                FullName = $"{user.FirstName} {user.LastName}".Trim(),
+                Email = user.Email,
+                Headline = profile.Headline,
+                Location = profile.Location,
+                PhotoUrl = profile.PhotoUrl,
+                JobTitle = jobTitle,
+                Status = a.Status.ToString(),
+                CoverLetter = a.CoverLetter,
+                AppliedAt = a.AppliedAt,
+                Skills = profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList(),
+                ExperienceSummary = experienceSummary,
+                ResumeUrl = profile.ResumeUrl
             };
         }
 

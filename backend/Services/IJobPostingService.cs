@@ -28,5 +28,15 @@ namespace backend.Services
 
         
         Task<PublicJobPageDto> GetPublicJobPageAsync(Guid id);
+
+        /// <summary>List candidates who applied to a job owned by this recruiter.</summary>
+        Task<JobApplicantsResultDto> GetApplicantsAsync(Guid jobId, Guid recruiterId);
+
+        /// <summary>List applicants across all jobs owned by this recruiter.</summary>
+        Task<List<JobApplicantDto>> GetAllApplicantsAsync(Guid recruiterId);
+
+        /// <summary>Update an application's pipeline status (must belong to recruiter's job).</summary>
+        Task<JobApplicantDto> UpdateApplicationStatusAsync(
+            Guid jobId, Guid applicationId, ApplicationStatus status, Guid recruiterId);
     }
 }

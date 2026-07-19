@@ -181,6 +181,66 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>List candidates who applied to one of the recruiter's jobs</summary>
+        [HttpGet("api/recruiter/jobs/{id:guid}/applicants")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(JobApplicantsResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetApplicants(Guid id)
+        {
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var result = await _jobService.GetApplicantsAsync(id, recruiterId.Value);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>List applicants across all of the recruiter's jobs</summary>
+        [HttpGet("api/recruiter/applicants")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(List<JobApplicantDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllApplicants()
+        {
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            var result = await _jobService.GetAllApplicantsAsync(recruiterId.Value);
+            return Ok(result);
+        }
+
+        /// <summary>Update pipeline status for an applicant on a recruiter-owned job</summary>
+        [HttpPatch("api/recruiter/jobs/{id:guid}/applicants/{applicationId:guid}/status")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(JobApplicantDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateApplicantStatus(
+            Guid id, Guid applicationId, [FromBody] UpdateApplicationStatusDto dto)
+        {
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var result = await _jobService.UpdateApplicationStatusAsync(
+                    id, applicationId, dto.Status, recruiterId.Value);
+                return Ok(new { message = $"Application status updated to '{dto.Status}'.", data = result });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         
 
         /// <summary>Browse all published jobs (candidates, unauthenticated)</summary>

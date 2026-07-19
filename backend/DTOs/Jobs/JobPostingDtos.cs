@@ -95,6 +95,45 @@ namespace backend.DTOs.Jobs
         public DateTime? PublishedAt { get; set; }
         public string RecruiterName { get; set; } = string.Empty;
         public string PostedBy { get; set; } = string.Empty;
+        public int ApplicantCount { get; set; }
+        public int ScreenedCount { get; set; }
+        public int ShortlistedCount { get; set; }
+        public int InterviewCount { get; set; }
+    }
+
+    /// <summary>Applicant row shown on the recruiter "View applicants" pipeline.</summary>
+    public class JobApplicantDto
+    {
+        public Guid ApplicationId { get; set; }
+        public Guid JobPostingId { get; set; }
+        public Guid CandidateProfileId { get; set; }
+        public Guid UserId { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? Headline { get; set; }
+        public string? Location { get; set; }
+        public string? PhotoUrl { get; set; }
+        public string JobTitle { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string? CoverLetter { get; set; }
+        public DateTime AppliedAt { get; set; }
+        public List<string> Skills { get; set; } = [];
+        public string? ExperienceSummary { get; set; }
+        public string? ResumeUrl { get; set; }
+    }
+
+    public class JobApplicantsResultDto
+    {
+        public Guid JobId { get; set; }
+        public string JobTitle { get; set; } = string.Empty;
+        public string JobStatus { get; set; } = string.Empty;
+        public List<JobApplicantDto> Applicants { get; set; } = [];
+    }
+
+    public class UpdateApplicationStatusDto
+    {
+        [Required]
+        public ApplicationStatus Status { get; set; }
     }
 
     public class JobPostingDetailDto : JobPostingListDto
