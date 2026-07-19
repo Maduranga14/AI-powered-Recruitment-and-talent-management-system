@@ -25,6 +25,7 @@ export interface RecruiterCandidate {
   /** Present when loaded from a real job application */
   applicationId?: string;
   jobId?: string;
+  resumeUrl?: string | null;
 }
 
 export interface RecruiterJob {

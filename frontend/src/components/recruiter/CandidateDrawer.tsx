@@ -145,6 +145,30 @@ export function CandidateDrawer({
                   {candidate.experience}
                 </p>
               </section>
+              {candidate.resumeUrl && (
+                <section className="mt-7">
+                  <h3 className="font-display text-base font-bold">Resume / CV</h3>
+                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 p-3 bg-slate-50">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                      <FileTextIcon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {candidate.name}’s Resume
+                      </p>
+                      <p className="text-xs text-slate-500">Resume / CV Document</p>
+                    </div>
+                    <a
+                      href={candidate.resumeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg bg-white border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                    >
+                      View Document
+                    </a>
+                  </div>
+                </section>
+              )}
               <section className="mt-7 rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
                 <div className="flex items-center gap-2">
                   <BrainCircuitIcon className="h-5 w-5 text-brand-600" />

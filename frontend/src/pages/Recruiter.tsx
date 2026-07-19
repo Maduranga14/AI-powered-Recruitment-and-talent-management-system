@@ -27,6 +27,7 @@ import {
   EmploymentTypeMap,
   type JobApplicant,
   type JobPostingListItem,
+  type DepartmentDto,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -108,6 +109,7 @@ function toRecruiterCandidate(applicant: JobApplicant, jobId?: string): Recruite
     email: applicant.email,
     applicationId: applicant.applicationId,
     jobId: resolvedJobId,
+    resumeUrl: applicant.resumeUrl,
   };
 }
 
@@ -388,6 +390,7 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
   const [location, setLocation] = useState('');
   const [locationType, setLocationType] = useState<'onsite' | 'remote' | 'hybrid'>('onsite');
   const [departmentId, setDepartmentId] = useState('');
+  const [departments, setDepartments] = useState<DepartmentDto[]>([]);
 
   // Step 2
   const [description, setDescription] = useState('');
@@ -411,6 +414,7 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
       setLocation('');
       setLocationType('onsite');
       setDepartmentId('');
+      setDepartments([]);
       setDescription('');
       setRequirements('');
       setSkills('');
@@ -421,6 +425,12 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
       setDeadline('');
       setError('');
       setLoading(false);
+
+      recruiterApi.getDepartments().then((res) => {
+        setDepartments(res.departments || []);
+      }).catch((err) => {
+        console.error('Failed to load departments:', err);
+      });
     }
   }, [open, defaultPostedBy]);
 
@@ -551,9 +561,9 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
                   <Input
                     label="Posted by"
                     value={postedBy}
-                    onChange={(e) => setPostedBy(e.target.value)}
+                    disabled
                     placeholder="e.g. Northwind Labs"
-                    hint="Company or organization posting this job"
+                    hint="Your organization name (configured in profile)"
                   />
 
                   <Select
@@ -565,6 +575,19 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
                     <option value="PartTime">Part-time</option>
                     <option value="Contract">Contract</option>
                     <option value="Internship">Internship</option>
+                  </Select>
+
+                  <Select
+                    label="Department"
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                  >
+                    <option value="">Select a Department (Optional)</option>
+                    {departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </option>
+                    ))}
                   </Select>
 
                   {/* 4. Location Ã¢â‚¬â€ work arrangement toggle */}
