@@ -309,6 +309,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
     company: companyName,
     companyLogo: logoUrl,
     location: job.location,
+    skills: job.requiredSkills ?? [],
   };
 
   const onApply = () => {
