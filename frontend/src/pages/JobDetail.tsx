@@ -130,7 +130,9 @@ function StaticJobDetail({ job }: { job: Job }) {
 
   const applied = hasApplied(job.id);
   const saved = isSaved(job.id);
-  const isRecruiter = (user?.title ?? '').toLowerCase() === 'recruiter';
+  const role = (user?.title ?? '').toLowerCase();
+  const hideCandidateActions =
+    role === 'admin' || role === 'recruiter' || role === 'hiringmanager';
 
   const onApply = () => {
     if (!isAuthenticated) {
@@ -186,7 +188,7 @@ function StaticJobDetail({ job }: { job: Job }) {
                 </div>
               </div>
             </div>
-            {isAuthenticated && (
+            {isAuthenticated && !hideCandidateActions && (
               <div className="flex flex-col items-center rounded-2xl bg-slate-50 p-3">
                 <MatchScore score={job.matchScore} size={56} />
                 <span className="mt-1 text-xs font-semibold text-slate-500">AI match</span>
@@ -206,7 +208,7 @@ function StaticJobDetail({ job }: { job: Job }) {
               <span className="ml-1 text-sm font-normal text-slate-400">/ year</span>
             </span>
             <div className="flex gap-2">
-              {!isRecruiter && (
+              {!hideCandidateActions && (
                 <Button
                   variant="outline"
                   onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: job.company, logo: job.companyLogo, location: job.location }) : navigate('/login')}
@@ -219,7 +221,7 @@ function StaticJobDetail({ job }: { job: Job }) {
               <Button variant="outline" aria-label="Share job">
                 <Share2Icon className="h-4 w-4" />
               </Button>
-              {!isRecruiter && (
+              {!hideCandidateActions && (
                 applied ? (
                   <Button variant="secondary" disabled>
                     <CheckCircle2Icon className="h-4 w-4" /> Applied
@@ -296,7 +298,9 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
 
   const saved = isSaved(job.id);
   const applied = hasApplied(job.id);
-  const isRecruiter = (user?.title ?? '').toLowerCase() === 'recruiter';
+  const role = (user?.title ?? '').toLowerCase();
+  const hideCandidateActions =
+    role === 'admin' || role === 'recruiter' || role === 'hiringmanager';
   const companyName = job.postedBy || job.organizationName || 'Company';
   const bgColor = stringToColor(companyName);
   const logoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bgColor}&color=fff&bold=true&size=128&format=png`;
@@ -392,7 +396,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               )}
             </span>
             <div className="flex gap-2">
-              {!isRecruiter && (
+              {!hideCandidateActions && (
                 <Button
                   variant="outline"
                   onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: companyName, logo: logoUrl, location: job.location }) : navigate('/login')}
@@ -405,7 +409,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               <Button variant="outline" aria-label="Share job">
                 <Share2Icon className="h-4 w-4" />
               </Button>
-              {!isRecruiter && (
+              {!hideCandidateActions && (
                 applied ? (
                   <Button variant="secondary" disabled>
                     <CheckCircle2Icon className="h-4 w-4" /> Applied
