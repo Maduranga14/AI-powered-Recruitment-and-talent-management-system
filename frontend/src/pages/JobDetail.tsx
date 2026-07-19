@@ -125,11 +125,12 @@ export function JobDetail() {
 
 function StaticJobDetail({ job }: { job: Job }) {
   const navigate = useNavigate();
-  const { isAuthenticated, hasApplied, isSaved, toggleSaveJob } = useAuth();
+  const { isAuthenticated, hasApplied, isSaved, toggleSaveJob, user } = useAuth();
   const [applyOpen, setApplyOpen] = useState(false);
 
   const applied = hasApplied(job.id);
   const saved = isSaved(job.id);
+  const isRecruiter = (user?.title ?? '').toLowerCase() === 'recruiter';
 
   const onApply = () => {
     if (!isAuthenticated) {
@@ -205,25 +206,29 @@ function StaticJobDetail({ job }: { job: Job }) {
               <span className="ml-1 text-sm font-normal text-slate-400">/ year</span>
             </span>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: job.company, logo: job.companyLogo, location: job.location }) : navigate('/login')}
-                aria-pressed={saved}
-              >
-                <BookmarkIcon className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
-                {saved ? 'Saved' : 'Save'}
-              </Button>
+              {!isRecruiter && (
+                <Button
+                  variant="outline"
+                  onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: job.company, logo: job.companyLogo, location: job.location }) : navigate('/login')}
+                  aria-pressed={saved}
+                >
+                  <BookmarkIcon className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
+                  {saved ? 'Saved' : 'Save'}
+                </Button>
+              )}
               <Button variant="outline" aria-label="Share job">
                 <Share2Icon className="h-4 w-4" />
               </Button>
-              {applied ? (
-                <Button variant="secondary" disabled>
-                  <CheckCircle2Icon className="h-4 w-4" /> Applied
-                </Button>
-              ) : (
-                <Button onClick={onApply}>
-                  {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
-                </Button>
+              {!isRecruiter && (
+                applied ? (
+                  <Button variant="secondary" disabled>
+                    <CheckCircle2Icon className="h-4 w-4" /> Applied
+                  </Button>
+                ) : (
+                  <Button onClick={onApply}>
+                    {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
+                  </Button>
+                )
               )}
             </div>
           </div>
@@ -286,11 +291,12 @@ function StaticJobDetail({ job }: { job: Job }) {
 
 function ApiJobDetail({ job }: { job: PublicJob }) {
   const navigate = useNavigate();
-  const { isAuthenticated, isSaved, toggleSaveJob, hasApplied } = useAuth();
+  const { isAuthenticated, isSaved, toggleSaveJob, hasApplied, user } = useAuth();
   const [applyOpen, setApplyOpen] = useState(false);
 
   const saved = isSaved(job.id);
   const applied = hasApplied(job.id);
+  const isRecruiter = (user?.title ?? '').toLowerCase() === 'recruiter';
   const companyName = job.postedBy || job.organizationName || 'Company';
   const bgColor = stringToColor(companyName);
   const logoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bgColor}&color=fff&bold=true&size=128&format=png`;
@@ -385,25 +391,29 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               )}
             </span>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: companyName, logo: logoUrl, location: job.location }) : navigate('/login')}
-                aria-pressed={saved}
-              >
-                <BookmarkIcon className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
-                {saved ? 'Saved' : 'Save'}
-              </Button>
+              {!isRecruiter && (
+                <Button
+                  variant="outline"
+                  onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: companyName, logo: logoUrl, location: job.location }) : navigate('/login')}
+                  aria-pressed={saved}
+                >
+                  <BookmarkIcon className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
+                  {saved ? 'Saved' : 'Save'}
+                </Button>
+              )}
               <Button variant="outline" aria-label="Share job">
                 <Share2Icon className="h-4 w-4" />
               </Button>
-              {applied ? (
-                <Button variant="secondary" disabled>
-                  <CheckCircle2Icon className="h-4 w-4" /> Applied
-                </Button>
-              ) : (
-                <Button onClick={onApply}>
-                  {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
-                </Button>
+              {!isRecruiter && (
+                applied ? (
+                  <Button variant="secondary" disabled>
+                    <CheckCircle2Icon className="h-4 w-4" /> Applied
+                  </Button>
+                ) : (
+                  <Button onClick={onApply}>
+                    {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
+                  </Button>
+                )
               )}
             </div>
           </div>
