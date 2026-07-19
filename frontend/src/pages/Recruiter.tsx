@@ -105,7 +105,7 @@ export function Recruiter() {
     showFeedback(
       candidate
         ? `Scheduling flow opened for ${candidate.name}.`
-        : 'Scheduling flow opened — choose a candidate and time.'
+        : 'Scheduling flow opened ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â choose a candidate and time.'
     );
   };
 
@@ -216,6 +216,7 @@ export function Recruiter() {
 
 
 
+
 interface CreateJobModalProps {
   open: boolean;
   onClose: () => void;
@@ -224,85 +225,107 @@ interface CreateJobModalProps {
 }
 
 function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: CreateJobModalProps) {
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Step 1
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
+  const [postedBy, setPostedBy] = useState(defaultPostedBy);
   const [employmentType, setEmploymentType] = useState('FullTime');
+  const [location, setLocation] = useState('');
+  const [locationType, setLocationType] = useState<'onsite' | 'remote' | 'hybrid'>('onsite');
+  const [departmentId, setDepartmentId] = useState('');
+
+  // Step 2
+  const [description, setDescription] = useState('');
+  const [requirements, setRequirements] = useState('');
   const [skills, setSkills] = useState('');
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
   const [salaryCurrency, setSalaryCurrency] = useState('USD');
-  const [postedBy, setPostedBy] = useState(defaultPostedBy);
-  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
-  const [departmentId, setDepartmentId] = useState('');
+  const [salaryPublic, setSalaryPublic] = useState(true);
+  const [deadline, setDeadline] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (open) {
+      setStep(1);
       setTitle('');
-      setDescription('');
-      setLocation('');
+      setPostedBy(defaultPostedBy);
       setEmploymentType('FullTime');
+      setLocation('');
+      setLocationType('onsite');
+      setDepartmentId('');
+      setDescription('');
+      setRequirements('');
       setSkills('');
       setSalaryMin('');
       setSalaryMax('');
       setSalaryCurrency('USD');
-      setPostedBy(defaultPostedBy);
-      setDepartmentId('');
+      setSalaryPublic(true);
+      setDeadline('');
       setError('');
       setLoading(false);
-
-      (async () => {
-        try {
-          const res = await recruiterApi.getDepartments();
-          setDepartments(res.departments);
-        } catch (e) {
-          console.error('Failed to load departments in modal:', e);
-        }
-      })();
     }
   }, [open, defaultPostedBy]);
+
+  const locationString =
+    locationType === 'remote'
+      ? 'Remote'
+      : locationType === 'hybrid'
+        ? location.trim()
+          ? `${location.trim()} - Hybrid`
+          : 'Hybrid'
+        : location.trim() || 'On-site';
 
   const salaryMinNum = salaryMin !== '' ? parseFloat(salaryMin) : undefined;
   const salaryMaxNum = salaryMax !== '' ? parseFloat(salaryMax) : undefined;
   const salaryRangeValid =
-    salaryMinNum === undefined ||
-    salaryMaxNum === undefined ||
-    salaryMinNum <= salaryMaxNum;
+    salaryMinNum === undefined || salaryMaxNum === undefined || salaryMinNum <= salaryMaxNum;
 
-  const canCreate =
+  const step1Valid =
     title.trim().length > 2 &&
-    description.trim().length > 0 &&
-    location.trim().length > 0 &&
-    salaryRangeValid;
+    (locationType === 'remote' || location.trim().length > 0);
+  const step2Valid = description.trim().length > 0 && salaryRangeValid;
+  const canCreate = step1Valid && step2Valid;
 
   const handleCreate = async () => {
     if (!canCreate) return;
     setLoading(true);
     setError('');
 
+    const fullDescription = requirements.trim()
+      ? `${description.trim()}\n\nRequirements:\n${requirements.trim()}`
+      : description.trim();
+
     try {
       const res = await recruiterApi.createJob({
         title: title.trim(),
-        description: description.trim(),
-        location: location.trim(),
+        description: fullDescription,
+        location: locationString,
         employmentType: EmploymentTypeMap[employmentType] ?? 0,
         status: 1,
         requiredSkills: skills.trim() || undefined,
-        salaryMin: salaryMinNum,
-        salaryMax: salaryMaxNum,
+        salaryMin: salaryPublic ? salaryMinNum : undefined,
+        salaryMax: salaryPublic ? salaryMaxNum : undefined,
         salaryCurrency: salaryCurrency.trim() || 'USD',
         postedBy: postedBy.trim() || undefined,
         departmentId: departmentId || undefined,
+        deadline: deadline || undefined,
       });
-
       onCreated(toRecruiterJob(res.data));
     } catch (err: any) {
       setError(err?.message ?? 'Failed to create job. Please try again.');
       setLoading(false);
     }
   };
+
+  const locationTypes = [
+    { value: 'onsite' as const, label: 'On-site' },
+    { value: 'remote' as const, label: 'Remote' },
+    { value: 'hybrid' as const, label: 'Hybrid' },
+  ];
 
   return (
     <AnimatePresence>
@@ -314,7 +337,7 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
             exit={{ opacity: 0 }}
             onClick={onClose}
             className="absolute inset-0 w-full bg-slate-900/45 backdrop-blur-sm"
-            aria-label="Close create job dialog"
+            aria-label="Close"
           />
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -324,153 +347,255 @@ function CreateJobModal({ open, onClose, onCreated, defaultPostedBy = '' }: Crea
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-job-title"
-            className="relative z-10 w-full max-w-lg rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl"
+            className="relative z-10 w-full max-w-2xl rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
           >
-            <button
-              onClick={onClose}
-              className="absolute right-4 top-4 rounded-lg p-2 text-slate-400 hover:bg-slate-100"
-              aria-label="Close"
-            >
-              <XIcon className="h-5 w-5" />
-            </button>
-
-            <h2
-              id="create-job-title"
-              className="font-display text-xl font-extrabold"
-            >
-              Create a job
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Fill in the details and publish to go live instantly.
-            </p>
-
-            <div className="mt-6 space-y-4">
-              <Input
-                label="Job title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Senior Product Designer"
-                autoFocus
-              />
-              <Input
-                label="Posted by"
-                value={postedBy}
-                onChange={(e) => setPostedBy(e.target.value)}
-                placeholder="e.g. Northwind Labs"
-                hint="Company or organization posting this job"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g. Remote · US"
-                />
-                <Select
-                  label="Type"
-                  value={employmentType}
-                  onChange={(e) => setEmploymentType(e.target.value)}
-                >
-                  <option value="FullTime">Full-time</option>
-                  <option value="PartTime">Part-time</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Internship">Internship</option>
-                  <option value="Remote">Remote</option>
-                </Select>
-              </div>
-              <Select
-                label="Department / Team (Optional)"
-                value={departmentId}
-                onChange={(e) => setDepartmentId(e.target.value)}
-              >
-                <option value="">No department (General)</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </Select>
-              <Textarea
-                label="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the role, responsibilities, and what success looks like…"
-              />
-
-              {/* Estimated salary */}
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
               <div>
-                <p className="mb-1.5 text-sm font-medium text-slate-700">
-                  Estimated salary{' '}
-                  <span className="font-normal text-slate-400">(optional)</span>
+                <h2 id="create-job-title" className="font-display text-xl font-extrabold text-slate-900">
+                  Create a job
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  Step {step} of 2 &mdash; {step === 1 ? 'Basic details' : 'Description & requirements'}
                 </p>
-                <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
-                  <Input
-                    placeholder="Min"
-                    type="number"
-                    min={0}
-                    value={salaryMin}
-                    onChange={(e) => setSalaryMin(e.target.value)}
-                    error={!salaryRangeValid ? 'Min > Max' : undefined}
-                  />
-                  <Input
-                    placeholder="Max"
-                    type="number"
-                    min={0}
-                    value={salaryMax}
-                    onChange={(e) => setSalaryMax(e.target.value)}
-                  />
-                  <Select
-                    value={salaryCurrency}
-                    onChange={(e) => setSalaryCurrency(e.target.value)}
-                    className="w-24"
-                  >
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="LKR">LKR</option>
-                    <option value="INR">INR</option>
-                    <option value="AUD">AUD</option>
-                    <option value="CAD">CAD</option>
-                  </Select>
-                </div>
-                {!salaryRangeValid && (
-                  <p className="mt-1.5 text-xs font-medium text-red-600">
-                    Minimum salary cannot be greater than maximum.
-                  </p>
-                )}
               </div>
+              <button
+                onClick={onClose}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                aria-label="Close"
+              >
+                <XIcon className="h-5 w-5" />
+              </button>
+            </div>
 
-              <Input
-                label="Required skills"
-                value={skills}
-                onChange={(e) => setSkills(e.target.value)}
-                placeholder="e.g. React, TypeScript, Node.js"
-                hint="Comma-separated"
+            {/* Progress bar */}
+            <div className="h-1 w-full bg-slate-100">
+              <motion.div
+                className="h-full bg-brand-600"
+                animate={{ width: step === 1 ? '50%' : '100%' }}
+                transition={{ duration: 0.3 }}
               />
             </div>
 
-            {error && (
-              <p className="mt-3 text-sm font-medium text-red-600">{error}</p>
-            )}
+            {/* Body */}
+            <div className="max-h-[68vh] overflow-y-auto px-6 py-6">
 
-            <div className="mt-7 flex gap-3">
-              <Button fullWidth variant="outline" onClick={onClose} disabled={loading}>
-                Cancel
-              </Button>
-              <Button
-                fullWidth
-                disabled={!canCreate || loading}
-                onClick={handleCreate}
-              >
-                {loading ? (
+              {/* STEP 1 */}
+              {step === 1 && (
+                <div className="space-y-5">
+
+                  {/* 1. Job Title */}
+                  <Input
+                    label="Job title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Senior Product Designer"
+                    autoFocus
+                  />
+
+                  {/* 2. Posted by */}
+                  <Input
+                    label="Posted by"
+                    value={postedBy}
+                    onChange={(e) => setPostedBy(e.target.value)}
+                    placeholder="e.g. Northwind Labs"
+                    hint="Company or organization posting this job"
+                  />
+
+                  <Select
+                    label="Employment type"
+                    value={employmentType}
+                    onChange={(e) => setEmploymentType(e.target.value)}
+                  >
+                    <option value="FullTime">Full-time</option>
+                    <option value="PartTime">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
+                  </Select>
+
+                  {/* 4. Location Ã¢â‚¬â€ work arrangement toggle */}
+                  <div>
+                    <p className="mb-2 text-sm font-medium text-slate-700">Work arrangement</p>
+                    <div className="flex gap-2">
+                      {locationTypes.map(({ value, label }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setLocationType(value)}
+                          className={`flex-1 rounded-xl border-2 py-2.5 text-sm font-semibold transition-all ${
+                            locationType === value
+                              ? 'border-brand-600 bg-brand-50 text-brand-700'
+                              : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* City input Ã¢â‚¬â€ hidden when Remote */}
+                  {locationType !== 'remote' && (
+                    <Input
+                      label={locationType === 'hybrid' ? 'City / Office location' : 'Location'}
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="e.g. New York, NY"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* STEP 2 */}
+              {step === 2 && (
+                <div className="space-y-5">
+
+                  {/* 6. Job Description */}
+                  <div>
+                    <Textarea
+                      label="Job description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Describe the role, responsibilities, and what success looks like..."
+                      className="min-h-[140px]"
+                    />
+                    <p className="mt-1 text-xs text-slate-400">
+                      Cover the overview, day-to-day responsibilities, and team context.
+                    </p>
+                  </div>
+
+                  {/* 7. Requirements / Qualifications */}
+                  <div>
+                    <Textarea
+                      label="Requirements & qualifications"
+                      value={requirements}
+                      onChange={(e) => setRequirements(e.target.value)}
+                      placeholder={'- 3+ years of experience in...\n- Proficiency in...\n- Degree in relevant field or equivalent experience'}
+                      hint="One requirement per line. Start each with a dash for clarity."
+                      className="min-h-[120px]"
+                    />
+                  </div>
+
+                  {/* Required skills */}
+                  <Input
+                    label="Required skills"
+                    value={skills}
+                    onChange={(e) => setSkills(e.target.value)}
+                    placeholder="e.g. React, TypeScript, Node.js"
+                    hint="Comma-separated list of key skills"
+                  />
+
+                  {/* 5. Salary Range */}
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-sm font-medium text-slate-700">
+                        Salary range
+                        <span className="ml-1.5 font-normal text-slate-400">(optional)</span>
+                      </p>
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={salaryPublic}
+                          onChange={(e) => setSalaryPublic(e.target.checked)}
+                          className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                        />
+                        Display publicly
+                      </label>
+                    </div>
+                    <div
+                      className={`grid grid-cols-[1fr_1fr_auto] gap-2 transition-opacity ${
+                        !salaryPublic ? 'pointer-events-none opacity-40' : ''
+                      }`}
+                    >
+                      <Input
+                        placeholder="Min"
+                        type="number"
+                        min={0}
+                        value={salaryMin}
+                        onChange={(e) => setSalaryMin(e.target.value)}
+                        error={!salaryRangeValid ? 'Min > Max' : undefined}
+                      />
+                      <Input
+                        placeholder="Max"
+                        type="number"
+                        min={0}
+                        value={salaryMax}
+                        onChange={(e) => setSalaryMax(e.target.value)}
+                      />
+                      <Select
+                        value={salaryCurrency}
+                        onChange={(e) => setSalaryCurrency(e.target.value)}
+                        className="w-24"
+                      >
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                        <option value="LKR">LKR</option>
+                        <option value="INR">INR</option>
+                        <option value="AUD">AUD</option>
+                        <option value="CAD">CAD</option>
+                      </Select>
+                    </div>
+                    {!salaryRangeValid && (
+                      <p className="mt-1.5 text-xs font-medium text-red-600">
+                        Minimum cannot be greater than maximum.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 8. Application Deadline */}
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                      Application deadline
+                      <span className="ml-1.5 font-normal text-slate-400">(optional)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={deadline}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setDeadline(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-100 px-6 py-4">
+              {error && (
+                <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+                  {error}
+                </p>
+              )}
+              <div className="flex gap-3">
+                {step === 1 ? (
                   <>
-                    <Loader2Icon className="h-4 w-4 animate-spin" />
-                    Creating…
+                    <Button fullWidth variant="outline" onClick={onClose}>
+                      Cancel
+                    </Button>
+                    <Button fullWidth disabled={!step1Valid} onClick={() => setStep(2)}>
+                      Next step
+                    </Button>
                   </>
                 ) : (
-                  'Create job'
+                  <>
+                    <Button fullWidth variant="outline" onClick={() => setStep(1)}>
+                      Back
+                    </Button>
+                    <Button fullWidth disabled={!canCreate || loading} onClick={handleCreate}>
+                      {loading ? (
+                        <>
+                          <Loader2Icon className="h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        'Create job'
+                      )}
+                    </Button>
+                  </>
                 )}
-              </Button>
+              </div>
             </div>
           </motion.div>
         </div>
