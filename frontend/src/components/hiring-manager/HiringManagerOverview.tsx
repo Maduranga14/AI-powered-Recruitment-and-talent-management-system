@@ -38,36 +38,53 @@ export function HiringManagerOverview({
   const submitted = candidates.filter(
     (candidate) => candidate.decisionStatus === 'Feedback submitted'
   );
-  const metrics = [
-  {
-    label: 'Assigned roles',
-    value: roles.length,
-    detail: 'Across three teams',
-    icon: UsersRoundIcon,
-    tone: 'brand'
-  },
-  {
-    label: 'Awaiting your input',
-    value: awaiting.length,
-    detail: 'Due before Friday',
-    icon: ClipboardCheckIcon,
-    tone: 'amber'
-  },
-  {
-    label: 'Upcoming interviews',
-    value: interviews.length,
-    detail: 'Next: 10:30 AM',
-    icon: CalendarClockIcon,
-    tone: 'accent'
-  },
-  {
-    label: 'Feedback submitted',
-    value: submitted.length,
-    detail: 'Decision-ready',
-    icon: CheckCircle2Icon,
-    tone: 'blue'
-  }];
+  const feedbackPct =
+    candidates.length === 0
+      ? 0
+      : Math.round((submitted.length / candidates.length) * 100);
+  const nextInterview = interviews[0];
+  const nextDetail = nextInterview
+    ? `Next: ${nextInterview.time.replace('Today · ', '')}`
+    : 'None scheduled';
 
+  const metrics = [
+    {
+      label: 'Assigned roles',
+      value: roles.length,
+      detail:
+        roles.length === 0
+          ? 'No roles assigned yet'
+          : `${roles.length} active search${roles.length === 1 ? '' : 'es'}`,
+      icon: UsersRoundIcon,
+      tone: 'brand',
+    },
+    {
+      label: 'Awaiting your input',
+      value: awaiting.length,
+      detail:
+        awaiting.length === 0
+          ? 'Queue is clear'
+          : `${awaiting.length} pending review${awaiting.length === 1 ? '' : 's'}`,
+      icon: ClipboardCheckIcon,
+      tone: 'amber',
+    },
+    {
+      label: 'Upcoming interviews',
+      value: interviews.length,
+      detail: nextDetail,
+      icon: CalendarClockIcon,
+      tone: 'accent',
+    },
+    {
+      label: 'Feedback submitted',
+      value: submitted.length,
+      detail: candidates.length
+        ? `${feedbackPct}% of queue complete`
+        : 'No candidates yet',
+      icon: CheckCircle2Icon,
+      tone: 'blue',
+    },
+  ];
   return (
     <motion.div
       initial={{
@@ -82,7 +99,13 @@ export function HiringManagerOverview({
       
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">Tuesday, May 14</p>
+          <p className="text-sm font-medium text-slate-500">
+            {new Date().toLocaleDateString(undefined, {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
           <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
             Good morning, {firstName}
           </h1>
@@ -209,6 +232,11 @@ export function HiringManagerOverview({
             </button>
           </div>
           <div className="mt-5 space-y-4">
+            {interviews.length === 0 && (
+              <p className="py-4 text-center text-sm text-slate-500">
+                No interviews scheduled for your roles yet.
+              </p>
+            )}
             {interviews.slice(0, 2).map((interview) =>
             <button
               key={interview.id}
@@ -265,6 +293,12 @@ export function HiringManagerOverview({
             <Badge tone="slate">{roles.length} roles</Badge>
           </div>
           <div className="mt-5 space-y-4">
+            {roles.length === 0 && (
+              <p className="py-4 text-center text-sm text-slate-500">
+                Roles appear here once candidates are shortlisted to your
+                departments.
+              </p>
+            )}
             {roles.map((role) =>
             <article
               key={role.id}
@@ -303,17 +337,19 @@ export function HiringManagerOverview({
             Team decision pulse
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            The Product Designer loop has two strong signals. Add your evidence
-            after today’s conversation so the team can calibrate before
-            Thursday.
+            {awaiting.length > 0
+              ? `${awaiting.length} candidate${awaiting.length === 1 ? '' : 's'} still need your recommendation before the recruiter can schedule interviews.`
+              : candidates.length > 0
+                ? 'All shortlisted candidates have feedback. Great pace — keep the loop moving.'
+                : 'When recruiters shortlist candidates for your teams, they will appear here for review.'}
           </p>
           <div className="mt-5 rounded-xl border border-accent-100 bg-white/80 p-4">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              This week
+              Feedback completion
             </p>
             <div className="mt-3 flex items-end gap-4">
               <p className="font-display text-3xl font-extrabold text-slate-900">
-                83%
+                {feedbackPct}%
               </p>
               <p className="pb-1 text-xs text-slate-500">
                 of assigned feedback complete
@@ -321,17 +357,11 @@ export function HiringManagerOverview({
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-accent-100">
               <motion.div
-                initial={{
-                  width: 0
-                }}
-                animate={{
-                  width: '83%'
-                }}
-                transition={{
-                  duration: 0.5
-                }}
-                className="h-full rounded-full bg-accent-500" />
-              
+                initial={{ width: 0 }}
+                animate={{ width: `${feedbackPct}%` }}
+                transition={{ duration: 0.5 }}
+                className="h-full rounded-full bg-accent-500"
+              />
             </div>
           </div>
           <button

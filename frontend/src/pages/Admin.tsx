@@ -22,12 +22,14 @@ import {
   type AccountStatus
 } from
   '../data/admin';
-import { adminApi } from '../services/api';
+import { adminApi, publicApi } from '../services/api';
 export function Admin() {
   const [view, setView] = useState<AdminView>('overview');
   const [people, setPeople] = useState<AdminPerson[]>([]);
   const [organizations, setOrganizations] = useState<AdminOrganization[]>([]);
   const [moderation, setModeration] = useState(ADMIN_MODERATION);
+  const [pendingApprovals, setPendingApprovals] = useState(0);
+  const [publishedJobs, setPublishedJobs] = useState(0);
   const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
   const [selectedOrganizationId, setSelectedOrganizationId] = useState<
     string | null>(
@@ -43,7 +45,21 @@ export function Admin() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await adminApi.getUsers(undefined, 1, 100);
+        const [res, pending, jobs] = await Promise.all([
+          adminApi.getUsers(undefined, 1, 100),
+          adminApi.getPendingRecruiters().catch(() => []),
+          publicApi.getPublishedJobs().catch(() => []),
+        ]);
+
+        setPendingApprovals(pending.length);
+        setPublishedJobs(jobs.length);
+
+        const jobsByOrg = new Map<string, number>();
+        for (const job of jobs) {
+          const key = (job.organizationName || job.postedBy || '').toLowerCase();
+          if (!key) continue;
+          jobsByOrg.set(key, (jobsByOrg.get(key) || 0) + 1);
+        }
         
         // 1. Map backend users to AdminPerson
         const backendPeople: AdminPerson[] = res.items.map((u) => {
@@ -83,21 +99,22 @@ export function Admin() {
 
         const backendOrgs: AdminOrganization[] = Array.from(orgNames).map((orgName) => {
           const initials = orgName.split(' ').map((w) => w[0]).join('').toUpperCase().substring(0, 3);
+          const activeJobs = jobsByOrg.get(orgName.toLowerCase()) || 0;
           return {
             id: `org-${orgName.toLowerCase().replace(/\s+/g, '-')}`,
             name: orgName,
             initials: initials || 'ORG',
             plan: 'Starter',
             members: res.items.filter((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase()).length,
-            activeJobs: 1, // mock count
-            status: 'Healthy',
+            activeJobs,
+            status: 'Healthy' as const,
             owner: res.items.find((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase() && u.role === 'Recruiter')?.fullName || 'Unknown',
             joined: new Date().toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
               year: 'numeric',
             }),
-            monthlyUsage: '0%'
+            monthlyUsage: `${activeJobs} live roles`
           };
         });
 
@@ -172,9 +189,7 @@ export function Admin() {
   const selectedOrganization =
     organizations.find((item) => item.id === selectedOrganizationId) ??
     null;
-  const pendingCount = moderation.filter(
-    (item) => item.status === 'Pending'
-  ).length;
+  const pendingCount = pendingApprovals;
   return (
     <AdminShell
       activeView={view}
@@ -202,6 +217,8 @@ export function Admin() {
               people={people}
               organizations={organizations}
               moderation={moderation}
+              pendingApprovals={pendingApprovals}
+              publishedJobs={publishedJobs}
               onViewChange={setView} />
 
           }

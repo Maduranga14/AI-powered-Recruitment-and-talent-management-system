@@ -668,6 +668,45 @@ namespace backend.Services
             }).ToList();
         }
 
+        public async Task<List<InterviewDto>> GetManagerInterviewsAsync(Guid managerUserId)
+        {
+            var manager = await _db.Users.FindAsync(managerUserId);
+            if (manager == null || manager.Role != UserRole.HiringManager)
+                throw new KeyNotFoundException("Hiring manager user not found.");
+
+            var managerName = manager.FullName;
+            var departments = await _db.Departments
+                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
+                .Select(d => d.Id)
+                .ToListAsync();
+
+            if (departments.Count == 0)
+                return [];
+
+            var interviews = await _db.Interviews
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.JobPosting)
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.CandidateProfile)
+                        .ThenInclude(cp => cp.User)
+                .Where(i => i.JobApplication.JobPosting.DepartmentId != null &&
+                            departments.Contains(i.JobApplication.JobPosting.DepartmentId.Value))
+                .OrderBy(i => i.ScheduledAt)
+                .ToListAsync();
+
+            return interviews.Select(i =>
+            {
+                var user = i.JobApplication.CandidateProfile.User;
+                var name = $"{user.FirstName} {user.LastName}".Trim();
+                return MapInterview(
+                    i,
+                    i.JobApplication,
+                    i.JobApplication.JobPosting.Title,
+                    name,
+                    user.Email);
+            }).ToList();
+        }
+
         private static InterviewDto MapInterview(
             Interview interview,
             JobApplication application,

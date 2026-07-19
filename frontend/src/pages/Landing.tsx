@@ -32,24 +32,6 @@ function stringToColor(str: string): string {
 }
 const HERO_IMG = "/319f6e15-d12b-45d3-abbd-034800eb8b5b.jpg";
 
-const stats = [
-{
-  value: '48k+',
-  label: 'Open roles'
-},
-{
-  value: '12k+',
-  label: 'Companies hiring'
-},
-{
-  value: '96%',
-  label: 'Match accuracy'
-},
-{
-  value: '3.2d',
-  label: 'Avg. time to interview'
-}];
-
 const companies = [
 'Northwind Labs',
 'Bloomly',
@@ -168,7 +150,7 @@ export function Landing() {
               requirements: p.requiredSkills,
               benefits: [],
               applicants: 0,
-              matchScore: 75,
+              matchScore: 0,
               featured: true,
             } satisfies Job;
           })
@@ -184,6 +166,31 @@ export function Landing() {
 
   // Show live jobs only, capped at 4
   const featured = liveJobs.slice(0, 4);
+  const companyCount = new Set(
+    liveJobs.map((j) => j.company).filter(Boolean)
+  ).size;
+  const remoteCount = liveJobs.filter(
+    (j) => j.workMode === 'Remote' || j.location.toLowerCase().includes('remote')
+  ).length;
+  const liveStats = [
+    {
+      value: String(liveJobs.length),
+      label: 'Open roles',
+    },
+    {
+      value: String(companyCount),
+      label: 'Companies hiring',
+    },
+    {
+      value: String(remoteCount),
+      label: 'Remote-friendly roles',
+    },
+    {
+      value: featured.length ? String(featured.length) : '0',
+      label: 'Featured this week',
+    },
+  ];
+  const heroJob = liveJobs[0];
   return (
     <div className="w-full bg-slate-50">
       {/* Hero */}
@@ -287,9 +294,13 @@ export function Landing() {
                 <BrainCircuitIcon className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-bold text-slate-900">94% match</p>
+                <p className="text-sm font-bold text-slate-900">
+                  {heroJob ? 'Live opening' : 'Start matching'}
+                </p>
                 <p className="text-xs text-slate-500">
-                  Senior Frontend Engineer
+                  {heroJob
+                    ? heroJob.title
+                    : 'Publish roles to appear here'}
                 </p>
               </div>
             </motion.div>
@@ -299,7 +310,7 @@ export function Landing() {
         {/* Stats bar */}
         <div className="border-t border-slate-100 bg-slate-50/60">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-8 sm:px-6 lg:grid-cols-4 lg:px-8">
-            {stats.map((s) =>
+            {liveStats.map((s) =>
             <div key={s.label} className="text-center lg:text-left">
                 <p className="font-display text-3xl font-extrabold text-slate-900">
                   {s.value}

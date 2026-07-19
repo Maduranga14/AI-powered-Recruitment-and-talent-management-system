@@ -394,6 +394,26 @@ namespace backend.Controllers
             return Ok(result);
         }
 
+        /// <summary>List interviews for jobs in the hiring manager's departments</summary>
+        [HttpGet("api/manager/interviews")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(List<InterviewDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetManagerInterviews()
+        {
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.GetManagerInterviewsAsync(managerId.Value);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         private Guid? GetRecruiterId()
         {
             var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)

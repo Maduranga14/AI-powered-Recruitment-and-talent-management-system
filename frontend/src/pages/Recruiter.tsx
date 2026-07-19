@@ -447,6 +447,7 @@ export function Recruiter() {
       {view === 'jobs' && (
         <RecruiterJobs
           jobs={jobs}
+          interviews={interviews}
           loading={jobsLoading}
           onCreateJob={() => setCreateOpen(true)}
           onSchedule={() => openSchedule()}

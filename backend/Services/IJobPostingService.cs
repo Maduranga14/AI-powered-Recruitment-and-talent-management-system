@@ -50,5 +50,8 @@ namespace backend.Services
 
         /// <summary>List interviews for jobs owned by this recruiter (upcoming first).</summary>
         Task<List<InterviewDto>> GetInterviewsAsync(Guid recruiterId);
+
+        /// <summary>List interviews for applications in this hiring manager's departments.</summary>
+        Task<List<InterviewDto>> GetManagerInterviewsAsync(Guid managerUserId);
     }
 }

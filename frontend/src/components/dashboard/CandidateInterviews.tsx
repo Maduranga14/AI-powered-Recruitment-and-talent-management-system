@@ -24,6 +24,14 @@ function TypeIcon({ type }: { type: string }) {
   return <VideoIcon className="h-4 w-4" />;
 }
 
+/** Ensure meeting links open correctly even if the recruiter omitted https:// */
+function toMeetingUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 function formatCountdown(iso: string): string | null {
   const at = new Date(iso).getTime();
   const now = Date.now();
@@ -141,16 +149,16 @@ function InterviewCard({
 
           <div className="mt-4 flex flex-wrap gap-2">
             {interview.meetingLink && !isPast && (
-              <a
-                href={interview.meetingLink}
-                target="_blank"
-                rel="noreferrer"
+              <Button
+                size="sm"
+                onClick={() => {
+                  const url = toMeetingUrl(interview.meetingLink!);
+                  window.open(url, '_blank', 'noopener,noreferrer');
+                }}
               >
-                <Button size="sm">
-                  <VideoIcon className="h-4 w-4" /> Join meeting
-                  <ExternalLinkIcon className="h-3.5 w-3.5 opacity-70" />
-                </Button>
-              </a>
+                <VideoIcon className="h-4 w-4" /> Join meeting
+                <ExternalLinkIcon className="h-3.5 w-3.5 opacity-70" />
+              </Button>
             )}
             <Link to={`/jobs/${interview.jobPostingId}`}>
               <Button size="sm" variant="outline">

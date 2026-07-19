@@ -430,6 +430,9 @@ export const managerApi = {
   getApplicants: () =>
     request<JobApplicant[]>('/manager/applicants'),
 
+  getInterviews: () =>
+    request<InterviewDto[]>('/manager/interviews'),
+
   submitFeedback: (
     applicationId: string,
     payload: {

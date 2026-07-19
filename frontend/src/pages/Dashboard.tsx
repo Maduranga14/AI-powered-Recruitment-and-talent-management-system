@@ -84,7 +84,7 @@ function toJob(p: PublicJob): Job {
     requirements: p.requiredSkills,
     benefits: [],
     applicants: 0,
-    matchScore: 75,
+    matchScore: 0,
     featured: false,
   };
 }
@@ -115,7 +115,7 @@ function savedToJob(s: {
     requirements: [],
     benefits: [],
     applicants: 0,
-    matchScore: 75,
+    matchScore: 0,
     featured: false,
   };
 }
@@ -153,7 +153,15 @@ export function Dashboard() {
 
   const allSaved = savedJobs.map(savedToJob);
   const interviewCount = interviews.length;
-  const topMatch = recommended[0]?.matchScore;
+  const profileCompleteness = user.completenessPercent;
+  const topMatch =
+    profileCompleteness != null
+      ? `${profileCompleteness}%`
+      : applications.length > 0
+        ? String(applications.length)
+        : '—';
+  const topMatchLabel =
+    profileCompleteness != null ? 'Profile strength' : 'Applications';
 
   return (
     <div className="w-full bg-slate-50">
@@ -226,8 +234,8 @@ export function Dashboard() {
               />
               <StatCard
                 icon={TrophyIcon}
-                label="Top match"
-                value={topMatch != null ? `${topMatch}%` : '—'}
+                label={topMatchLabel}
+                value={topMatch}
                 tone="amber"
               />
             </div>

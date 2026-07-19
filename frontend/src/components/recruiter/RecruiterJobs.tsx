@@ -8,11 +8,12 @@ import {
   PlusIcon,
   UsersRoundIcon } from
 'lucide-react';
-import type { RecruiterJob } from '../../data/recruiter';
+import type { RecruiterInterview, RecruiterJob } from '../../data/recruiter';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 interface RecruiterJobsProps {
   jobs: RecruiterJob[];
+  interviews?: RecruiterInterview[];
   loading?: boolean;
   onCreateJob: () => void;
   onSchedule: () => void;
@@ -21,8 +22,25 @@ interface RecruiterJobsProps {
   onEditJob: (job: RecruiterJob) => void;
   onDeleteJob: (jobId: string) => void;
 }
+
+function countInterviewsThisWeek(interviews: RecruiterInterview[]): number {
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setHours(0, 0, 0, 0);
+  const day = weekStart.getDay();
+  weekStart.setDate(weekStart.getDate() + (day === 0 ? -6 : 1 - day));
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 7);
+  return interviews.filter((i) => {
+    if (!i.scheduledAt) return false;
+    const at = new Date(i.scheduledAt);
+    return at >= weekStart && at < weekEnd;
+  }).length;
+}
+
 export function RecruiterJobs({
   jobs,
+  interviews = [],
   loading,
   onCreateJob,
   onSchedule,
@@ -32,6 +50,7 @@ export function RecruiterJobs({
   onDeleteJob
 }: RecruiterJobsProps) {
   const [activeMenuJobId, setActiveMenuJobId] = useState<string | null>(null);
+  const interviewsThisWeek = countInterviewsThisWeek(interviews);
   return (
     <motion.div
       initial={{
@@ -78,7 +97,9 @@ export function RecruiterJobs({
           <p className="text-sm font-medium text-slate-500">
             Interviews this week
           </p>
-          <p className="mt-2 font-display text-3xl font-extrabold">14</p>
+          <p className="mt-2 font-display text-3xl font-extrabold">
+            {interviewsThisWeek}
+          </p>
         </div>
       </div>
       <section

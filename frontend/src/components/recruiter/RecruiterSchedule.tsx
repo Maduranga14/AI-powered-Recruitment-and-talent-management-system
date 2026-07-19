@@ -199,9 +199,13 @@ export function RecruiterSchedule({
                     </p>
                     {interview.meetingLink && (
                       <a
-                        href={interview.meetingLink}
+                        href={
+                          /^https?:\/\//i.test(interview.meetingLink.trim())
+                            ? interview.meetingLink.trim()
+                            : `https://${interview.meetingLink.trim()}`
+                        }
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:underline"
                       >
                         <LinkIcon className="h-3.5 w-3.5" /> Join link
