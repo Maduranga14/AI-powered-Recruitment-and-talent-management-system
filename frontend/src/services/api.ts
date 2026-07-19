@@ -252,6 +252,34 @@ export interface JobApplicant {
   skillRatings?: string | null;
 }
 
+export interface ScheduleInterviewPayload {
+  scheduledAt: string;
+  durationMinutes: number;
+  interviewType: 'Video' | 'Phone' | 'Onsite';
+  meetingLink?: string;
+  location?: string;
+  interviewerName: string;
+  notes?: string;
+}
+
+export interface InterviewDto {
+  id: string;
+  applicationId: string;
+  jobPostingId: string;
+  candidateName: string;
+  candidateEmail: string;
+  photoUrl: string | null;
+  jobTitle: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  interviewType: string;
+  meetingLink: string | null;
+  location: string | null;
+  interviewerName: string;
+  notes: string | null;
+  applicationStatus: string;
+}
+
 export interface JobApplicantsResult {
   jobId: string;
   jobTitle: string;
@@ -338,6 +366,22 @@ export const recruiterApi = {
         body: JSON.stringify({ status }),
       }
     ),
+
+  scheduleInterview: (
+    jobId: string,
+    applicationId: string,
+    payload: ScheduleInterviewPayload
+  ) =>
+    request<ApiResponse<InterviewDto>>(
+      `/recruiter/jobs/${jobId}/applicants/${applicationId}/interview`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  getInterviews: () =>
+    request<InterviewDto[]>('/recruiter/interviews'),
 
   updateJobStatus: (id: string, status: number) =>
     request<ApiResponse<JobPostingDetail>>(`/recruiter/jobs/${id}/status`, {

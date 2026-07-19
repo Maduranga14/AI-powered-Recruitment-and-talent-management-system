@@ -58,6 +58,9 @@ export interface RecruiterInterview {
   interviewer: string;
   type: string;
   avatar: string;
+  scheduledAt?: string;
+  meetingLink?: string | null;
+  location?: string | null;
 }
 
 export interface RecruiterMessage {

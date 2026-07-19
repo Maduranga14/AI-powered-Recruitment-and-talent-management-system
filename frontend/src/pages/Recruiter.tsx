@@ -9,6 +9,7 @@ import { RecruiterOverview } from '../components/recruiter/RecruiterOverview';
 import { RecruiterSchedule } from '../components/recruiter/RecruiterSchedule';
 import { RecruiterHiringManagers } from '../components/recruiter/RecruiterHiringManagers';
 import { RecruiterDepartments } from '../components/recruiter/RecruiterDepartments';
+import { ScheduleInterviewModal } from '../components/recruiter/ScheduleInterviewModal';
 import {
   RecruiterShell,
   type RecruiterView,
@@ -16,15 +17,16 @@ import {
 import { Button } from '../components/ui/Button';
 import { Input, Select, Textarea } from '../components/ui/Input';
 import {
-  RECRUITER_INTERVIEWS,
   RECRUITER_MESSAGES,
   type RecruiterCandidate,
+  type RecruiterInterview,
   type RecruiterJob,
   type RecruiterStage,
 } from '../data/recruiter';
 import {
   recruiterApi,
   EmploymentTypeMap,
+  type InterviewDto,
   type JobApplicant,
   type JobPostingListItem,
   type DepartmentDto,
@@ -148,10 +150,49 @@ function toRecruiterJob(item: JobPostingListItem): RecruiterJob {
   };
 }
 
+function formatInterviewTime(iso: string): string {
+  const at = new Date(iso);
+  const now = new Date();
+  const sameDay = at.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = at.toDateString() === tomorrow.toDateString();
+  const time = at.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  if (sameDay) return `Today · ${time}`;
+  if (isTomorrow) return `Tomorrow · ${time}`;
+  return `${at.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })} · ${time}`;
+}
+
+function toRecruiterInterview(item: InterviewDto): RecruiterInterview {
+  return {
+    id: item.id,
+    candidateId: item.applicationId,
+    candidate: item.candidateName,
+    role: item.jobTitle,
+    time: formatInterviewTime(item.scheduledAt),
+    duration: `${item.durationMinutes} min`,
+    interviewer: item.interviewerName,
+    type: item.interviewType,
+    avatar: avatarFor(item.candidateName, item.photoUrl),
+    scheduledAt: item.scheduledAt,
+    meetingLink: item.meetingLink,
+    location: item.location,
+  };
+}
+
 export function Recruiter() {
   const [view, setView] = useState<RecruiterView>('overview');
   const [candidates, setCandidates] = useState<RecruiterCandidate[]>([]);
   const [jobs, setJobs] = useState<RecruiterJob[]>([]);
+  const [interviews, setInterviews] = useState<RecruiterInterview[]>([]);
+  const [interviewsLoading, setInterviewsLoading] = useState(false);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
   const [selectedJobFilter, setSelectedJobFilter] = useState<{
@@ -160,6 +201,9 @@ export function Recruiter() {
   } | null>(null);
   const [selectedCandidate, setSelectedCandidate] =
     useState<RecruiterCandidate | null>(null);
+  const [scheduleCandidate, setScheduleCandidate] =
+    useState<RecruiterCandidate | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
 
@@ -188,9 +232,22 @@ export function Recruiter() {
     }
   }, []);
 
+  const fetchInterviews = useCallback(async () => {
+    setInterviewsLoading(true);
+    try {
+      const items = await recruiterApi.getInterviews();
+      setInterviews(items.map(toRecruiterInterview));
+    } catch {
+      setInterviews([]);
+    } finally {
+      setInterviewsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchJobs();
-  }, [fetchJobs]);
+    fetchInterviews();
+  }, [fetchJobs, fetchInterviews]);
 
   // Load real applicants whenever the Candidates tab is opened (no job filter)
   useEffect(() => {
@@ -198,6 +255,15 @@ export function Recruiter() {
       fetchAllApplicants();
     }
   }, [view, selectedJobFilter, fetchAllApplicants]);
+
+  useEffect(() => {
+    if (view === 'schedule') {
+      fetchInterviews();
+    }
+    if (view === 'overview' && candidates.length === 0) {
+      fetchAllApplicants();
+    }
+  }, [view, fetchInterviews, fetchAllApplicants, candidates.length]);
 
   const showFeedback = (message: string) => {
     setFeedback(message);
@@ -260,13 +326,32 @@ export function Recruiter() {
     showFeedback(`${candidate?.name ?? 'Candidate'} moved to ${stage}.`);
   };
 
-  const openSchedule = (candidate?: RecruiterCandidate) => {
-    setView('schedule');
-    showFeedback(
-      candidate
-        ? `Scheduling flow opened for ${candidate.name}.`
-        : 'Scheduling flow opened — choose a candidate and time.'
+  const openSchedule = async (candidate?: RecruiterCandidate) => {
+    setScheduleCandidate(candidate ?? null);
+    if (!candidate && candidates.length === 0) {
+      await fetchAllApplicants();
+    }
+    setScheduleOpen(true);
+    if (candidate) {
+      setSelectedCandidate(null);
+    }
+  };
+
+  const handleInterviewScheduled = (candidateId: string) => {
+    setCandidates((current) =>
+      current.map((c) =>
+        c.id === candidateId ? { ...c, stage: 'Interview' as RecruiterStage } : c
+      )
     );
+    setSelectedCandidate((current) =>
+      current?.id === candidateId
+        ? { ...current, stage: 'Interview' }
+        : current
+    );
+    fetchInterviews();
+    fetchJobs();
+    setView('schedule');
+    showFeedback('Interview scheduled — candidate notified by email.');
   };
 
   const toggleJobStatus = async (jobId: string) => {
@@ -354,7 +439,7 @@ export function Recruiter() {
         <RecruiterOverview
           candidates={candidates}
           jobs={jobs}
-          interviews={RECRUITER_INTERVIEWS}
+          interviews={interviews}
           onViewChange={setView}
           onCandidateSelect={(c) => setSelectedCandidate(c)}
         />
@@ -389,7 +474,8 @@ export function Recruiter() {
       )}
       {view === 'schedule' && (
         <RecruiterSchedule
-          interviews={RECRUITER_INTERVIEWS}
+          interviews={interviews}
+          loading={interviewsLoading}
           onSchedule={() => openSchedule()}
         />
       )}
@@ -400,6 +486,18 @@ export function Recruiter() {
         onClose={() => setSelectedCandidate(null)}
         onStageChange={updateStage}
         onSchedule={openSchedule}
+      />
+
+      <ScheduleInterviewModal
+        open={scheduleOpen}
+        candidate={scheduleCandidate}
+        candidates={candidates}
+        defaultInterviewer={user?.name ?? ''}
+        onClose={() => {
+          setScheduleOpen(false);
+          setScheduleCandidate(null);
+        }}
+        onScheduled={handleInterviewScheduled}
       />
 
       <CreateJobModal
