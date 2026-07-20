@@ -317,6 +317,7 @@ namespace backend.Services
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Experiences)
                 .Include(a => a.JobPosting)
+                .Include(a => a.Interviews)
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
@@ -341,6 +342,7 @@ namespace backend.Services
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Experiences)
                 .Include(a => a.JobPosting)
+                .Include(a => a.Interviews)
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
@@ -364,12 +366,50 @@ namespace backend.Services
                     .ThenInclude(cp => cp.Skills)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Experiences)
+                .Include(a => a.Interviews)
                 .FirstOrDefaultAsync(a => a.Id == applicationId && a.JobPostingId == jobId)
                 ?? throw new KeyNotFoundException("Application not found for this job.");
 
             application.Status = status;
             application.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+
+            if (status == ApplicationStatus.Hired)
+            {
+                try
+                {
+                    var candidateName = $"{application.CandidateProfile.User.FirstName} {application.CandidateProfile.User.LastName}".Trim();
+                    var emailSubject = $"Congratulations! Offer extended for {job.Title}";
+                    var emailBody = $@"
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;'>
+                            <div style='text-align: center; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9;'>
+                                <h1 style='color: #059669; font-size: 24px; margin: 0;'>🎉 Congratulations, {candidateName}!</h1>
+                                <p style='color: #475569; font-size: 15px; margin-top: 8px;'>We are thrilled to select you for the <strong>{job.Title}</strong> role.</p>
+                            </div>
+                            <div style='padding: 20px 0;'>
+                                <p style='color: #334155; font-size: 14px; line-height: 1.6;'>
+                                    After evaluating your interview and background, our hiring team has officially decided to extend an offer for the <strong>{job.Title}</strong> position.
+                                </p>
+                                <div style='background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; border-radius: 8px; margin: 20px 0;'>
+                                    <p style='margin: 0; color: #065f46; font-weight: bold; font-size: 14px;'>Next Steps:</p>
+                                    <p style='margin: 4px 0 0 0; color: #047857; font-size: 13px;'>
+                                        Our recruitment team will contact you shortly with your official offer letter and onboarding details.
+                                    </p>
+                                </div>
+                                <p style='color: #334155; font-size: 14px;'>Welcome aboard! We look forward to working together.</p>
+                            </div>
+                            <div style='border-top: 1px solid #f1f5f9; padding-top: 16px; text-align: center; color: #94a3b8; font-size: 12px;'>
+                                <p style='margin: 0;'>This is an automated notification from TalentPortal.</p>
+                            </div>
+                        </div>";
+
+                    await _emailService.SendEmailAsync(application.CandidateProfile.User.Email, emailSubject, emailBody);
+                }
+                catch
+                {
+                    // Status is updated in database even if email sending fails
+                }
+            }
 
             if (status == ApplicationStatus.Rejected)
             {
@@ -418,6 +458,11 @@ namespace backend.Services
                     : $"{years} role{(years == 1 ? "" : "s")} · {latestExp.Title} at {latestExp.Company}";
             }
 
+            var latestInterview = a.Interviews?
+                .Where(i => i.FeedbackSubmittedAt.HasValue)
+                .OrderByDescending(i => i.FeedbackSubmittedAt)
+                .FirstOrDefault();
+
             return new JobApplicantDto
             {
                 ApplicationId = a.Id,
@@ -439,7 +484,13 @@ namespace backend.Services
                 Feedback = a.Feedback,
                 Recommendation = a.Recommendation,
                 OverallRating = a.OverallRating,
-                SkillRatings = a.SkillRatings
+                SkillRatings = a.SkillRatings,
+                // Post-interview evaluation
+                InterviewOverallRating = latestInterview?.FeedbackOverallRating,
+                InterviewRecommendation = latestInterview?.FeedbackRecommendation,
+                InterviewComments = latestInterview?.FeedbackComments,
+                InterviewSkillRatings = latestInterview?.FeedbackSkillRatings,
+                InterviewTechnicalScore = latestInterview?.FeedbackTechnicalScore,
             };
         }
 
@@ -519,6 +570,7 @@ namespace backend.Services
                     .ThenInclude(cp => cp.Experiences)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Skills)
+                .Include(a => a.Interviews)
                 .Where(a => a.JobPosting.DepartmentId != null &&
                             departments.Contains(a.JobPosting.DepartmentId.Value) &&
                             a.Status != ApplicationStatus.Applied)
@@ -752,7 +804,7 @@ namespace backend.Services
                 JobTitle = jobTitle,
                 Company = posting?.PostedBy,
                 JobLocation = posting?.Location,
-                ScheduledAt = interview.ScheduledAt,
+                ScheduledAt = DateTime.SpecifyKind(interview.ScheduledAt, DateTimeKind.Utc),
                 DurationMinutes = interview.DurationMinutes,
                 InterviewType = interview.InterviewType,
                 MeetingLink = interview.MeetingLink,
@@ -762,8 +814,21 @@ namespace backend.Services
                 ApplicationStatus = application.Status.ToString(),
                 RescheduleRequested = interview.RescheduleRequested,
                 RescheduleReason = interview.RescheduleReason,
-                RescheduleRequestedAt = interview.RescheduleRequestedAt,
-                LastRescheduledAt = interview.LastRescheduledAt
+                RescheduleRequestedAt = interview.RescheduleRequestedAt.HasValue
+                    ? DateTime.SpecifyKind(interview.RescheduleRequestedAt.Value, DateTimeKind.Utc)
+                    : null,
+                LastRescheduledAt = interview.LastRescheduledAt.HasValue
+                    ? DateTime.SpecifyKind(interview.LastRescheduledAt.Value, DateTimeKind.Utc)
+                    : null,
+                // Post-interview feedback fields
+                FeedbackOverallRating = interview.FeedbackOverallRating,
+                FeedbackRecommendation = interview.FeedbackRecommendation,
+                FeedbackComments = interview.FeedbackComments,
+                FeedbackSkillRatings = interview.FeedbackSkillRatings,
+                FeedbackTechnicalScore = interview.FeedbackTechnicalScore,
+                FeedbackSubmittedAt = interview.FeedbackSubmittedAt.HasValue
+                    ? DateTime.SpecifyKind(interview.FeedbackSubmittedAt.Value, DateTimeKind.Utc)
+                    : null,
             };
         }
 
@@ -891,6 +956,63 @@ namespace backend.Services
             }
 
             return MapInterview(interview, interview.JobApplication, job.Title, candidateName, candidate.Email);
+        }
+
+        public async Task<InterviewDto> SubmitInterviewFeedbackAsync(
+            Guid interviewId, SubmitInterviewFeedbackDto dto, Guid managerUserId)
+        {
+            var manager = await _db.Users.FindAsync(managerUserId)
+                ?? throw new KeyNotFoundException("Hiring manager user not found.");
+
+            if (manager.Role != UserRole.HiringManager)
+                throw new UnauthorizedAccessException("Only hiring managers can submit interview feedback.");
+
+            // Resolve departments this manager is responsible for
+            var departments = await _db.Departments
+                .Where(d => d.Head == manager.FullName && d.OrganizationName == manager.OrganizationName)
+                .Select(d => d.Id)
+                .ToListAsync();
+
+            var interview = await _db.Interviews
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.JobPosting)
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.CandidateProfile)
+                        .ThenInclude(cp => cp.User)
+                .FirstOrDefaultAsync(i => i.Id == interviewId)
+                ?? throw new KeyNotFoundException("Interview not found.");
+
+            var posting = interview.JobApplication.JobPosting;
+            if (posting.DepartmentId == null || !departments.Contains(posting.DepartmentId.Value))
+                throw new UnauthorizedAccessException("You are not authorized to submit feedback for this interview.");
+
+            var application = interview.JobApplication;
+            if (application.Status != ApplicationStatus.Interview)
+                throw new InvalidOperationException(
+                    $"Feedback can only be submitted when the application status is 'Interview'. Current status: '{application.Status}'.");
+
+            // Validate recommendation value
+            var allowed = new[] { "Strong Yes", "Yes", "Maybe", "No", "Strong No" };
+            if (!allowed.Contains(dto.Recommendation, StringComparer.OrdinalIgnoreCase))
+                throw new ArgumentException("Recommendation must be one of: Strong Yes, Yes, Maybe, No, Strong No.");
+
+            // Persist feedback on the Interview record
+            interview.FeedbackOverallRating = dto.OverallRating;
+            interview.FeedbackRecommendation = dto.Recommendation;
+            interview.FeedbackComments = dto.Comments.Trim();
+            interview.FeedbackSkillRatings = string.IsNullOrWhiteSpace(dto.SkillRatings) ? null : dto.SkillRatings;
+            interview.FeedbackTechnicalScore = dto.TechnicalAssessmentScore;
+            interview.FeedbackSubmittedAt = DateTime.UtcNow;
+
+            // Advance application status to UnderFinalReview
+            application.Status = ApplicationStatus.UnderFinalReview;
+            application.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+
+            var user = application.CandidateProfile.User;
+            var candidateName = $"{user.FirstName} {user.LastName}".Trim();
+            return MapInterview(interview, application, posting.Title, candidateName, user.Email);
         }
     }
 }

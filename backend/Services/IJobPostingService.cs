@@ -59,5 +59,8 @@ namespace backend.Services
 
         /// <summary>Recruiter updates an existing interview's time/details (clears reschedule request).</summary>
         Task<InterviewDto> RescheduleInterviewAsync(Guid interviewId, ScheduleInterviewDto dto, Guid recruiterId);
+
+        /// <summary>Hiring manager submits post-interview feedback and moves status to UnderFinalReview.</summary>
+        Task<InterviewDto> SubmitInterviewFeedbackAsync(Guid interviewId, SubmitInterviewFeedbackDto dto, Guid managerUserId);
     }
 }

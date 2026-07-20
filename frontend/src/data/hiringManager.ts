@@ -42,6 +42,7 @@ export interface ManagerInterview {
   scheduledAt?: string;
   rescheduleRequested?: boolean;
   rescheduleReason?: string | null;
+  feedbackSubmitted?: boolean;
 }
 
 export interface ManagerRole {

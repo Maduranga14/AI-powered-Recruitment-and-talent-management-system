@@ -105,6 +105,7 @@ function toManagerInterview(item: InterviewDto): ManagerInterview {
     scheduledAt: item.scheduledAt,
     rescheduleRequested: item.rescheduleRequested,
     rescheduleReason: item.rescheduleReason,
+    feedbackSubmitted: item.hasFeedback ?? !!item.feedbackSubmittedAt,
   };
 }
 
@@ -253,6 +254,7 @@ export function HiringManager() {
                 interviews={interviews}
                 onOpenFeedback={openFeedback}
                 onRescheduleRequested={loadData}
+                onFeedbackSubmitted={loadData}
               />
             )}
           </motion.div>

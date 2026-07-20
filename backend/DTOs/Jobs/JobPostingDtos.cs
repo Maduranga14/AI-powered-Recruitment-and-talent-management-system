@@ -124,6 +124,13 @@ namespace backend.DTOs.Jobs
         public string? Recommendation { get; set; }
         public int? OverallRating { get; set; }
         public string? SkillRatings { get; set; }
+
+        // Post-interview evaluation (submitted by interviewer after conducting interview)
+        public int? InterviewOverallRating { get; set; }
+        public string? InterviewRecommendation { get; set; }
+        public string? InterviewComments { get; set; }
+        public string? InterviewSkillRatings { get; set; }
+        public int? InterviewTechnicalScore { get; set; }
     }
 
     public class JobApplicantsResultDto
@@ -250,6 +257,36 @@ namespace backend.DTOs.Jobs
         public string? RescheduleReason { get; set; }
         public DateTime? RescheduleRequestedAt { get; set; }
         public DateTime? LastRescheduledAt { get; set; }
+
+        // ── Post-interview feedback ──────────────────────────────────────────────
+        public int? FeedbackOverallRating { get; set; }
+        public string? FeedbackRecommendation { get; set; }
+        public string? FeedbackComments { get; set; }
+        public string? FeedbackSkillRatings { get; set; }
+        public int? FeedbackTechnicalScore { get; set; }
+        public DateTime? FeedbackSubmittedAt { get; set; }
+        public bool HasFeedback => FeedbackSubmittedAt.HasValue;
+    }
+
+    /// <summary>Payload for hiring manager submitting post-interview feedback.</summary>
+    public class SubmitInterviewFeedbackDto
+    {
+        [Required(ErrorMessage = "Recommendation is required.")]
+        public string Recommendation { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Written comments are required.")]
+        [MaxLength(4000)]
+        public string Comments { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Overall rating is required.")]
+        [Range(1, 5, ErrorMessage = "Overall rating must be between 1 and 5.")]
+        public int OverallRating { get; set; }
+
+        /// <summary>JSON: {"Technical skills":4,"Communication":3,"Culture fit":5}</summary>
+        public string? SkillRatings { get; set; }
+
+        [Range(1, 5, ErrorMessage = "Technical assessment score must be between 1 and 5.")]
+        public int? TechnicalAssessmentScore { get; set; }
     }
 
     public class RequestRescheduleDto

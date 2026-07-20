@@ -250,6 +250,12 @@ export interface JobApplicant {
   recommendation?: string | null;
   overallRating?: number | null;
   skillRatings?: string | null;
+  // Post-interview evaluation fields
+  interviewOverallRating?: number | null;
+  interviewRecommendation?: string | null;
+  interviewComments?: string | null;
+  interviewSkillRatings?: string | null;
+  interviewTechnicalScore?: number | null;
 }
 
 export interface ScheduleInterviewPayload {
@@ -284,6 +290,14 @@ export interface InterviewDto {
   rescheduleReason?: string | null;
   rescheduleRequestedAt?: string | null;
   lastRescheduledAt?: string | null;
+  // Post-interview feedback fields
+  feedbackOverallRating?: number | null;
+  feedbackRecommendation?: string | null;
+  feedbackComments?: string | null;
+  feedbackSkillRatings?: string | null;
+  feedbackTechnicalScore?: number | null;
+  feedbackSubmittedAt?: string | null;
+  hasFeedback?: boolean;
 }
 
 export interface JobApplicantsResult {
@@ -471,6 +485,21 @@ export const managerApi = {
   ) =>
     request<JobApplicant>(`/manager/applications/${applicationId}/feedback`, {
       method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  submitInterviewFeedback: (
+    interviewId: string,
+    payload: {
+      recommendation: string;
+      comments: string;
+      overallRating: number;
+      skillRatings?: string;
+      technicalAssessmentScore?: number | null;
+    }
+  ) =>
+    request<ApiResponse<InterviewDto>>(`/manager/interviews/${interviewId}/feedback`, {
+      method: 'POST',
       body: JSON.stringify(payload),
     }),
 };

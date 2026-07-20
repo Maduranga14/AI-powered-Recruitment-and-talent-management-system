@@ -483,6 +483,48 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>Hiring manager submits post-interview feedback (sets application status to UnderFinalReview)</summary>
+        [HttpPost("api/manager/interviews/{interviewId:guid}/feedback")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> SubmitInterviewFeedback(
+            Guid interviewId, [FromBody] SubmitInterviewFeedbackDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.SubmitInterviewFeedbackAsync(interviewId, dto, managerId.Value);
+                return Ok(new
+                {
+                    message = "Interview feedback submitted. Application is now Under Final Review.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         private Guid? GetRecruiterId()
         {
             var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)

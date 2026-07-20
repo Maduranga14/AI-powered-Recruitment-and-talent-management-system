@@ -54,5 +54,27 @@ namespace backend.Models
         public User CreatedByRecruiter { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // ── Post-interview feedback (submitted by the hiring manager) ────────────
+
+        /// <summary>Overall rating 1–5 submitted after the interview.</summary>
+        public int? FeedbackOverallRating { get; set; }
+
+        /// <summary>Strong Yes | Yes | Maybe | No | Strong No</summary>
+        [MaxLength(20)]
+        public string? FeedbackRecommendation { get; set; }
+
+        /// <summary>Written evaluation: strengths, concerns, general impression.</summary>
+        [MaxLength(4000)]
+        public string? FeedbackComments { get; set; }
+
+        /// <summary>JSON: {"Technical skills":4,"Communication":3,"Culture fit":5}</summary>
+        public string? FeedbackSkillRatings { get; set; }
+
+        /// <summary>Optional technical assessment score 1–5.</summary>
+        public int? FeedbackTechnicalScore { get; set; }
+
+        /// <summary>UTC timestamp when the hiring manager submitted feedback.</summary>
+        public DateTime? FeedbackSubmittedAt { get; set; }
     }
 }

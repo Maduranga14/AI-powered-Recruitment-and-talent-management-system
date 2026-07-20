@@ -278,7 +278,7 @@ namespace backend.Services
                     JobTitle = posting.Title,
                     Company = posting.PostedBy,
                     JobLocation = posting.Location,
-                    ScheduledAt = i.ScheduledAt,
+                    ScheduledAt = DateTime.SpecifyKind(i.ScheduledAt, DateTimeKind.Utc),
                     DurationMinutes = i.DurationMinutes,
                     InterviewType = i.InterviewType,
                     MeetingLink = i.MeetingLink,
@@ -288,8 +288,12 @@ namespace backend.Services
                     ApplicationStatus = i.JobApplication.Status.ToString(),
                     RescheduleRequested = i.RescheduleRequested,
                     RescheduleReason = i.RescheduleReason,
-                    RescheduleRequestedAt = i.RescheduleRequestedAt,
-                    LastRescheduledAt = i.LastRescheduledAt
+                    RescheduleRequestedAt = i.RescheduleRequestedAt.HasValue
+                        ? DateTime.SpecifyKind(i.RescheduleRequestedAt.Value, DateTimeKind.Utc)
+                        : null,
+                    LastRescheduledAt = i.LastRescheduledAt.HasValue
+                        ? DateTime.SpecifyKind(i.LastRescheduledAt.Value, DateTimeKind.Utc)
+                        : null
                 };
             }).ToList();
         }

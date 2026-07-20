@@ -58,6 +58,7 @@ export function ScheduleInterviewModal({
           (c.stage === 'Reviewed' ||
             c.stage === 'Shortlisted' ||
             c.stage === 'Interview' ||
+            c.stage === 'Under Final Review' ||
             !!c.recommendation)
       ),
     [candidates]

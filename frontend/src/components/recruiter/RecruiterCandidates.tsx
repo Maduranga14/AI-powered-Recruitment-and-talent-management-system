@@ -146,18 +146,19 @@ export function RecruiterCandidates({
               
               <option>All stages</option>
               {(
-              [
-              'New',
-              'Screening',
-              'Shortlisted',
-              'Reviewed',
-              'Interview',
-              'Offer',
-              'Rejected'] as
-              RecruiterStage[]).
-              map((stage) =>
-              <option key={stage}>{stage}</option>
-              )}
+                [
+                  'New',
+                  'Screening',
+                  'Shortlisted',
+                  'Reviewed',
+                  'Interview',
+                  'Under Final Review',
+                  'Offer',
+                  'Rejected',
+                ] as RecruiterStage[]
+              ).map((stage) => (
+                <option key={stage}>{stage}</option>
+              ))}
             </select>
             <FilterIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
           </label>
@@ -242,23 +243,45 @@ export function RecruiterCandidates({
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => onStageChange(candidate.id, 'Shortlisted')}
-                disabled={candidate.stage === 'Shortlisted'}>
-                
-                    <UserRoundCheckIcon className="h-4 w-4" />
-                    <span className="hidden xl:inline">Shortlist</span>
-                  </Button>
-                  <button
-                onClick={() => onStageChange(candidate.id, 'Rejected')}
-                disabled={candidate.stage === 'Rejected'}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
-                aria-label={`Reject ${candidate.name}`}>
-                
-                    <UserRoundXIcon className="h-4 w-4" />
-                  </button>
+                  {candidate.stage === 'Under Final Review' ? (
+                    <>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        onClick={() => onStageChange(candidate.id, 'Offer')}
+                      >
+                        <UserRoundCheckIcon className="h-4 w-4" />
+                        <span className="hidden xl:inline">Hire</span>
+                      </Button>
+                      <button
+                        onClick={() => onStageChange(candidate.id, 'Rejected')}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                        aria-label={`Reject ${candidate.name}`}
+                      >
+                        <UserRoundXIcon className="h-4 w-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => onStageChange(candidate.id, 'Shortlisted')}
+                        disabled={candidate.stage === 'Shortlisted'}
+                      >
+                        <UserRoundCheckIcon className="h-4 w-4" />
+                        <span className="hidden xl:inline">Shortlist</span>
+                      </Button>
+                      <button
+                        onClick={() => onStageChange(candidate.id, 'Rejected')}
+                        disabled={candidate.stage === 'Rejected'}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                        aria-label={`Reject ${candidate.name}`}
+                      >
+                        <UserRoundXIcon className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </article>
           )}

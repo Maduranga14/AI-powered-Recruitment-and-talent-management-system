@@ -4,6 +4,7 @@ import {
   CalendarClockIcon,
   CheckCircle2Icon,
   Clock3Icon,
+  ClipboardCheckIcon,
   ExternalLinkIcon,
   LightbulbIcon,
   Loader2Icon,
@@ -11,15 +12,18 @@ import {
   XIcon,
 } from 'lucide-react';
 import type { ManagerInterview } from '../../data/hiringManager';
+import type { InterviewDto } from '../../services/api';
 import { managerApi } from '../../services/api';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Input';
+import { InterviewFeedbackModal } from './InterviewFeedbackModal';
 
 interface HiringManagerCalendarProps {
   interviews: ManagerInterview[];
   onOpenFeedback: (candidateId: string) => void;
   onRescheduleRequested?: () => void;
+  onFeedbackSubmitted?: () => void;
 }
 
 function toMeetingUrl(url: string): string {
@@ -31,8 +35,8 @@ function toMeetingUrl(url: string): string {
 
 export function HiringManagerCalendar({
   interviews,
-  onOpenFeedback,
   onRescheduleRequested,
+  onFeedbackSubmitted,
 }: HiringManagerCalendarProps) {
   const [message, setMessage] = useState('');
   const [rescheduleTarget, setRescheduleTarget] =
@@ -40,6 +44,8 @@ export function HiringManagerCalendar({
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  // Interview feedback modal state
+  const [feedbackInterview, setFeedbackInterview] = useState<InterviewDto | null>(null);
 
   const showMessage = (next: string) => {
     setMessage(next);
@@ -68,6 +74,44 @@ export function HiringManagerCalendar({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleOpenFeedback = (interview: ManagerInterview) => {
+    // Build a minimal InterviewDto from the ManagerInterview to pass to the modal
+    const dto: InterviewDto = {
+      id: interview.id,
+      applicationId: interview.candidateId,
+      jobPostingId: '',
+      candidateName: interview.candidate,
+      candidateEmail: '',
+      photoUrl: interview.avatar,
+      jobTitle: interview.role,
+      scheduledAt: interview.scheduledAt ?? new Date().toISOString(),
+      durationMinutes: parseInt(interview.duration) || 60,
+      interviewType: interview.format,
+      meetingLink: interview.meetingLink ?? null,
+      location: null,
+      interviewerName: '',
+      notes: interview.focus,
+      applicationStatus: 'Interview',
+    };
+    setFeedbackInterview(dto);
+  };
+
+  const handleFeedbackSubmit = async (
+    interviewId: string,
+    payload: {
+      recommendation: string;
+      comments: string;
+      overallRating: number;
+      skillRatings?: string;
+      technicalAssessmentScore?: number | null;
+    }
+  ) => {
+    await managerApi.submitInterviewFeedback(interviewId, payload);
+    setFeedbackInterview(null);
+    showMessage('Interview feedback submitted. Application moved to Under Final Review.');
+    onFeedbackSubmitted?.();
   };
 
   const upcoming = [...interviews].sort((a, b) => {
@@ -153,10 +197,16 @@ export function HiringManagerCalendar({
                       {interview.rescheduleRequested && (
                         <Badge tone="amber">Reschedule requested</Badge>
                       )}
+                      {interview.feedbackSubmitted && (
+                        <Badge tone="green">
+                          <ClipboardCheckIcon className="h-3 w-3" />
+                          Feedback submitted
+                        </Badge>
+                      )}
                     </div>
                     <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
                       <Clock3Icon className="h-4 w-4 text-slate-400" />
-                      {interview.time} · {interview.duration}
+                      {interview.time} &middot; {interview.duration}
                     </p>
                     <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
                       <VideoIcon className="h-3.5 w-3.5" />
@@ -206,12 +256,23 @@ export function HiringManagerCalendar({
                     </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => onOpenFeedback(interview.candidateId)}
-                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                >
-                  Complete feedback <CheckCircle2Icon className="h-4 w-4" />
-                </button>
+                {/* Add Feedback / Feedback Submitted actions */}
+                {interview.feedbackSubmitted ? (
+                  <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5">
+                    <CheckCircle2Icon className="h-4 w-4 text-emerald-600" />
+                    <span className="text-sm font-semibold text-emerald-700">
+                      Feedback submitted &mdash; application is Under Final Review
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleOpenFeedback(interview)}
+                    className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-brand-200 hover:bg-brand-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  >
+                    <ClipboardCheckIcon className="h-4 w-4" />
+                    Add Interview Feedback
+                  </button>
+                )}
               </article>
             ))}
           </div>
@@ -255,7 +316,7 @@ export function HiringManagerCalendar({
                     Request reschedule
                   </h2>
                   <p className="mt-0.5 text-sm text-slate-500">
-                    {rescheduleTarget.candidate} · {rescheduleTarget.role}
+                    {rescheduleTarget.candidate} &middot; {rescheduleTarget.role}
                   </p>
                 </div>
                 <button
@@ -301,7 +362,7 @@ export function HiringManagerCalendar({
                 >
                   {submitting ? (
                     <>
-                      <Loader2Icon className="h-4 w-4 animate-spin" /> Sending…
+                      <Loader2Icon className="h-4 w-4 animate-spin" /> Sending&hellip;
                     </>
                   ) : (
                     'Send to recruiter'
@@ -312,6 +373,13 @@ export function HiringManagerCalendar({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Post-interview Feedback Modal */}
+      <InterviewFeedbackModal
+        interview={feedbackInterview}
+        onClose={() => setFeedbackInterview(null)}
+        onSubmit={handleFeedbackSubmit}
+      />
     </motion.div>
   );
 }

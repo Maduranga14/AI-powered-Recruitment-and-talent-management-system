@@ -44,6 +44,8 @@ function statusToStage(status: string): RecruiterStage {
       return 'Reviewed';
     case 'Interview':
       return 'Interview';
+    case 'UnderFinalReview':
+      return 'Under Final Review';
     case 'Hired':
       return 'Offer';
     case 'Rejected':
@@ -64,6 +66,8 @@ function stageToStatus(stage: RecruiterStage): number {
       return 5; // Reviewed status index 5 in backend
     case 'Interview':
       return 2;
+    case 'Under Final Review':
+      return 6; // UnderFinalReview
     case 'Rejected':
       return 3;
     case 'Offer':
@@ -121,6 +125,12 @@ function toRecruiterCandidate(applicant: JobApplicant, jobId?: string): Recruite
     feedback: applicant.feedback,
     overallRating: applicant.overallRating,
     skillRatings: applicant.skillRatings,
+    // Post-interview evaluation fields
+    interviewOverallRating: applicant.interviewOverallRating,
+    interviewRecommendation: applicant.interviewRecommendation,
+    interviewComments: applicant.interviewComments,
+    interviewSkillRatings: applicant.interviewSkillRatings,
+    interviewTechnicalScore: applicant.interviewTechnicalScore,
   };
 }
 

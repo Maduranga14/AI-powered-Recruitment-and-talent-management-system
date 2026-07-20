@@ -41,5 +41,7 @@ namespace backend.Models
         public int? OverallRating { get; set; }
 
         public string? SkillRatings { get; set; }
+
+        public ICollection<Interview> Interviews { get; set; } = new List<Interview>();
     }
 }

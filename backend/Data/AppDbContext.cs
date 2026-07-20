@@ -161,7 +161,7 @@ namespace backend.Data
                 entity.HasIndex(i => i.CreatedByRecruiterId);
 
                 entity.HasOne(i => i.JobApplication)
-                      .WithMany()
+                      .WithMany(a => a.Interviews)
                       .HasForeignKey(i => i.JobApplicationId)
                       .OnDelete(DeleteBehavior.Cascade);
 
