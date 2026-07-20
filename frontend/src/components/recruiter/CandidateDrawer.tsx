@@ -147,16 +147,36 @@ export function CandidateDrawer({
                         <XIcon className="h-4 w-4" /> Reject
                       </Button>
                     </>
+                  ) : candidate.stage === 'Offer' ? (
+                    <>
+                      <Button
+                        disabled
+                        className="bg-emerald-600 text-white font-bold opacity-90 cursor-not-allowed col-span-2 sm:col-span-1"
+                      >
+                        <CheckIcon className="h-4 w-4" /> Hired / Offer Extended
+                      </Button>
+                    </>
+                  ) : candidate.stage === 'Rejected' ? (
+                    <>
+                      <Button
+                        disabled
+                        variant="outline"
+                        className="border-red-200 text-red-600 bg-red-50 font-bold opacity-90 cursor-not-allowed col-span-2 sm:col-span-1"
+                      >
+                        <XIcon className="h-4 w-4" /> Application Rejected
+                      </Button>
+                    </>
                   ) : (
                     <>
                       <Button
                         onClick={() => onStageChange(candidate.id, 'Shortlisted')}
+                        disabled={candidate.stage !== 'New'}
                         variant={
-                          candidate.stage === 'Shortlisted' ? 'secondary' : 'primary'
+                          candidate.stage !== 'New' ? 'secondary' : 'primary'
                         }
                       >
                         <CheckIcon className="h-4 w-4" />
-                        {candidate.stage === 'Shortlisted' ? 'Shortlisted' : 'Shortlist'}
+                        {candidate.stage !== 'New' ? 'Shortlisted' : 'Shortlist'}
                       </Button>
                       <Button onClick={() => onSchedule(candidate)} variant="outline">
                         <CalendarPlusIcon className="h-4 w-4" /> Schedule
@@ -336,16 +356,26 @@ export function CandidateDrawer({
 
                     {/* Decision Action Buttons inside Feedback Block */}
                     <div className="mt-4 pt-3 border-t border-emerald-200/60">
-                      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                        Recruiter Final Decision
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Recruiter Final Decision
+                        </span>
+                        {(candidate.stage === 'Offer' || candidate.stage === 'Rejected') && (
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                            Decision Finalized &amp; Locked
+                          </span>
+                        )}
+                      </div>
                       <div className="mt-2.5 flex gap-2.5">
                         <button
                           type="button"
+                          disabled={candidate.stage === 'Offer' || candidate.stage === 'Rejected'}
                           onClick={() => onStageChange(candidate.id, 'Offer')}
                           className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-4 text-xs font-bold text-white shadow-md transition ${
                             candidate.stage === 'Offer'
-                              ? 'bg-emerald-700 ring-2 ring-emerald-400'
+                              ? 'bg-emerald-700 ring-2 ring-emerald-400 opacity-95 cursor-not-allowed'
+                              : candidate.stage === 'Rejected'
+                              ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                               : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
                           }`}
                         >
@@ -356,10 +386,13 @@ export function CandidateDrawer({
                         </button>
                         <button
                           type="button"
+                          disabled={candidate.stage === 'Offer' || candidate.stage === 'Rejected'}
                           onClick={() => onStageChange(candidate.id, 'Rejected')}
                           className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-4 text-xs font-bold transition ${
                             candidate.stage === 'Rejected'
-                              ? 'bg-red-700 text-white ring-2 ring-red-400'
+                              ? 'bg-red-700 text-white ring-2 ring-red-400 opacity-95 cursor-not-allowed'
+                              : candidate.stage === 'Offer'
+                              ? 'bg-slate-200 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
                               : 'border border-red-200 bg-white text-red-600 hover:bg-red-50'
                           }`}
                         >

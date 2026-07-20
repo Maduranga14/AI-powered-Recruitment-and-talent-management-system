@@ -265,12 +265,14 @@ export function RecruiterCandidates({
                     <>
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant={candidate.stage !== 'New' ? 'secondary' : 'primary'}
                         onClick={() => onStageChange(candidate.id, 'Shortlisted')}
-                        disabled={candidate.stage === 'Shortlisted'}
+                        disabled={candidate.stage !== 'New'}
                       >
                         <UserRoundCheckIcon className="h-4 w-4" />
-                        <span className="hidden xl:inline">Shortlist</span>
+                        <span className="hidden xl:inline">
+                          {candidate.stage !== 'New' ? 'Shortlisted' : 'Shortlist'}
+                        </span>
                       </Button>
                       <button
                         onClick={() => onStageChange(candidate.id, 'Rejected')}
