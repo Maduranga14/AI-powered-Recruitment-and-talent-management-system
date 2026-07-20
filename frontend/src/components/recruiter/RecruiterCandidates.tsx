@@ -16,6 +16,7 @@ interface RecruiterCandidatesProps {
   candidates: RecruiterCandidate[];
   loading?: boolean;
   jobTitle?: string | null;
+  departments?: { id?: string; name: string }[];
   onCandidateSelect: (candidate: RecruiterCandidate) => void;
   onStageChange: (candidateId: string, stage: RecruiterStage) => void;
   onClearJobFilter?: () => void;
@@ -24,40 +25,63 @@ export function RecruiterCandidates({
   candidates,
   loading,
   jobTitle,
+  departments: orgDepartments = [],
   onCandidateSelect,
   onStageChange,
   onClearJobFilter
 }: RecruiterCandidatesProps) {
   const [query, setQuery] = useState('');
+  const [deptFilter, setDeptFilter] = useState('All departments');
   const [roleFilter, setRoleFilter] = useState('All roles');
   const [stageFilter, setStageFilter] = useState<'All stages' | RecruiterStage>(
     'All stages'
   );
+
+  const departmentOptions = useMemo(() => {
+    const set = new Set<string>();
+    // Add dynamic organization departments from system
+    orgDepartments.forEach((d) => {
+      if (d.name?.trim()) set.add(d.name.trim());
+    });
+    // Add any department names attached to candidates
+    candidates.forEach((c) => {
+      if (c.department?.trim()) set.add(c.department.trim());
+    });
+    return Array.from(set).sort();
+  }, [orgDepartments, candidates]);
+
   const visibleCandidates = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return candidates.filter((candidate) => {
       const matchesQuery =
-      !normalized ||
-      [
-      candidate.name,
-      candidate.title,
-      candidate.location,
-      candidate.role,
-      ...candidate.skills].
+        !normalized ||
+        [
+          candidate.name,
+          candidate.title,
+          candidate.location,
+          candidate.role,
+          candidate.department,
+          ...candidate.skills,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(normalized);
 
-      join(' ').
-      toLowerCase().
-      includes(normalized);
-      return (
-        matchesQuery && (
-        roleFilter === 'All roles' || candidate.role === roleFilter) && (
-        stageFilter === 'All stages' || candidate.stage === stageFilter));
+      const matchesDept =
+        deptFilter === 'All departments' || candidate.department === deptFilter;
+      const matchesRole =
+        roleFilter === 'All roles' || candidate.role === roleFilter;
+      const matchesStage =
+        stageFilter === 'All stages' || candidate.stage === stageFilter;
 
+      return matchesQuery && matchesDept && matchesRole && matchesStage;
     });
-  }, [candidates, query, roleFilter, stageFilter]);
+  }, [candidates, query, deptFilter, roleFilter, stageFilter]);
+
   const roles = Array.from(
     new Set(candidates.map((candidate) => candidate.role))
   );
+
   return (
     <motion.div
       initial={{
@@ -108,16 +132,30 @@ export function RecruiterCandidates({
         className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5"
         aria-label="Candidate filters">
         
-        <div className="grid gap-3 lg:grid-cols-[1fr_200px_180px]">
+        <div className="grid gap-3 lg:grid-cols-[1fr_170px_170px_160px]">
           <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
             <SearchIcon className="h-5 w-5 text-slate-400" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, skill, role, or location"
+              placeholder="Search candidate name, skills, role, or department..."
               className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-slate-400"
               aria-label="Search candidates" />
             
+          </label>
+          <label className="relative">
+            <span className="sr-only">Filter by department</span>
+            <select
+              value={deptFilter}
+              onChange={(event) => setDeptFilter(event.target.value)}
+              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+              
+              <option>All departments</option>
+              {departmentOptions.map((dept) => (
+                <option key={dept}>{dept}</option>
+              ))}
+            </select>
+            <FilterIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
           </label>
           <label className="relative">
             <span className="sr-only">Filter by role</span>
@@ -172,6 +210,7 @@ export function RecruiterCandidates({
         <button
           onClick={() => {
             setQuery('');
+            setDeptFilter('All departments');
             setRoleFilter('All roles');
             setStageFilter('All stages');
           }}

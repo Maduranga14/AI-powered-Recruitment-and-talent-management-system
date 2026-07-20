@@ -177,10 +177,18 @@ export function ScheduleInterviewModal({
       .finally(() => setLoadingAvailability(false));
   }, [selectedManagerId]);
 
+  const parseISOToDate = (isoStr: string) => {
+    if (!isoStr) return new Date();
+    if (isoStr.includes('T') && !isoStr.endsWith('Z') && !isoStr.includes('+') && !isoStr.includes('-')) {
+      return new Date(isoStr + 'Z');
+    }
+    return new Date(isoStr);
+  };
+
   const dateBusySlots = useMemo(() => {
     if (!date || busySlots.length === 0) return [];
     return busySlots.filter((slot) => {
-      const slotDate = new Date(slot.scheduledAt);
+      const slotDate = parseISOToDate(slot.scheduledAt);
       const pad = (n: number) => String(n).padStart(2, '0');
       const slotDateString = `${slotDate.getFullYear()}-${pad(slotDate.getMonth() + 1)}-${pad(slotDate.getDate())}`;
       return slotDateString === date;
@@ -226,7 +234,16 @@ export function ScheduleInterviewModal({
     const slotEnd = new Date(slotStart.getTime() + durationMinutes * 60 * 1000);
     
     const isOverlap = dateBusySlots.some((busy) => {
-      const busyStart = new Date(busy.scheduledAt);
+      const busyStart = parseISOToDate(busy.scheduledAt);
+
+      // When rescheduling, exclude the interview being rescheduled from conflict check
+      if (isReschedule && rescheduleInterview?.scheduledAt) {
+        const rescheduleStart = parseISOToDate(rescheduleInterview.scheduledAt);
+        if (Math.abs(busyStart.getTime() - rescheduleStart.getTime()) < 60000) {
+          return false;
+        }
+      }
+
       const busyEnd = new Date(busyStart.getTime() + busy.durationMinutes * 60 * 1000);
       return busyStart < slotEnd && busyEnd > slotStart;
     });
@@ -311,6 +328,13 @@ export function ScheduleInterviewModal({
     const scheduledAt = new Date(`${date}T${time}:00`);
     if (Number.isNaN(scheduledAt.getTime())) {
       setError('Please pick a valid date and time.');
+      setLoading(false);
+      return;
+    }
+
+    const slotStatus = getSlotStatus(time);
+    if (slotStatus === 'busy') {
+      setError(`Interviewer ${interviewerName.trim()} is already booked for another interview at this time (${time}). Please choose a different time slot or interviewer.`);
       setLoading(false);
       return;
     }

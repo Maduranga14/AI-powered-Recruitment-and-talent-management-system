@@ -240,6 +240,7 @@ export interface JobApplicant {
   location: string | null;
   photoUrl: string | null;
   jobTitle: string;
+  departmentName?: string | null;
   status: string;
   coverLetter: string | null;
   appliedAt: string;

@@ -114,6 +114,7 @@ namespace backend.DTOs.Jobs
         public string? Location { get; set; }
         public string? PhotoUrl { get; set; }
         public string JobTitle { get; set; } = string.Empty;
+        public string? DepartmentName { get; set; }
         public string Status { get; set; } = string.Empty;
         public string? CoverLetter { get; set; }
         public DateTime AppliedAt { get; set; }
@@ -137,6 +138,7 @@ namespace backend.DTOs.Jobs
     {
         public Guid JobId { get; set; }
         public string JobTitle { get; set; } = string.Empty;
+        public string? DepartmentName { get; set; }
         public string JobStatus { get; set; } = string.Empty;
         public List<JobApplicantDto> Applicants { get; set; } = [];
     }

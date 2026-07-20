@@ -106,6 +106,7 @@ function toRecruiterCandidate(applicant: JobApplicant, jobId?: string): Recruite
     location: applicant.location || '—',
     avatar: avatarFor(name, applicant.photoUrl),
     role: applicant.jobTitle,
+    department: applicant.departmentName || undefined,
     stage: statusToStage(applicant.status),
     matchScore: 0,
     skills: applicant.skills ?? [],
@@ -208,9 +209,17 @@ export function Recruiter() {
   const [candidates, setCandidates] = useState<RecruiterCandidate[]>([]);
   const [jobs, setJobs] = useState<RecruiterJob[]>([]);
   const [interviews, setInterviews] = useState<RecruiterInterview[]>([]);
+  const [departments, setDepartments] = useState<DepartmentDto[]>([]);
   const [interviewsLoading, setInterviewsLoading] = useState(false);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
+
+  useEffect(() => {
+    recruiterApi
+      .getDepartments()
+      .then((res) => setDepartments(res.departments || []))
+      .catch(() => setDepartments([]));
+  }, []);
   const [selectedJobFilter, setSelectedJobFilter] = useState<{
     id: string;
     title: string;
@@ -495,6 +504,7 @@ export function Recruiter() {
           candidates={candidates}
           loading={applicantsLoading}
           jobTitle={selectedJobFilter?.title}
+          departments={departments}
           onCandidateSelect={(c) => setSelectedCandidate(c)}
           onStageChange={updateStage}
           onClearJobFilter={selectedJobFilter ? clearJobFilter : undefined}

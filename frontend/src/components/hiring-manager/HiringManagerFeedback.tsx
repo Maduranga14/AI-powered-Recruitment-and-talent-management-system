@@ -94,7 +94,7 @@ export function HiringManagerFeedback({
   const submit = () => {
     if (!candidate || !recommendation || !canSubmit) return;
     const combinedEvidence = `Strengths:\n${strengths.trim() || 'None specified'}\n\nConcerns:\n${concerns.trim() || 'None specified'}\n\nGeneral Impression:\n${generalImpression.trim()}`;
-    onSubmitFeedback(candidate.id, recommendation, combinedEvidence, overallRating, JSON.stringify(scores));
+    onSubmitFeedback(candidate.id, recommendation, combinedEvidence, overallRating, undefined);
     setSubmitted(true);
   };
 
@@ -310,43 +310,6 @@ export function HiringManagerFeedback({
                 <p className="mt-1 text-right text-[10px] text-slate-400">
                   {generalImpression.trim().length} / 10 min characters
                 </p>
-              </div>
-            </div>
-
-            {/* 4. Skill ratings */}
-            <div className="mt-6 border-t border-slate-100 pt-5">
-              <h3 className="text-sm font-bold text-slate-800">Skill-specific scorecard (Optional)</h3>
-              <div className="mt-3 divide-y divide-slate-100">
-                {dimensions.map((dimension) => (
-                  <fieldset
-                    key={dimension}
-                    className="flex flex-col gap-3 py-3 first:pt-0 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <legend className="text-xs font-semibold text-slate-600">{dimension}</legend>
-                    <div className="flex gap-1.5" aria-label={`${dimension} rating`}>
-                      {[1, 2, 3, 4, 5].map((score) => (
-                        <button
-                          key={score}
-                          type="button"
-                          onClick={() =>
-                            setScores((current) => ({
-                              ...current,
-                              [dimension]: score,
-                            }))
-                          }
-                          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
-                            scores[dimension] === score
-                              ? 'border-brand-600 bg-brand-600 text-white'
-                              : 'border-slate-200 text-slate-500 hover:border-brand-300 hover:bg-brand-50'
-                          }`}
-                          aria-pressed={scores[dimension] === score}
-                        >
-                          {score}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                ))}
               </div>
             </div>
 
