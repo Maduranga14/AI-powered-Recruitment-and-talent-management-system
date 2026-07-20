@@ -404,6 +404,9 @@ export const recruiterApi = {
   getHiringManagers: () =>
     request<RecruiterHiringManagersResponse>('/recruiter/hiring-managers'),
 
+  getHiringManagerAvailability: (id: string) =>
+    request<BusySlot[]>(`/recruiter/hiring-managers/${id}/availability`),
+
   toggleHiringManagerStatus: (id: string) =>
     request<{ message: string; isActive: boolean }>(`/recruiter/hiring-managers/${id}/toggle-status`, {
       method: 'PUT',
@@ -416,6 +419,11 @@ export const recruiterApi = {
 
   revokeInvitation: (id: string) =>
     request<{ message: string }>(`/recruiter/hiring-managers/invitations/${id}/revoke`, {
+      method: 'DELETE',
+    }),
+
+  deleteHiringManager: (id: string) =>
+    request<{ message: string }>(`/recruiter/hiring-managers/${id}`, {
       method: 'DELETE',
     }),
 
@@ -474,6 +482,8 @@ export interface HiringManager {
   email: string;
   isActive: boolean;
   createdAt: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
 }
 
 export interface HiringManagerInvitation {
@@ -487,6 +497,11 @@ export interface HiringManagerInvitation {
 export interface RecruiterHiringManagersResponse {
   hiringManagers: HiringManager[];
   pendingInvitations: HiringManagerInvitation[];
+}
+
+export interface BusySlot {
+  scheduledAt: string;
+  durationMinutes: number;
 }
 
 // ─── Public job types ─────────────────────────────────────────────────────────

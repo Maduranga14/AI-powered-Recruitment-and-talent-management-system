@@ -78,6 +78,22 @@ export function RecruiterHiringManagers() {
     }
   };
 
+  const handleDeleteManager = async (manager: HiringManager) => {
+    if (!window.confirm(`Are you sure you want to permanently delete hiring manager "${manager.firstName} ${manager.lastName}"? This will also clear them as head of any assigned departments.`)) {
+      return;
+    }
+    startLoadingId(manager.id);
+    try {
+      await recruiterApi.deleteHiringManager(manager.id);
+      setHiringManagers((prev) => prev.filter((item) => item.id !== manager.id));
+      showFeedback(`Hiring manager "${manager.firstName} ${manager.lastName}" has been deleted.`);
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to delete hiring manager.');
+    } finally {
+      stopLoadingId(manager.id);
+    }
+  };
+
   const handleResendInvitation = async (invitation: HiringManagerInvitation) => {
     startLoadingId(invitation.id);
     try {
@@ -226,24 +242,36 @@ export function RecruiterHiringManagers() {
                           {formatDate(manager.createdAt)}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Button
-                            variant={manager.isActive ? 'outline' : 'primary'}
-                            size="sm"
-                            disabled={isIdLoading(manager.id)}
-                            onClick={() => handleToggleStatus(manager)}
-                          >
-                            {isIdLoading(manager.id) ? (
-                              <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
-                            ) : manager.isActive ? (
-                              <>
-                                <UserXIcon className="h-3.5 w-3.5" /> Deactivate
-                              </>
-                            ) : (
-                              <>
-                                <UserCheckIcon className="h-3.5 w-3.5" /> Activate
-                              </>
-                            )}
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant={manager.isActive ? 'outline' : 'primary'}
+                              size="sm"
+                              disabled={isIdLoading(manager.id)}
+                              onClick={() => handleToggleStatus(manager)}
+                            >
+                              {isIdLoading(manager.id) ? (
+                                <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
+                              ) : manager.isActive ? (
+                                <>
+                                  <UserXIcon className="h-3.5 w-3.5" /> Deactivate
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheckIcon className="h-3.5 w-3.5" /> Activate
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                              disabled={isIdLoading(manager.id)}
+                              onClick={() => handleDeleteManager(manager)}
+                              title="Delete Hiring Manager"
+                            >
+                              <Trash2Icon className="h-4.5 w-4.5" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}

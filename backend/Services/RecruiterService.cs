@@ -31,20 +31,32 @@ namespace backend.Services
             var recruiter = await GetRecruiterOrThrowAsync(recruiterId);
             var orgName = recruiter.OrganizationName ?? recruiter.FullName;
 
-            var managers = await _db.Users
+            var departments = await _db.Departments
+                .Where(d => d.OrganizationName == orgName)
+                .ToListAsync();
+
+            var users = await _db.Users
                 .Where(u => u.Role == UserRole.HiringManager && u.OrganizationName == orgName)
                 .OrderBy(u => u.FirstName)
                 .ThenBy(u => u.LastName)
-                .Select(u => new HiringManagerDto
+                .ToListAsync();
+
+            var managers = users.Select(u =>
+            {
+                var fullName = $"{u.FirstName} {u.LastName}".Trim();
+                var dept = departments.FirstOrDefault(d => d.Head.Equals(fullName, StringComparison.OrdinalIgnoreCase));
+                return new HiringManagerDto
                 {
                     Id = u.Id,
                     FirstName = u.FirstName,
                     LastName = u.LastName,
                     Email = u.Email,
                     IsActive = u.IsActive,
-                    CreatedAt = u.CreatedAt
-                })
-                .ToListAsync();
+                    CreatedAt = u.CreatedAt,
+                    DepartmentId = dept?.Id,
+                    DepartmentName = dept?.Name
+                };
+            }).ToList();
 
             var pendingInvites = await _db.HiringManagerInvitations
                 .Where(i => i.OrganizationName == orgName && !i.IsUsed)
@@ -146,6 +158,65 @@ namespace backend.Services
                 throw new UnauthorizedAccessException("You do not have permission to manage invitations for other organizations.");
 
             _db.HiringManagerInvitations.Remove(invite);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<List<BusySlotDto>> GetHiringManagerAvailabilityAsync(Guid managerId, Guid recruiterId)
+        {
+            var recruiter = await GetRecruiterOrThrowAsync(recruiterId);
+            var orgName = recruiter.OrganizationName ?? recruiter.FullName;
+
+            var manager = await _db.Users.FindAsync(managerId)
+                ?? throw new KeyNotFoundException("Hiring Manager account not found.");
+
+            if (manager.Role != UserRole.HiringManager)
+                throw new InvalidOperationException("The specified user is not a Hiring Manager.");
+
+            if (manager.OrganizationName != orgName)
+                throw new UnauthorizedAccessException("You do not have permission to view users in other organizations.");
+
+            var managerFullName = $"{manager.FirstName} {manager.LastName}".Trim();
+
+            var busySlots = await _db.Interviews
+                .Where(i => i.InterviewerName == managerFullName && i.ScheduledAt >= DateTime.UtcNow.Date)
+                .OrderBy(i => i.ScheduledAt)
+                .Select(i => new BusySlotDto
+                {
+                    ScheduledAt = i.ScheduledAt,
+                    DurationMinutes = i.DurationMinutes
+                })
+                .ToListAsync();
+
+            return busySlots;
+        }
+
+        public async Task DeleteHiringManagerAsync(Guid managerId, Guid recruiterId)
+        {
+            var recruiter = await GetRecruiterOrThrowAsync(recruiterId);
+            var orgName = recruiter.OrganizationName ?? recruiter.FullName;
+
+            var manager = await _db.Users.FindAsync(managerId)
+                ?? throw new KeyNotFoundException("Hiring Manager account not found.");
+
+            if (manager.Role != UserRole.HiringManager)
+                throw new InvalidOperationException("The specified user is not a Hiring Manager.");
+
+            if (manager.OrganizationName != orgName)
+                throw new UnauthorizedAccessException("You do not have permission to delete users in other organizations.");
+
+            // Unset from any departments they head
+            var managerFullName = $"{manager.FirstName} {manager.LastName}".Trim();
+            var departments = await _db.Departments
+                .Where(d => d.Head == managerFullName && d.OrganizationName == orgName)
+                .ToListAsync();
+
+            foreach (var dept in departments)
+            {
+                dept.Head = string.Empty;
+                dept.HeadInitials = string.Empty;
+            }
+
+            _db.Users.Remove(manager);
             await _db.SaveChangesAsync();
         }
     }

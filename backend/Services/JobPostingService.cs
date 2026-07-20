@@ -371,6 +371,32 @@ namespace backend.Services
             application.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
 
+            if (status == ApplicationStatus.Rejected)
+            {
+                try
+                {
+                    var candidateName = $"{application.CandidateProfile.User.FirstName} {application.CandidateProfile.User.LastName}".Trim();
+                    var emailSubject = $"Update on your application for {job.Title}";
+                    var emailBody = $@"
+                        <div style='font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>
+                            <h2 style='color: #475569; margin-bottom: 16px;'>Application Update</h2>
+                            <p>Dear {candidateName},</p>
+                            <p>Thank you for your interest in the <strong>{job.Title}</strong> role. We appreciate the time you took to apply and share your experience with us.</p>
+                            <p>After careful review of your application, we regret to inform you that we will not be moving forward with your candidacy at this time.</p>
+                            <p>We encourage you to keep an eye on our career portal for future opportunities that align with your skill set.</p>
+                            <p>We wish you all the best in your job search and professional endeavors.</p>
+                            <hr style='border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;' />
+                            <p style='color: #64748b; font-size: 12px;'>This is an automated notification. Please do not reply directly to this email.</p>
+                        </div>";
+
+                    await _emailService.SendEmailAsync(application.CandidateProfile.User.Email, emailSubject, emailBody);
+                }
+                catch
+                {
+                    // Rejection status is updated in database even if email sending fails
+                }
+            }
+
             return MapApplicant(application, job.Title);
         }
 
