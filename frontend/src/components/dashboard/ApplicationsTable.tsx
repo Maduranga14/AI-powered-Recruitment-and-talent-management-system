@@ -1,52 +1,84 @@
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { FileSearchIcon } from 'lucide-react';
-import { getJob } from '../../data/jobs';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import type { Application, ApplicationStatus } from '../../context/AuthContext';
+import type { InterviewDto } from '../../services/api';
+
 const statusTone: Record<
   ApplicationStatus,
-  'blue' | 'amber' | 'brand' | 'green' | 'red'> =
-{
+  'blue' | 'amber' | 'brand' | 'green' | 'red'
+> = {
   Applied: 'blue',
   'In Review': 'amber',
   Interview: 'brand',
   Offer: 'green',
-  Rejected: 'red'
+  Rejected: 'red',
 };
-const STAGES: ApplicationStatus[] = [
-'Applied',
-'In Review',
-'Interview',
-'Offer'];
 
-function Stepper({ status }: {status: ApplicationStatus;}) {
+const STAGES: ApplicationStatus[] = [
+  'Applied',
+  'In Review',
+  'Interview',
+  'Offer',
+];
+
+function Stepper({ status }: { status: ApplicationStatus }) {
   if (status === 'Rejected') {
     return (
       <span className="text-xs font-semibold text-red-500">
         Not moving forward
-      </span>);
-
+      </span>
+    );
   }
   const currentIndex = STAGES.indexOf(status);
   return (
     <div className="flex items-center gap-1.5" aria-label={`Stage: ${status}`}>
-      {STAGES.map((s, i) =>
-      <span
-        key={s}
-        title={s}
-        className={`h-1.5 w-6 rounded-full ${i <= currentIndex ? 'bg-brand-600' : 'bg-slate-200'}`} />
-
-      )}
-    </div>);
-
+      {STAGES.map((s, i) => (
+        <span
+          key={s}
+          title={s}
+          className={`h-1.5 w-6 rounded-full ${
+            i <= currentIndex ? 'bg-brand-600' : 'bg-slate-200'
+          }`}
+        />
+      ))}
+    </div>
+  );
 }
+
+function appDisplay(app: Application) {
+  const title = app.jobTitle ?? 'Unknown role';
+  const company = app.jobCompany ?? 'Unknown company';
+  const logo =
+    app.jobCompanyLogo ??
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(company)}&background=4f46e5&color=fff&bold=true&size=96`;
+  return { title, company, logo };
+}
+
+function interviewHint(
+  app: Application,
+  interviews: InterviewDto[]
+): { label: string; tone: 'amber' | 'green' | 'brand' } | null {
+  const match = interviews.find((i) => i.jobPostingId === app.jobId);
+  if (!match) return null;
+  if (match.rescheduleRequested) {
+    return { label: 'Reschedule pending', tone: 'amber' };
+  }
+  if (match.lastRescheduledAt) {
+    return { label: 'Interview updated', tone: 'green' };
+  }
+  return { label: 'Interview scheduled', tone: 'brand' };
+}
+
 export function ApplicationsTable({
-  applications
-
-
-}: {applications: Application[];}) {
+  applications,
+  interviews = [],
+}: {
+  applications: Application[];
+  interviews?: InterviewDto[];
+}) {
   if (applications.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
@@ -58,12 +90,11 @@ export function ApplicationsTable({
         <Link to="/jobs">
           <Button className="mt-5">Browse jobs</Button>
         </Link>
-      </div>);
-
+      </div>
+    );
   }
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
-      {/* Desktop table */}
       <table className="hidden w-full text-left sm:table">
         <thead>
           <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -76,22 +107,16 @@ export function ApplicationsTable({
         </thead>
         <tbody className="divide-y divide-slate-100">
           {applications.map((app) => {
-            const job = getJob(app.jobId);
-            const title = job?.title ?? app.jobTitle ?? 'Unknown role';
-            const company = job?.company ?? app.jobCompany ?? 'Unknown company';
-            const logo = job?.companyLogo ?? app.jobCompanyLogo ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(company)}&background=4f46e5&color=fff&bold=true&size=96`;
+            const { title, company, logo } = appDisplay(app);
+            const hint = interviewHint(app, interviews);
             return (
               <tr
                 key={app.jobId}
-                className="transition-colors hover:bg-slate-50">
-                
+                className="transition-colors hover:bg-slate-50"
+              >
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={logo}
-                      alt=""
-                      className="h-9 w-9 rounded-lg" />
-                    
+                    <img src={logo} alt="" className="h-9 w-9 rounded-lg" />
                     <div>
                       <p className="text-sm font-semibold text-slate-900">
                         {title}
@@ -104,7 +129,12 @@ export function ApplicationsTable({
                   <Stepper status={app.status} />
                 </td>
                 <td className="px-5 py-4">
-                  <Badge tone={statusTone[app.status]}>{app.status}</Badge>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge tone={statusTone[app.status]}>{app.status}</Badge>
+                    {hint && hint.label !== app.status && (
+                      <Badge tone={hint.tone}>{hint.label}</Badge>
+                    )}
+                  </div>
                 </td>
                 <td className="px-5 py-4 text-sm text-slate-500">
                   {formatDistanceToNow(app.appliedAt, { addSuffix: true })}
@@ -112,7 +142,8 @@ export function ApplicationsTable({
                 <td className="px-5 py-4 text-right">
                   <Link
                     to={`/jobs/${app.jobId}`}
-                    className="text-sm font-semibold text-brand-600 hover:underline">
+                    className="text-sm font-semibold text-brand-600 hover:underline"
+                  >
                     View
                   </Link>
                 </td>
@@ -122,31 +153,36 @@ export function ApplicationsTable({
         </tbody>
       </table>
 
-      {/* Mobile cards */}
       <div className="divide-y divide-slate-100 sm:hidden">
         {applications.map((app) => {
-          const job = getJob(app.jobId);
-          const title = job?.title ?? app.jobTitle ?? 'Unknown role';
-          const company = job?.company ?? app.jobCompany ?? 'Unknown company';
-          const logo = job?.companyLogo ?? app.jobCompanyLogo ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(company)}&background=4f46e5&color=fff&bold=true&size=96`;
+          const { title, company, logo } = appDisplay(app);
+          const hint = interviewHint(app, interviews);
           return (
             <Link
               key={app.jobId}
               to={`/jobs/${app.jobId}`}
-              className="flex items-center gap-3 p-4">
+              className="flex items-center gap-3 p-4"
+            >
               <img src={logo} alt="" className="h-10 w-10 rounded-lg" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900">{title}</p>
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {title}
+                </p>
                 <p className="text-xs text-slate-500">{company}</p>
                 <div className="mt-2">
                   <Stepper status={app.status} />
                 </div>
               </div>
-              <Badge tone={statusTone[app.status]}>{app.status}</Badge>
+              <div className="flex flex-col items-end gap-1">
+                <Badge tone={statusTone[app.status]}>{app.status}</Badge>
+                {hint && hint.label !== app.status && (
+                  <Badge tone={hint.tone}>{hint.label}</Badge>
+                )}
+              </div>
             </Link>
           );
         })}
       </div>
-    </div>);
-
+    </div>
+  );
 }

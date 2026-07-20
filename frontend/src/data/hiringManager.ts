@@ -38,6 +38,11 @@ export interface ManagerInterview {
   format: string;
   focus: string;
   avatar: string;
+  meetingLink?: string | null;
+  scheduledAt?: string;
+  rescheduleRequested?: boolean;
+  rescheduleReason?: string | null;
+  feedbackSubmitted?: boolean;
 }
 
 export interface ManagerRole {

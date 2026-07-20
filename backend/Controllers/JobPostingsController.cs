@@ -342,6 +342,189 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>Schedule an interview for an applicant (sets status to Interview and emails the candidate)</summary>
+        [HttpPost("api/recruiter/jobs/{id:guid}/applicants/{applicationId:guid}/interview")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ScheduleInterview(
+            Guid id, Guid applicationId, [FromBody] ScheduleInterviewDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var result = await _jobService.ScheduleInterviewAsync(id, applicationId, dto, recruiterId.Value);
+                return StatusCode(StatusCodes.Status201Created, new
+                {
+                    message = "Interview scheduled successfully.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>List interviews for the logged-in recruiter's jobs</summary>
+        [HttpGet("api/recruiter/interviews")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(List<InterviewDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetInterviews()
+        {
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            var result = await _jobService.GetInterviewsAsync(recruiterId.Value);
+            return Ok(result);
+        }
+
+        /// <summary>List interviews for jobs in the hiring manager's departments</summary>
+        [HttpGet("api/manager/interviews")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(List<InterviewDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetManagerInterviews()
+        {
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.GetManagerInterviewsAsync(managerId.Value);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>Hiring manager requests a reschedule for an interview</summary>
+        [HttpPost("api/manager/interviews/{interviewId:guid}/request-reschedule")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RequestReschedule(
+            Guid interviewId, [FromBody] RequestRescheduleDto? dto)
+        {
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.RequestRescheduleAsync(
+                    interviewId, dto?.Reason, managerId.Value);
+                return Ok(new
+                {
+                    message = "Reschedule request sent to the recruiter.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        /// <summary>Recruiter reschedules an existing interview</summary>
+        [HttpPut("api/recruiter/interviews/{interviewId:guid}")]
+        [Authorize(Roles = "Recruiter")]
+        [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RescheduleInterview(
+            Guid interviewId, [FromBody] ScheduleInterviewDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var result = await _jobService.RescheduleInterviewAsync(interviewId, dto, recruiterId.Value);
+                return Ok(new
+                {
+                    message = "Interview rescheduled successfully.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>Hiring manager submits post-interview feedback (sets application status to UnderFinalReview)</summary>
+        [HttpPost("api/manager/interviews/{interviewId:guid}/feedback")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> SubmitInterviewFeedback(
+            Guid interviewId, [FromBody] SubmitInterviewFeedbackDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.SubmitInterviewFeedbackAsync(interviewId, dto, managerId.Value);
+                return Ok(new
+                {
+                    message = "Interview feedback submitted. Application is now Under Final Review.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         private Guid? GetRecruiterId()
         {
             var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)

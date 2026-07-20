@@ -130,5 +130,65 @@ namespace backend.Controllers
                 return Forbid();
             }
         }
+
+        [HttpGet("hiring-managers/{id:guid}/availability")]
+        [ProducesResponseType(typeof(System.Collections.Generic.List<BusySlotDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetHiringManagerAvailability(Guid id)
+        {
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var result = await _recruiterService.GetHiringManagerAvailabilityAsync(id, recruiterId.Value);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("hiring-managers/{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> DeleteHiringManager(Guid id)
+        {
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                await _recruiterService.DeleteHiringManagerAsync(id, recruiterId.Value);
+                return Ok(new { message = "Hiring Manager account deleted successfully." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

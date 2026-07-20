@@ -250,6 +250,54 @@ export interface JobApplicant {
   recommendation?: string | null;
   overallRating?: number | null;
   skillRatings?: string | null;
+  // Post-interview evaluation fields
+  interviewOverallRating?: number | null;
+  interviewRecommendation?: string | null;
+  interviewComments?: string | null;
+  interviewSkillRatings?: string | null;
+  interviewTechnicalScore?: number | null;
+}
+
+export interface ScheduleInterviewPayload {
+  scheduledAt: string;
+  durationMinutes: number;
+  interviewType: 'Video' | 'Phone' | 'Onsite';
+  meetingLink?: string;
+  location?: string;
+  interviewerName: string;
+  notes?: string;
+}
+
+export interface InterviewDto {
+  id: string;
+  applicationId: string;
+  jobPostingId: string;
+  candidateName: string;
+  candidateEmail: string;
+  photoUrl: string | null;
+  jobTitle: string;
+  company?: string | null;
+  jobLocation?: string | null;
+  scheduledAt: string;
+  durationMinutes: number;
+  interviewType: string;
+  meetingLink: string | null;
+  location: string | null;
+  interviewerName: string;
+  notes: string | null;
+  applicationStatus: string;
+  rescheduleRequested?: boolean;
+  rescheduleReason?: string | null;
+  rescheduleRequestedAt?: string | null;
+  lastRescheduledAt?: string | null;
+  // Post-interview feedback fields
+  feedbackOverallRating?: number | null;
+  feedbackRecommendation?: string | null;
+  feedbackComments?: string | null;
+  feedbackSkillRatings?: string | null;
+  feedbackTechnicalScore?: number | null;
+  feedbackSubmittedAt?: string | null;
+  hasFeedback?: boolean;
 }
 
 export interface JobApplicantsResult {
@@ -339,6 +387,28 @@ export const recruiterApi = {
       }
     ),
 
+  scheduleInterview: (
+    jobId: string,
+    applicationId: string,
+    payload: ScheduleInterviewPayload
+  ) =>
+    request<ApiResponse<InterviewDto>>(
+      `/recruiter/jobs/${jobId}/applicants/${applicationId}/interview`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  getInterviews: () =>
+    request<InterviewDto[]>('/recruiter/interviews'),
+
+  rescheduleInterview: (interviewId: string, payload: ScheduleInterviewPayload) =>
+    request<ApiResponse<InterviewDto>>(`/recruiter/interviews/${interviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
   updateJobStatus: (id: string, status: number) =>
     request<ApiResponse<JobPostingDetail>>(`/recruiter/jobs/${id}/status`, {
       method: 'PATCH',
@@ -347,6 +417,9 @@ export const recruiterApi = {
 
   getHiringManagers: () =>
     request<RecruiterHiringManagersResponse>('/recruiter/hiring-managers'),
+
+  getHiringManagerAvailability: (id: string) =>
+    request<BusySlot[]>(`/recruiter/hiring-managers/${id}/availability`),
 
   toggleHiringManagerStatus: (id: string) =>
     request<{ message: string; isActive: boolean }>(`/recruiter/hiring-managers/${id}/toggle-status`, {
@@ -360,6 +433,11 @@ export const recruiterApi = {
 
   revokeInvitation: (id: string) =>
     request<{ message: string }>(`/recruiter/hiring-managers/invitations/${id}/revoke`, {
+      method: 'DELETE',
+    }),
+
+  deleteHiringManager: (id: string) =>
+    request<{ message: string }>(`/recruiter/hiring-managers/${id}`, {
       method: 'DELETE',
     }),
 
@@ -384,6 +462,18 @@ export const managerApi = {
   getApplicants: () =>
     request<JobApplicant[]>('/manager/applicants'),
 
+  getInterviews: () =>
+    request<InterviewDto[]>('/manager/interviews'),
+
+  requestReschedule: (interviewId: string, reason?: string) =>
+    request<ApiResponse<InterviewDto>>(
+      `/manager/interviews/${interviewId}/request-reschedule`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason || undefined }),
+      }
+    ),
+
   submitFeedback: (
     applicationId: string,
     payload: {
@@ -397,6 +487,21 @@ export const managerApi = {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
+
+  submitInterviewFeedback: (
+    interviewId: string,
+    payload: {
+      recommendation: string;
+      comments: string;
+      overallRating: number;
+      skillRatings?: string;
+      technicalAssessmentScore?: number | null;
+    }
+  ) =>
+    request<ApiResponse<InterviewDto>>(`/manager/interviews/${interviewId}/feedback`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
 export interface HiringManager {
@@ -406,6 +511,8 @@ export interface HiringManager {
   email: string;
   isActive: boolean;
   createdAt: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
 }
 
 export interface HiringManagerInvitation {
@@ -419,6 +526,11 @@ export interface HiringManagerInvitation {
 export interface RecruiterHiringManagersResponse {
   hiringManagers: HiringManager[];
   pendingInvitations: HiringManagerInvitation[];
+}
+
+export interface BusySlot {
+  scheduledAt: string;
+  durationMinutes: number;
 }
 
 // ─── Public job types ─────────────────────────────────────────────────────────
@@ -598,6 +710,9 @@ export const candidateApi = {
 
   getApplications: () =>
     request<ApplicationResponseDto[]>('/candidate/profile/applications'),
+
+  getInterviews: () =>
+    request<InterviewDto[]>('/candidate/profile/interviews'),
 
   applyToJob: (payload: { jobPostingId: string; coverLetter?: string }) =>
     request<{ message: string; data: ApplicationResponseDto }>('/candidate/profile/applications', {

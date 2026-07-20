@@ -124,6 +124,13 @@ namespace backend.DTOs.Jobs
         public string? Recommendation { get; set; }
         public int? OverallRating { get; set; }
         public string? SkillRatings { get; set; }
+
+        // Post-interview evaluation (submitted by interviewer after conducting interview)
+        public int? InterviewOverallRating { get; set; }
+        public string? InterviewRecommendation { get; set; }
+        public string? InterviewComments { get; set; }
+        public string? InterviewSkillRatings { get; set; }
+        public int? InterviewTechnicalScore { get; set; }
     }
 
     public class JobApplicantsResultDto
@@ -200,5 +207,91 @@ namespace backend.DTOs.Jobs
         public int OverallRating { get; set; }
 
         public string? SkillRatings { get; set; }
+    }
+
+    public class ScheduleInterviewDto
+    {
+        [Required]
+        public DateTime ScheduledAt { get; set; }
+
+        [Range(15, 480)]
+        public int DurationMinutes { get; set; } = 60;
+
+        /// <summary>Video | Phone | Onsite</summary>
+        [Required, MaxLength(30)]
+        public string InterviewType { get; set; } = "Video";
+
+        [MaxLength(500)]
+        public string? MeetingLink { get; set; }
+
+        [MaxLength(300)]
+        public string? Location { get; set; }
+
+        [Required, MaxLength(150)]
+        public string InterviewerName { get; set; } = string.Empty;
+
+        [MaxLength(1000)]
+        public string? Notes { get; set; }
+    }
+
+    public class InterviewDto
+    {
+        public Guid Id { get; set; }
+        public Guid ApplicationId { get; set; }
+        public Guid JobPostingId { get; set; }
+        public string CandidateName { get; set; } = string.Empty;
+        public string CandidateEmail { get; set; } = string.Empty;
+        public string? PhotoUrl { get; set; }
+        public string JobTitle { get; set; } = string.Empty;
+        public string? Company { get; set; }
+        public string? JobLocation { get; set; }
+        public DateTime ScheduledAt { get; set; }
+        public int DurationMinutes { get; set; }
+        public string InterviewType { get; set; } = string.Empty;
+        public string? MeetingLink { get; set; }
+        public string? Location { get; set; }
+        public string InterviewerName { get; set; } = string.Empty;
+        public string? Notes { get; set; }
+        public string ApplicationStatus { get; set; } = string.Empty;
+        public bool RescheduleRequested { get; set; }
+        public string? RescheduleReason { get; set; }
+        public DateTime? RescheduleRequestedAt { get; set; }
+        public DateTime? LastRescheduledAt { get; set; }
+
+        // ── Post-interview feedback ──────────────────────────────────────────────
+        public int? FeedbackOverallRating { get; set; }
+        public string? FeedbackRecommendation { get; set; }
+        public string? FeedbackComments { get; set; }
+        public string? FeedbackSkillRatings { get; set; }
+        public int? FeedbackTechnicalScore { get; set; }
+        public DateTime? FeedbackSubmittedAt { get; set; }
+        public bool HasFeedback => FeedbackSubmittedAt.HasValue;
+    }
+
+    /// <summary>Payload for hiring manager submitting post-interview feedback.</summary>
+    public class SubmitInterviewFeedbackDto
+    {
+        [Required(ErrorMessage = "Recommendation is required.")]
+        public string Recommendation { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Written comments are required.")]
+        [MaxLength(4000)]
+        public string Comments { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Overall rating is required.")]
+        [Range(1, 5, ErrorMessage = "Overall rating must be between 1 and 5.")]
+        public int OverallRating { get; set; }
+
+        /// <summary>JSON: {"Technical skills":4,"Communication":3,"Culture fit":5}</summary>
+        public string? SkillRatings { get; set; }
+
+        [Range(1, 5, ErrorMessage = "Technical assessment score must be between 1 and 5.")]
+        public int? TechnicalAssessmentScore { get; set; }
+    }
+
+    public class RequestRescheduleDto
+    {
+        [MaxLength(1000)]
+        public string? Reason { get; set; }
     }
 }

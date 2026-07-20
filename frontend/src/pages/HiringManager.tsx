@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2Icon, Loader2Icon } from 'lucide-react';
 import { HiringManagerCalendar } from '../components/hiring-manager/HiringManagerCalendar';
@@ -8,16 +8,19 @@ import { HiringManagerFeedback } from '../components/hiring-manager/HiringManage
 import { HiringManagerOverview } from '../components/hiring-manager/HiringManagerOverview';
 import {
   HiringManagerShell,
-  type HiringManagerView } from
-  '../components/hiring-manager/HiringManagerShell';
+  type HiringManagerView,
+} from '../components/hiring-manager/HiringManagerShell';
+import type {
+  ManagerCandidate,
+  ManagerInterview,
+  ManagerRecommendation,
+  ManagerRole,
+} from '../data/hiringManager';
 import {
-  MANAGER_CANDIDATES,
-  MANAGER_INTERVIEWS,
-  MANAGER_ROLES,
-  type ManagerCandidate,
-  type ManagerRecommendation } from
-  '../data/hiringManager';
-import { managerApi, type JobApplicant } from '../services/api';
+  managerApi,
+  type InterviewDto,
+  type JobApplicant,
+} from '../services/api';
 
 const avatarUrl = (name: string, bg: string) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${bg}&color=fff&bold=true&size=128&format=png`;
@@ -28,7 +31,7 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     recommendation = applicant.recommendation as ManagerRecommendation;
   }
 
-  let decisionStatus: any = 'Awaiting feedback';
+  let decisionStatus: ManagerCandidate['decisionStatus'] = 'Awaiting feedback';
   if (applicant.feedback) {
     decisionStatus = 'Feedback submitted';
   }
@@ -36,25 +39,30 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
   const skills = applicant.skills || [];
   const signals = [
     `Matches requirement with skills: ${skills.slice(0, 3).join(', ') || 'General skills match'}`,
-    applicant.experienceSummary ? `Experience: ${applicant.experienceSummary}` : 'Verified professional background'
+    applicant.experienceSummary
+      ? `Experience: ${applicant.experienceSummary}`
+      : 'Verified professional background',
   ];
 
   return {
     id: applicant.candidateProfileId,
     applicationId: applicant.applicationId,
     name: applicant.fullName,
-    title: applicant.headline || 'Software Engineer',
+    title: applicant.headline || 'Applicant',
     location: applicant.location || 'Remote',
     avatar: applicant.photoUrl || avatarUrl(applicant.fullName, '0d9488'),
     role: applicant.jobTitle,
     decisionStatus,
-    matchScore: 88,
+    matchScore: 0,
     skills,
     experience: applicant.experienceSummary || 'Not specified',
-    applied: applicant.appliedAt ? new Date(applicant.appliedAt).toLocaleDateString() : 'Recently',
+    applied: applicant.appliedAt
+      ? new Date(applicant.appliedAt).toLocaleDateString()
+      : 'Recently',
     summary: applicant.coverLetter || 'No cover letter provided.',
     signals,
-    interviewFocus: 'Technical coding, architectural skills, department alignment.',
+    interviewFocus:
+      'Technical depth, role alignment, and team collaboration.',
     recommendation,
     evidence: applicant.feedback || undefined,
     overallRating: applicant.overallRating || undefined,
@@ -62,9 +70,71 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
   };
 }
 
+function formatInterviewTime(iso: string): string {
+  const at = new Date(iso);
+  const now = new Date();
+  const sameDay = at.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = at.toDateString() === tomorrow.toDateString();
+  const time = at.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  if (sameDay) return `Today · ${time}`;
+  if (isTomorrow) return `Tomorrow · ${time}`;
+  return `${at.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })} · ${time}`;
+}
+
+function toManagerInterview(item: InterviewDto): ManagerInterview {
+  return {
+    id: item.id,
+    candidateId: item.applicationId,
+    candidate: item.candidateName,
+    role: item.jobTitle,
+    time: formatInterviewTime(item.scheduledAt),
+    duration: `${item.durationMinutes} min`,
+    format: item.interviewType,
+    focus: item.notes || `${item.interviewType} interview with ${item.interviewerName}`,
+    avatar: avatarUrl(item.candidateName, '0d9488'),
+    meetingLink: item.meetingLink,
+    scheduledAt: item.scheduledAt,
+    rescheduleRequested: item.rescheduleRequested,
+    rescheduleReason: item.rescheduleReason,
+    feedbackSubmitted: item.hasFeedback ?? !!item.feedbackSubmittedAt,
+  };
+}
+
+function deriveRoles(candidates: ManagerCandidate[]): ManagerRole[] {
+  const map = new Map<string, ManagerRole>();
+  for (const c of candidates) {
+    const existing = map.get(c.role);
+    const awaiting = c.decisionStatus === 'Awaiting feedback' ? 1 : 0;
+    if (existing) {
+      existing.awaitingDecisions += awaiting;
+      if (awaiting) existing.stage = 'Needs decisions';
+    } else {
+      map.set(c.role, {
+        id: `role-${c.role.toLowerCase().replace(/\s+/g, '-')}`,
+        title: c.role,
+        team: 'Your department',
+        openSeats: 1,
+        awaitingDecisions: awaiting,
+        stage: awaiting ? 'Needs decisions' : 'On track',
+      });
+    }
+  }
+  return Array.from(map.values());
+}
+
 export function HiringManager() {
   const [view, setView] = useState<HiringManagerView>('overview');
   const [candidates, setCandidates] = useState<ManagerCandidate[]>([]);
+  const [interviews, setInterviews] = useState<ManagerInterview[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] =
     useState<ManagerCandidate | null>(null);
@@ -73,22 +143,28 @@ export function HiringManager() {
   );
   const [feedback, setFeedback] = useState('');
 
-  const loadCandidates = async () => {
+  const roles = useMemo(() => deriveRoles(candidates), [candidates]);
+
+  const loadData = async () => {
     setLoading(true);
     try {
-      const list = await managerApi.getApplicants();
-      const mapped = list.map(toManagerCandidate);
-      setCandidates(mapped);
-    } catch (err: any) {
-      console.error('Failed to load manager applicants, using mock fallback:', err);
-      setCandidates(MANAGER_CANDIDATES);
+      const [list, interviewList] = await Promise.all([
+        managerApi.getApplicants(),
+        managerApi.getInterviews().catch(() => [] as InterviewDto[]),
+      ]);
+      setCandidates(list.map(toManagerCandidate));
+      setInterviews(interviewList.map(toManagerInterview));
+    } catch (err) {
+      console.error('Failed to load manager data:', err);
+      setCandidates([]);
+      setInterviews([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadCandidates();
+    loadData();
   }, []);
 
   const showFeedback = (message: string) => {
@@ -110,25 +186,8 @@ export function HiringManager() {
     skillRatingsJson: string
   ) => {
     const candidate = candidates.find((item) => item.id === candidateId);
-    if (!candidate) return;
-
-    if (candidateId.startsWith('manager-candidate-') || !candidate.applicationId) {
-      setCandidates((current) =>
-        current.map((item) =>
-          item.id === candidateId
-            ? {
-                ...item,
-                decisionStatus: 'Feedback submitted',
-                recommendation,
-                evidence,
-                overallRating,
-                skillRatings: skillRatingsJson,
-              }
-            : item
-        )
-      );
-      showFeedback(`${candidate.name} feedback shared with the hiring team.`);
-      setView('candidates');
+    if (!candidate?.applicationId) {
+      showFeedback('Unable to submit feedback for this candidate.');
       return;
     }
 
@@ -140,11 +199,13 @@ export function HiringManager() {
         skillRatings: skillRatingsJson,
       });
 
-      await loadCandidates();
+      await loadData();
       showFeedback(`${candidate.name} feedback shared with the hiring team.`);
       setView('candidates');
-    } catch (err: any) {
-      showFeedback(err?.message ?? 'Failed to submit feedback.');
+    } catch (err: unknown) {
+      showFeedback(
+        err instanceof Error ? err.message : 'Failed to submit feedback.'
+      );
     }
   };
 
@@ -169,8 +230,8 @@ export function HiringManager() {
             {view === 'overview' && (
               <HiringManagerOverview
                 candidates={candidates}
-                interviews={MANAGER_INTERVIEWS}
-                roles={MANAGER_ROLES}
+                interviews={interviews}
+                roles={roles}
                 onViewChange={setView}
                 onCandidateSelect={selectCandidate}
               />
@@ -190,8 +251,10 @@ export function HiringManager() {
             )}
             {view === 'calendar' && (
               <HiringManagerCalendar
-                interviews={MANAGER_INTERVIEWS}
+                interviews={interviews}
                 onOpenFeedback={openFeedback}
+                onRescheduleRequested={loadData}
+                onFeedbackSubmitted={loadData}
               />
             )}
           </motion.div>

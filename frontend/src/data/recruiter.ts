@@ -1,11 +1,12 @@
 export type RecruiterStage =
-'New' |
-'Screening' |
-'Shortlisted' |
-'Reviewed' |
-'Interview' |
-'Offer' |
-'Rejected';
+  | 'New'
+  | 'Screening'
+  | 'Shortlisted'
+  | 'Reviewed'
+  | 'Interview'
+  | 'Under Final Review'
+  | 'Offer'
+  | 'Rejected';
 
 export interface RecruiterCandidate {
   id: string;
@@ -32,6 +33,12 @@ export interface RecruiterCandidate {
   feedback?: string | null;
   overallRating?: number | null;
   skillRatings?: string | null;
+  // Post-interview evaluation
+  interviewOverallRating?: number | null;
+  interviewRecommendation?: string | null;
+  interviewComments?: string | null;
+  interviewSkillRatings?: string | null;
+  interviewTechnicalScore?: number | null;
 }
 
 export interface RecruiterJob {
@@ -58,6 +65,15 @@ export interface RecruiterInterview {
   interviewer: string;
   type: string;
   avatar: string;
+  scheduledAt?: string;
+  meetingLink?: string | null;
+  location?: string | null;
+  jobPostingId?: string;
+  applicationId?: string;
+  durationMinutes?: number;
+  notes?: string | null;
+  rescheduleRequested?: boolean;
+  rescheduleReason?: string | null;
 }
 
 export interface RecruiterMessage {
@@ -346,24 +362,26 @@ export const RECRUITER_MESSAGES: RecruiterMessage[] = [
 
 
 export const STAGE_ORDER: RecruiterStage[] = [
-'New',
-'Screening',
-'Shortlisted',
-'Reviewed',
-'Interview',
-'Offer',
-'Rejected'];
-
+  'New',
+  'Screening',
+  'Shortlisted',
+  'Reviewed',
+  'Interview',
+  'Under Final Review',
+  'Offer',
+  'Rejected',
+];
 
 export const STAGE_TONES: Record<
   RecruiterStage,
-  'blue' | 'amber' | 'brand' | 'accent' | 'green' | 'red'> =
-{
+  'blue' | 'amber' | 'brand' | 'accent' | 'green' | 'red'
+> = {
   New: 'blue',
   Screening: 'amber',
   Shortlisted: 'brand',
   Reviewed: 'green',
   Interview: 'accent',
+  'Under Final Review': 'brand',
   Offer: 'green',
-  Rejected: 'red'
+  Rejected: 'red',
 };

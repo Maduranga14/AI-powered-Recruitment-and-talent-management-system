@@ -62,7 +62,7 @@ function toJob(p: PublicJob): Job {
     requirements: p.requiredSkills,
     benefits: [],
     applicants: 0,
-    matchScore: 75,
+    matchScore: 0,
     featured: false,
   };
 }

@@ -44,5 +44,23 @@ namespace backend.Services
 
         /// <summary>Submit manager feedback and advance/reject the application.</summary>
         Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId);
+
+        /// <summary>Schedule an interview for an applicant and set status to Interview.</summary>
+        Task<InterviewDto> ScheduleInterviewAsync(Guid jobId, Guid applicationId, ScheduleInterviewDto dto, Guid recruiterId);
+
+        /// <summary>List interviews for jobs owned by this recruiter (upcoming first).</summary>
+        Task<List<InterviewDto>> GetInterviewsAsync(Guid recruiterId);
+
+        /// <summary>List interviews for applications in this hiring manager's departments.</summary>
+        Task<List<InterviewDto>> GetManagerInterviewsAsync(Guid managerUserId);
+
+        /// <summary>Hiring manager requests that the recruiter reschedule an interview.</summary>
+        Task<InterviewDto> RequestRescheduleAsync(Guid interviewId, string? reason, Guid managerUserId);
+
+        /// <summary>Recruiter updates an existing interview's time/details (clears reschedule request).</summary>
+        Task<InterviewDto> RescheduleInterviewAsync(Guid interviewId, ScheduleInterviewDto dto, Guid recruiterId);
+
+        /// <summary>Hiring manager submits post-interview feedback and moves status to UnderFinalReview.</summary>
+        Task<InterviewDto> SubmitInterviewFeedbackAsync(Guid interviewId, SubmitInterviewFeedbackDto dto, Guid managerUserId);
     }
 }

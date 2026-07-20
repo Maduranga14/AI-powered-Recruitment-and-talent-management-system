@@ -7,6 +7,8 @@ namespace backend.Models.Enums
         Interview,
         Rejected,
         Hired,
-        Reviewed
+        Reviewed,
+        /// <summary>Set after the hiring manager submits post-interview feedback.</summary>
+        UnderFinalReview
     }
 }

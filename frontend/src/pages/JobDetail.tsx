@@ -5,7 +5,6 @@ import {
   MapPinIcon,
   BriefcaseIcon,
   ClockIcon,
-  UsersIcon,
   BookmarkIcon,
   CheckIcon,
   ArrowLeftIcon,
@@ -14,16 +13,11 @@ import {
   Share2Icon,
   Loader2Icon,
 } from 'lucide-react';
-import { getJob, formatSalary, JOBS, type Job } from '../data/jobs';
 import { publicApi, type PublicJob } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { MatchScore } from '../components/ui/MatchScore';
-import { JobCard } from '../components/JobCard';
 import { ApplyModal } from '../components/ApplyModal';
 import { useAuth } from '../context/AuthContext';
-
-
 
 function stringToColor(str: string): string {
   const colors = ['4f46e5', '0d9488', '7c3aed', 'db2777', 'ea580c', '2563eb', '0284c7'];
@@ -48,8 +42,6 @@ function msToPostedLabel(publishedAt: string): string {
   return `${diff} days ago`;
 }
 
-
-
 function Section({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
   return (
@@ -67,30 +59,28 @@ function Section({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-
 export function JobDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  
-  const staticJob = id ? getJob(id) : undefined;
-
-  
   const [apiJob, setApiJob] = useState<PublicJob | null>(null);
-  const [loading, setLoading] = useState(!staticJob); // only load if static not found
+  const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (staticJob || !id) return; // static job found, no need to fetch
+    if (!id) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setNotFound(false);
     publicApi
       .getJobById(id)
       .then((job) => setApiJob(job))
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [id, staticJob]);
+  }, [id]);
 
-  
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -99,8 +89,7 @@ export function JobDetail() {
     );
   }
 
-  
-  if (notFound || (!staticJob && !apiJob)) {
+  if (notFound || !apiJob) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-24 text-center">
         <h1 className="font-display text-2xl font-bold text-slate-900">Job not found</h1>
@@ -112,184 +101,8 @@ export function JobDetail() {
     );
   }
 
-  
-  if (staticJob) {
-    return <StaticJobDetail job={staticJob} />;
-  }
-
-  
-  return <ApiJobDetail job={apiJob!} />;
+  return <ApiJobDetail job={apiJob} />;
 }
-
-
-
-function StaticJobDetail({ job }: { job: Job }) {
-  const navigate = useNavigate();
-  const { isAuthenticated, hasApplied, isSaved, toggleSaveJob, user } = useAuth();
-  const [applyOpen, setApplyOpen] = useState(false);
-
-  const applied = hasApplied(job.id);
-  const saved = isSaved(job.id);
-  const role = (user?.title ?? '').toLowerCase();
-  const hideCandidateActions =
-    role === 'admin' || role === 'recruiter' || role === 'hiringmanager';
-
-  const onApply = () => {
-    if (!isAuthenticated) {
-      navigate(`/register?redirect=/jobs/${job.id}`);
-      return;
-    }
-    setApplyOpen(true);
-  };
-
-  const related = JOBS.filter((j) => j.category === job.category && j.id !== job.id).slice(0, 3);
-
-  return (
-    <div className="w-full bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <Link
-          to="/jobs"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-600"
-        >
-          <ArrowLeftIcon className="h-4 w-4" /> Back to jobs
-        </Link>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8"
-        >
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex gap-4">
-              <img
-                src={job.companyLogo}
-                alt={`${job.company} logo`}
-                className="h-16 w-16 flex-shrink-0 rounded-2xl ring-1 ring-slate-100"
-              />
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-display text-2xl font-extrabold text-slate-900">{job.title}</h1>
-                  {job.featured && <Badge tone="amber">Featured</Badge>}
-                </div>
-                <p className="mt-1 font-medium text-slate-600">{job.company}</p>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
-                  <span className="inline-flex items-center gap-1.5">
-                    <MapPinIcon className="h-4 w-4" /> {job.location}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <BriefcaseIcon className="h-4 w-4" /> {job.type}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <ClockIcon className="h-4 w-4" /> {job.postedDaysAgo}d ago
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <UsersIcon className="h-4 w-4" /> {job.applicants} applicants
-                  </span>
-                </div>
-              </div>
-            </div>
-            {isAuthenticated && !hideCandidateActions && (
-              <div className="flex flex-col items-center rounded-2xl bg-slate-50 p-3">
-                <MatchScore score={job.matchScore} size={56} />
-                <span className="mt-1 text-xs font-semibold text-slate-500">AI match</span>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Badge tone="brand">{job.workMode}</Badge>
-            <Badge tone="slate">{job.level}</Badge>
-            <Badge tone="accent">{job.category}</Badge>
-          </div>
-
-          <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <span className="font-display text-xl font-bold text-slate-900">
-              {formatSalary(job.salaryMin, job.salaryMax)}
-              <span className="ml-1 text-sm font-normal text-slate-400">/ year</span>
-            </span>
-            <div className="flex gap-2">
-              {!hideCandidateActions && (
-                <Button
-                  variant="outline"
-                  onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: job.company, logo: job.companyLogo, location: job.location }) : navigate('/login')}
-                  aria-pressed={saved}
-                >
-                  <BookmarkIcon className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
-                  {saved ? 'Saved' : 'Save'}
-                </Button>
-              )}
-              <Button variant="outline" aria-label="Share job">
-                <Share2Icon className="h-4 w-4" />
-              </Button>
-              {!hideCandidateActions && (
-                applied ? (
-                  <Button variant="secondary" disabled>
-                    <CheckCircle2Icon className="h-4 w-4" /> Applied
-                  </Button>
-                ) : (
-                  <Button onClick={onApply}>
-                    {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
-                  </Button>
-                )
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        <div className="mt-8 grid gap-8 lg:grid-cols-3">
-          <div className="space-y-8 lg:col-span-2">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
-              <h2 className="font-display text-lg font-bold text-slate-900">About the role</h2>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">{job.shortDescription}</p>
-              <div className="mt-8 space-y-8">
-                <Section title="What you'll do" items={job.responsibilities} />
-                <Section title="What we're looking for" items={job.requirements} />
-                <Section title="Benefits & perks" items={job.benefits} />
-              </div>
-            </div>
-          </div>
-          <aside className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-              <h3 className="font-display text-base font-bold text-slate-900">Skills</h3>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {job.skills.map((s) => (
-                  <Badge key={s} tone="brand">{s}</Badge>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-              <h3 className="flex items-center gap-2 font-display text-base font-bold text-slate-900">
-                <BuildingIcon className="h-4 w-4 text-slate-400" /> {job.company}
-              </h3>
-              <p className="mt-2 text-sm text-slate-600">
-                A team building meaningful products with a people-first culture. Explore more open roles
-                at {job.company}.
-              </p>
-              <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/companies')}>
-                View company
-              </Button>
-            </div>
-          </aside>
-        </div>
-
-        {related.length > 0 && (
-          <section className="mt-14">
-            <h2 className="font-display text-xl font-extrabold text-slate-900">Similar roles</h2>
-            <div className="mt-5 grid gap-6 sm:grid-cols-2">
-              {related.map((j) => (
-                <JobCard key={j.id} job={j} showMatch={isAuthenticated} />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-
-      <ApplyModal job={job} open={applyOpen} onClose={() => setApplyOpen(false)} />
-    </div>
-  );
-}
-
-
 
 function ApiJobDetail({ job }: { job: PublicJob }) {
   const navigate = useNavigate();
@@ -306,7 +119,6 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
   const logoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bgColor}&color=fff&bold=true&size=128&format=png`;
   const postedLabel = msToPostedLabel(job.publishedAt);
 
-  
   const applyJobShape = {
     id: job.id,
     title: job.title,
@@ -324,7 +136,6 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
     setApplyOpen(true);
   };
 
-  
   const descParagraphs = job.description
     .split(/\n+/)
     .map((p) => p.trim())
@@ -340,7 +151,6 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
           <ArrowLeftIcon className="h-4 w-4" /> Back to jobs
         </Link>
 
-        
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -355,7 +165,9 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               />
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-display text-2xl font-extrabold text-slate-900">{job.title}</h1>
+                  <h1 className="font-display text-2xl font-extrabold text-slate-900">
+                    {job.title}
+                  </h1>
                   <Badge tone="green">Live</Badge>
                 </div>
                 <p className="mt-1 font-medium text-slate-600">{companyName}</p>
@@ -364,7 +176,8 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
                     <MapPinIcon className="h-4 w-4" /> {job.location}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <BriefcaseIcon className="h-4 w-4" /> {job.employmentType.replace(/([A-Z])/g, ' $1').trim()}
+                    <BriefcaseIcon className="h-4 w-4" />{' '}
+                    {job.employmentType.replace(/([A-Z])/g, ' $1').trim()}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <ClockIcon className="h-4 w-4" /> {postedLabel}
@@ -380,14 +193,16 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
             </div>
           </div>
 
-          
           <div className="mt-6 flex flex-wrap gap-2">
-            <Badge tone="brand">{job.employmentType.replace(/([A-Z])/g, ' $1').trim()}</Badge>
+            <Badge tone="brand">
+              {job.employmentType.replace(/([A-Z])/g, ' $1').trim()}
+            </Badge>
             {job.departmentName && <Badge tone="accent">{job.departmentName}</Badge>}
-            {job.experienceRequired && <Badge tone="slate">{job.experienceRequired}</Badge>}
+            {job.experienceRequired && (
+              <Badge tone="slate">{job.experienceRequired}</Badge>
+            )}
           </div>
 
-         
           <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <span className="font-display text-xl font-bold text-slate-900">
               {formatApiSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}
@@ -399,18 +214,29 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               {!hideCandidateActions && (
                 <Button
                   variant="outline"
-                  onClick={() => isAuthenticated ? toggleSaveJob(job.id, { title: job.title, company: companyName, logo: logoUrl, location: job.location }) : navigate('/login')}
+                  onClick={() =>
+                    isAuthenticated
+                      ? toggleSaveJob(job.id, {
+                          title: job.title,
+                          company: companyName,
+                          logo: logoUrl,
+                          location: job.location,
+                        })
+                      : navigate('/login')
+                  }
                   aria-pressed={saved}
                 >
-                  <BookmarkIcon className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`} />
+                  <BookmarkIcon
+                    className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`}
+                  />
                   {saved ? 'Saved' : 'Save'}
                 </Button>
               )}
               <Button variant="outline" aria-label="Share job">
                 <Share2Icon className="h-4 w-4" />
               </Button>
-              {!hideCandidateActions && (
-                applied ? (
+              {!hideCandidateActions &&
+                (applied ? (
                   <Button variant="secondary" disabled>
                     <CheckCircle2Icon className="h-4 w-4" /> Applied
                   </Button>
@@ -418,17 +244,17 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
                   <Button onClick={onApply}>
                     {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
                   </Button>
-                )
-              )}
+                ))}
             </div>
           </div>
         </motion.div>
 
-        
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
-              <h2 className="font-display text-lg font-bold text-slate-900">About the role</h2>
+              <h2 className="font-display text-lg font-bold text-slate-900">
+                About the role
+              </h2>
               <div className="mt-3 space-y-3">
                 {descParagraphs.map((p, i) => (
                   <p key={i} className="text-sm leading-relaxed text-slate-600">
@@ -445,22 +271,26 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
             </div>
           </div>
 
-          
           <aside className="space-y-6">
             {job.requiredSkills.length > 0 && (
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-                <h3 className="font-display text-base font-bold text-slate-900">Required skills</h3>
+                <h3 className="font-display text-base font-bold text-slate-900">
+                  Required skills
+                </h3>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {job.requiredSkills.map((s) => (
-                    <Badge key={s} tone="brand">{s}</Badge>
+                    <Badge key={s} tone="brand">
+                      {s}
+                    </Badge>
                   ))}
                 </div>
               </div>
             )}
 
-            
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-              <h3 className="font-display text-base font-bold text-slate-900">Job details</h3>
+              <h3 className="font-display text-base font-bold text-slate-900">
+                Job details
+              </h3>
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-slate-500">Type</dt>
@@ -475,13 +305,17 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
                 {job.experienceRequired && (
                   <div className="flex justify-between">
                     <dt className="text-slate-500">Experience</dt>
-                    <dd className="font-semibold text-slate-900">{job.experienceRequired}</dd>
+                    <dd className="font-semibold text-slate-900">
+                      {job.experienceRequired}
+                    </dd>
                   </div>
                 )}
                 {job.departmentName && (
                   <div className="flex justify-between">
                     <dt className="text-slate-500">Department</dt>
-                    <dd className="font-semibold text-slate-900">{job.departmentName}</dd>
+                    <dd className="font-semibold text-slate-900">
+                      {job.departmentName}
+                    </dd>
                   </div>
                 )}
                 {job.deadline && (
@@ -499,7 +333,6 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               </dl>
             </div>
 
-            
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
               <h3 className="flex items-center gap-2 font-display text-base font-bold text-slate-900">
                 <BuildingIcon className="h-4 w-4 text-slate-400" /> {companyName}
@@ -507,7 +340,12 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               <p className="mt-2 text-sm text-slate-600">
                 Explore open roles and learn more about the team at {companyName}.
               </p>
-              <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/companies')}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => navigate('/companies')}
+              >
                 View company
               </Button>
             </div>

@@ -25,6 +25,9 @@ namespace backend.Services
         /// <summary>List all job applications for this candidate.</summary>
         Task<List<ApplicationResponseDto>> GetApplicationsAsync(Guid userId);
 
+        /// <summary>List interviews scheduled for this candidate.</summary>
+        Task<List<backend.DTOs.Jobs.InterviewDto>> GetInterviewsAsync(Guid userId);
+
         /// <summary>Apply to a job posting. Throws if already applied.</summary>
         Task<ApplicationResponseDto> ApplyToJobAsync(Guid userId, ApplyToJobDto dto);
 

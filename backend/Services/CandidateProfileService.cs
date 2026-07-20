@@ -248,6 +248,56 @@ namespace backend.Services
                 .ToListAsync();
         }
 
+        public async Task<List<backend.DTOs.Jobs.InterviewDto>> GetInterviewsAsync(Guid userId)
+        {
+            var profile = await GetProfileEntityAsync(userId);
+
+            var interviews = await _db.Interviews
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.JobPosting)
+                .Include(i => i.JobApplication)
+                    .ThenInclude(a => a.CandidateProfile)
+                        .ThenInclude(cp => cp.User)
+                .Where(i => i.JobApplication.CandidateProfileId == profile.Id)
+                .OrderBy(i => i.ScheduledAt)
+                .ToListAsync();
+
+            return interviews.Select(i =>
+            {
+                var user = i.JobApplication.CandidateProfile.User;
+                var name = $"{user.FirstName} {user.LastName}".Trim();
+                var posting = i.JobApplication.JobPosting;
+                return new backend.DTOs.Jobs.InterviewDto
+                {
+                    Id = i.Id,
+                    ApplicationId = i.JobApplicationId,
+                    JobPostingId = i.JobApplication.JobPostingId,
+                    CandidateName = name,
+                    CandidateEmail = user.Email,
+                    PhotoUrl = i.JobApplication.CandidateProfile.PhotoUrl,
+                    JobTitle = posting.Title,
+                    Company = posting.PostedBy,
+                    JobLocation = posting.Location,
+                    ScheduledAt = DateTime.SpecifyKind(i.ScheduledAt, DateTimeKind.Utc),
+                    DurationMinutes = i.DurationMinutes,
+                    InterviewType = i.InterviewType,
+                    MeetingLink = i.MeetingLink,
+                    Location = i.Location,
+                    InterviewerName = i.InterviewerName,
+                    Notes = i.Notes,
+                    ApplicationStatus = i.JobApplication.Status.ToString(),
+                    RescheduleRequested = i.RescheduleRequested,
+                    RescheduleReason = i.RescheduleReason,
+                    RescheduleRequestedAt = i.RescheduleRequestedAt.HasValue
+                        ? DateTime.SpecifyKind(i.RescheduleRequestedAt.Value, DateTimeKind.Utc)
+                        : null,
+                    LastRescheduledAt = i.LastRescheduledAt.HasValue
+                        ? DateTime.SpecifyKind(i.LastRescheduledAt.Value, DateTimeKind.Utc)
+                        : null
+                };
+            }).ToList();
+        }
+
         // ── Apply to job ──────────────────────────────────────────────────────
         public async Task<ApplicationResponseDto> ApplyToJobAsync(Guid userId, ApplyToJobDto dto)
         {
