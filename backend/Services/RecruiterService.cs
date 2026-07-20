@@ -177,15 +177,20 @@ namespace backend.Services
 
             var managerFullName = $"{manager.FirstName} {manager.LastName}".Trim();
 
-            var busySlots = await _db.Interviews
-                .Where(i => i.InterviewerName == managerFullName && i.ScheduledAt >= DateTime.UtcNow.Date)
+            var allInterviews = await _db.Interviews
+                .AsNoTracking()
+                .Where(i => i.ScheduledAt >= DateTime.UtcNow.AddDays(-1))
+                .ToListAsync();
+
+            var busySlots = allInterviews
+                .Where(i => i.InterviewerName.Trim().Equals(managerFullName, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(i => i.ScheduledAt)
                 .Select(i => new BusySlotDto
                 {
-                    ScheduledAt = i.ScheduledAt,
+                    ScheduledAt = DateTime.SpecifyKind(i.ScheduledAt, DateTimeKind.Utc),
                     DurationMinutes = i.DurationMinutes
                 })
-                .ToListAsync();
+                .ToList();
 
             return busySlots;
         }

@@ -317,6 +317,7 @@ namespace backend.Services
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Experiences)
                 .Include(a => a.JobPosting)
+                    .ThenInclude(j => j.Department)
                 .Include(a => a.Interviews)
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
@@ -342,6 +343,7 @@ namespace backend.Services
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Experiences)
                 .Include(a => a.JobPosting)
+                    .ThenInclude(j => j.Department)
                 .Include(a => a.Interviews)
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
@@ -475,6 +477,7 @@ namespace backend.Services
                 Location = profile.Location,
                 PhotoUrl = profile.PhotoUrl,
                 JobTitle = jobTitle,
+                DepartmentName = a.JobPosting?.Department?.Name,
                 Status = a.Status.ToString(),
                 CoverLetter = a.CoverLetter,
                 AppliedAt = a.AppliedAt,
@@ -657,11 +660,10 @@ namespace backend.Services
             if (scheduledAt < DateTime.UtcNow.AddMinutes(-5))
                 throw new ArgumentException("Interview time must be in the future.");
 
-            if (interviewType == "Video" && string.IsNullOrWhiteSpace(dto.MeetingLink))
-                throw new ArgumentException("A meeting link is required for video interviews.");
-
             if (interviewType == "Onsite" && string.IsNullOrWhiteSpace(dto.Location))
                 throw new ArgumentException("A location is required for onsite interviews.");
+
+            await ValidateInterviewerAvailabilityAsync(dto.InterviewerName, scheduledAt, dto.DurationMinutes);
 
             var interview = new Interview
             {
@@ -898,11 +900,10 @@ namespace backend.Services
             if (scheduledAt < DateTime.UtcNow.AddMinutes(-5))
                 throw new ArgumentException("Interview time must be in the future.");
 
-            if (interviewType == "Video" && string.IsNullOrWhiteSpace(dto.MeetingLink))
-                throw new ArgumentException("A meeting link is required for video interviews.");
-
             if (interviewType == "Onsite" && string.IsNullOrWhiteSpace(dto.Location))
                 throw new ArgumentException("A location is required for onsite interviews.");
+
+            await ValidateInterviewerAvailabilityAsync(dto.InterviewerName, scheduledAt, dto.DurationMinutes, excludeInterviewId: interview.Id);
 
             interview.ScheduledAt = scheduledAt;
             interview.DurationMinutes = dto.DurationMinutes > 0 ? dto.DurationMinutes : 60;
@@ -956,6 +957,33 @@ namespace backend.Services
             }
 
             return MapInterview(interview, interview.JobApplication, job.Title, candidateName, candidate.Email);
+        }
+
+        private async Task ValidateInterviewerAvailabilityAsync(
+            string interviewerName, DateTime scheduledAt, int durationMinutes, Guid? excludeInterviewId = null)
+        {
+            var interviewerClean = interviewerName.Trim();
+            var durationMins = durationMinutes > 0 ? durationMinutes : 60;
+            var interviewEnd = scheduledAt.AddMinutes(durationMins);
+
+            var sameDayInterviews = await _db.Interviews
+                .AsNoTracking()
+                .Where(i => i.ScheduledAt.Date == scheduledAt.Date)
+                .ToListAsync();
+
+            var conflict = sameDayInterviews.FirstOrDefault(i =>
+                (!excludeInterviewId.HasValue || i.Id != excludeInterviewId.Value) &&
+                i.InterviewerName.Equals(interviewerClean, StringComparison.OrdinalIgnoreCase) &&
+                scheduledAt < i.ScheduledAt.AddMinutes(i.DurationMinutes) &&
+                interviewEnd > i.ScheduledAt);
+
+            if (conflict != null)
+            {
+                var conflictStart = conflict.ScheduledAt.ToLocalTime();
+                var conflictEnd = conflictStart.AddMinutes(conflict.DurationMinutes);
+                throw new InvalidOperationException(
+                    $"Interviewer '{interviewerClean}' already has an interview scheduled from {conflictStart:h:mm tt} to {conflictEnd:h:mm tt} on {conflictStart:MMM d, yyyy}. Please choose a different time or interviewer.");
+            }
         }
 
         public async Task<InterviewDto> SubmitInterviewFeedbackAsync(
