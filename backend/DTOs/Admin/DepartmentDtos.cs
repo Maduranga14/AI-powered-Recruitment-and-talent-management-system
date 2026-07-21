@@ -2,21 +2,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace backend.DTOs.Admin
 {
-    public class OrganizationDto
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Sub { get; set; } = string.Empty;
-    }
     public class DepartmentDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
         public string Badge { get; set; } = string.Empty;
         public string BadgeColor { get; set; } = string.Empty;
         public string Head { get; set; } = string.Empty;
+        public string? ContactEmail { get; set; }
         public string HeadInitials { get; set; } = string.Empty;
         public string HeadColor { get; set; } = string.Empty;
+        public string? OrganizationName { get; set; }
     }
 
     public class GlobalPolicyDto
@@ -40,15 +37,20 @@ namespace backend.DTOs.Admin
         [StringLength(100, ErrorMessage = "Department name cannot exceed 100 characters.")]
         public string Name { get; set; } = string.Empty;
 
+        [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters.")]
+        public string? Description { get; set; }
+
         [StringLength(50, ErrorMessage = "Badge text cannot exceed 50 characters.")]
         public string Badge { get; set; } = string.Empty;
 
         [StringLength(7, ErrorMessage = "Badge color must be a valid hex color code.")]
         public string BadgeColor { get; set; } = "#64748b";
 
-        [Required(ErrorMessage = "Department head name is required.")]
         [StringLength(100, ErrorMessage = "Head name cannot exceed 100 characters.")]
-        public string Head { get; set; } = string.Empty;
+        public string? Head { get; set; }
+
+        [EmailAddress(ErrorMessage = "Invalid contact email address.")]
+        public string? ContactEmail { get; set; }
 
         [StringLength(10, ErrorMessage = "Head initials cannot exceed 10 characters.")]
         public string HeadInitials { get; set; } = string.Empty;

@@ -29,6 +29,8 @@ namespace backend.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = dto.Role,
                 Status = UserStatus.Active,
+                OrganizationId = dto.OrganizationId,
+                DepartmentId = dto.DepartmentId,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -37,24 +39,34 @@ namespace backend.Services
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
 
+            // Load navigation properties for mapping
+            if (user.OrganizationId.HasValue)
+                await _db.Entry(user).Reference(u => u.Organization).LoadAsync();
+            if (user.DepartmentId.HasValue)
+                await _db.Entry(user).Reference(u => u.Department).LoadAsync();
+
             return MapToListDto(user);
         }
 
         public async Task<PagedResultDto<UserListDto>> GetAllUsersAsync(UserRole? roleFilter, int page, int pageSize)
         {
-            var query = _db.Users.AsQueryable();
+            var query = _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .AsQueryable();
 
             if (roleFilter.HasValue)
                 query = query.Where(u => u.Role == roleFilter.Value);
 
             var totalCount = await query.CountAsync();
 
-            var items = await query
+            var users = await query
                 .OrderByDescending(u => u.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => MapToListDto(u))
                 .ToListAsync();
+
+            var items = users.Select(MapToListDto).ToList();
 
             return new PagedResultDto<UserListDto>
             {
@@ -203,7 +215,10 @@ namespace backend.Services
             Email = u.Email,
             Role = u.Role.ToString(),
             Status = u.Status.ToString(),
-            OrganizationName = u.OrganizationName,
+            OrganizationName = u.Organization?.Name ?? u.OrganizationName,
+            OrganizationId = u.OrganizationId,
+            DepartmentName = u.Department?.Name,
+            DepartmentId = u.DepartmentId,
             IsActive = u.IsActive,
             CreatedAt = u.CreatedAt
         };

@@ -60,7 +60,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   if (!response.ok) {
-    const errorMsg = data?.message || `Request failed with status ${response.status}`;
+    const errorMsg =
+      data?.message ||
+      (data?.errors ? Object.values(data.errors).flat().join(', ') : null) ||
+      `Request failed with status ${response.status}`;
     throw new Error(errorMsg);
   }
 
@@ -153,8 +156,42 @@ export interface BackendUser {
   role: string;
   status: string;
   organizationName?: string;
+  organizationId?: string;
+  departmentName?: string;
+  departmentId?: string;
   isActive: boolean;
   createdAt: string;
+}
+
+export interface AdminOrganizationDto {
+  id: string;
+  name: string;
+  taxNumber: string;
+  website?: string | null;
+  shortDescription?: string | null;
+  logoUrl?: string | null;
+  initials: string;
+  sub: string;
+  plan: 'Scale' | 'Growth' | 'Starter' | string;
+  status: 'Healthy' | 'Review' | 'Restricted' | string;
+  owner: string;
+  members: number;
+  activeJobs: number;
+  joined: string;
+  monthlyUsage: string;
+  createdAt: string;
+}
+
+export interface CreateOrganizationPayload {
+  name: string;
+  taxNumber: string;
+  website?: string;
+  shortDescription?: string;
+  logoUrl?: string;
+  sub?: string;
+  plan?: string;
+  status?: string;
+  owner?: string;
 }
 
 export interface PagedResult<T> {
@@ -166,6 +203,11 @@ export interface PagedResult<T> {
 }
 
 export const adminApi = {
+  getDepartments: (organizationName?: string) => {
+    const qs = organizationName ? `?organizationName=${encodeURIComponent(organizationName)}` : '';
+    return request<DepartmentDashboardDto>(`/departments/dashboard${qs}`);
+  },
+
   getPendingRecruiters: () =>
     request<PendingRecruiter[]>('/admin/pending-recruiters'),
 
@@ -183,6 +225,40 @@ export const adminApi = {
     const roleParam = role ? `&role=${encodeURIComponent(role)}` : '';
     return request<PagedResult<BackendUser>>(`/admin/users?page=${page}&pageSize=${pageSize}${roleParam}`);
   },
+
+  createUser: (payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role: string;
+    organizationId?: string;
+    departmentId?: string;
+  }) =>
+    request<{ message: string; data: BackendUser }>('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getOrganizations: () =>
+    request<AdminOrganizationDto[]>('/admin/organizations'),
+
+  createOrganization: (payload: CreateOrganizationPayload) =>
+    request<{ message: string; data: AdminOrganizationDto }>('/admin/organizations', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateOrganization: (id: string, payload: CreateOrganizationPayload) =>
+    request<{ message: string; data: AdminOrganizationDto }>(`/admin/organizations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteOrganization: (id: string) =>
+    request<{ message: string }>(`/admin/organizations/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 
@@ -447,7 +523,7 @@ export const recruiterApi = {
     return request<DepartmentDashboardDto>(`/departments/dashboard${qs}`);
   },
 
-  createDepartment: (payload: { name: string; head: string; badge?: string; organizationName?: string }) =>
+  createDepartment: (payload: { name: string; description?: string; head?: string; contactEmail?: string; badge?: string; organizationName?: string }) =>
     request<DepartmentDto>('/departments', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -565,6 +641,9 @@ export const publicApi = {
 
   getJobById: (id: string) =>
     publicRequest<PublicJob>(`/jobs/${id}`),
+
+  getOrganizations: () =>
+    publicRequest<AdminOrganizationDto[]>('/organizations'),
 };
 
 // ─── Candidate Profile integration types ─────────────────────────────────────
@@ -791,11 +870,14 @@ export const chatApi = {
 export interface DepartmentDto {
   id: string;
   name: string;
+  description?: string | null;
   badge: string;
   badgeColor: string;
   head: string;
+  contactEmail?: string | null;
   headInitials: string;
   headColor: string;
+  organizationName?: string | null;
 }
 
 export interface DepartmentDashboardDto {

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using backend.Models.Enums;
 
 namespace backend.DTOs.Admin
@@ -16,12 +17,15 @@ namespace backend.DTOs.Admin
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Password is required.")]
-        [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
-        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$",
-            ErrorMessage = "Password must contain uppercase, lowercase, number, and special character.")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
         public string Password { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Role is required.")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public UserRole Role { get; set; }
+
+        public Guid? OrganizationId { get; set; }
+
+        public Guid? DepartmentId { get; set; }
     }
 }

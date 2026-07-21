@@ -42,88 +42,54 @@ export function Admin() {
   });
   const [feedback, setFeedback] = useState('');
 
+  const refreshData = async () => {
+    try {
+      const [res, pending, jobs, liveOrgs] = await Promise.all([
+        adminApi.getUsers(undefined, 1, 100),
+        adminApi.getPendingRecruiters().catch(() => []),
+        publicApi.getPublishedJobs().catch(() => []),
+        adminApi.getOrganizations().catch(() => []),
+      ]);
+
+      setPendingApprovals(pending.length);
+      setPublishedJobs(jobs.length);
+
+      // 1. Map backend users to AdminPerson
+      const backendPeople: AdminPerson[] = res.items.map((u) => {
+        let mappedRole: AdminRole = 'Candidate';
+        if (u.role === 'Admin') mappedRole = 'Administrator';
+        else if (u.role === 'Recruiter') mappedRole = 'Recruiter';
+        else if (u.role === 'HiringManager') mappedRole = 'Hiring manager';
+
+        let mappedStatus: AccountStatus = u.isActive ? 'Active' : 'Suspended';
+
+        return {
+          id: u.id,
+          name: u.fullName,
+          email: u.email,
+          role: mappedRole,
+          status: mappedStatus,
+          organization: u.organizationName || 'Independent',
+          joined: new Date(u.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+          lastActive: 'Recently',
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=4f46e5&color=fff&bold=true&size=96&format=png`
+        };
+      });
+
+      setPeople(backendPeople);
+      setOrganizations(liveOrgs as AdminOrganization[]);
+
+    } catch (err) {
+      console.error('Failed to load live admin data:', err);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const [res, pending, jobs] = await Promise.all([
-          adminApi.getUsers(undefined, 1, 100),
-          adminApi.getPendingRecruiters().catch(() => []),
-          publicApi.getPublishedJobs().catch(() => []),
-        ]);
-
-        setPendingApprovals(pending.length);
-        setPublishedJobs(jobs.length);
-
-        const jobsByOrg = new Map<string, number>();
-        for (const job of jobs) {
-          const key = (job.organizationName || job.postedBy || '').toLowerCase();
-          if (!key) continue;
-          jobsByOrg.set(key, (jobsByOrg.get(key) || 0) + 1);
-        }
-        
-        // 1. Map backend users to AdminPerson
-        const backendPeople: AdminPerson[] = res.items.map((u) => {
-          let mappedRole: AdminRole = 'Candidate';
-          if (u.role === 'Admin') mappedRole = 'Administrator';
-          else if (u.role === 'Recruiter') mappedRole = 'Recruiter';
-          else if (u.role === 'HiringManager') mappedRole = 'Hiring manager';
-
-          let mappedStatus: AccountStatus = u.isActive ? 'Active' : 'Suspended';
-
-          return {
-            id: u.id,
-            name: u.fullName,
-            email: u.email,
-            role: mappedRole,
-            status: mappedStatus,
-            organization: u.organizationName || 'Independent',
-            joined: new Date(u.createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            }),
-            lastActive: 'Recently',
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=4f46e5&color=fff&bold=true&size=96&format=png`
-          };
-        });
-
-        setPeople(backendPeople);
-
-        // 2. Extract organizations from backend users
-        const orgNames = new Set<string>();
-        res.items.forEach((u) => {
-          if (u.organizationName) {
-            orgNames.add(u.organizationName);
-          }
-        });
-
-        const backendOrgs: AdminOrganization[] = Array.from(orgNames).map((orgName) => {
-          const initials = orgName.split(' ').map((w) => w[0]).join('').toUpperCase().substring(0, 3);
-          const activeJobs = jobsByOrg.get(orgName.toLowerCase()) || 0;
-          return {
-            id: `org-${orgName.toLowerCase().replace(/\s+/g, '-')}`,
-            name: orgName,
-            initials: initials || 'ORG',
-            plan: 'Starter',
-            members: res.items.filter((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase()).length,
-            activeJobs,
-            status: 'Healthy' as const,
-            owner: res.items.find((u) => u.organizationName?.toLowerCase() === orgName.toLowerCase() && u.role === 'Recruiter')?.fullName || 'Unknown',
-            joined: new Date().toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            }),
-            monthlyUsage: `${activeJobs} live roles`
-          };
-        });
-
-        setOrganizations(backendOrgs);
-
-      } catch (err) {
-        console.error('Failed to load live admin data:', err);
-      }
-    })();
+    refreshData();
   }, [view]);
 
   const showFeedback = (message: string) => {
@@ -223,14 +189,15 @@ export function Admin() {
 
           }
           {view === 'people' &&
-            <AdminPeople people={people} onPersonSelect={setSelectedPerson} />
+            <AdminPeople people={people} onPersonSelect={setSelectedPerson} onRefresh={refreshData} />
           }
           {view === 'organizations' &&
             <AdminOrganizations
               organizations={organizations}
               onOrganizationSelect={(organization) =>
                 setSelectedOrganizationId(organization.id)
-              } />
+              }
+              onRefresh={refreshData} />
 
           }
           {view === 'departments' &&
