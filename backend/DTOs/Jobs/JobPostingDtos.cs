@@ -238,6 +238,16 @@ namespace backend.DTOs.Jobs
         public string? SkillRatings { get; set; }
     }
 
+    public class MakeHiringDecisionDto
+    {
+        /// <summary>Expected: "Hired" | "Rejected" | "UnderFinalReview"</summary>
+        [Required(ErrorMessage = "Decision is required.")]
+        public string Decision { get; set; } = string.Empty;
+
+        [MaxLength(2000)]
+        public string? Notes { get; set; }
+    }
+
     public class ScheduleInterviewDto
     {
         [Required]

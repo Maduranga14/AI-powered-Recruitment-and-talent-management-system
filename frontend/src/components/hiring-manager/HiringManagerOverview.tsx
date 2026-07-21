@@ -47,6 +47,10 @@ export function HiringManagerOverview({
     ? `Next: ${nextInterview.time.replace('Today · ', '')}`
     : 'None scheduled';
 
+  const hiredCount = candidates.filter(
+    (candidate) => candidate.decisionStatus === 'Hired'
+  ).length;
+
   const metrics = [
     {
       label: 'Assigned roles',
@@ -69,20 +73,21 @@ export function HiringManagerOverview({
       tone: 'amber',
     },
     {
+      label: 'Hired candidates',
+      value: hiredCount,
+      detail:
+        hiredCount === 0
+          ? 'No hiring decisions yet'
+          : `${hiredCount} candidate${hiredCount === 1 ? '' : 's'} selected to hire`,
+      icon: CheckCircle2Icon,
+      tone: 'green',
+    },
+    {
       label: 'Upcoming interviews',
       value: interviews.length,
       detail: nextDetail,
       icon: CalendarClockIcon,
       tone: 'accent',
-    },
-    {
-      label: 'Feedback submitted',
-      value: submitted.length,
-      detail: candidates.length
-        ? `${feedbackPct}% of queue complete`
-        : 'No candidates yet',
-      icon: CheckCircle2Icon,
-      tone: 'blue',
     },
   ];
   return (

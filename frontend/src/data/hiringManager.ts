@@ -1,7 +1,11 @@
 export type ManagerDecisionStatus =
-'Awaiting feedback' |
-'Feedback submitted' |
-'Decision shared';
+  | 'Awaiting feedback'
+  | 'Interview'
+  | 'Feedback submitted'
+  | 'Decision shared'
+  | 'Hired'
+  | 'Rejected'
+  | 'Under Final Review';
 
 export type ManagerRecommendation = 'Strong Yes' | 'Yes' | 'Maybe' | 'No' | 'Strong No';
 
@@ -51,6 +55,11 @@ export interface ManagerCandidate {
   appliedAt?: string;
   coverLetter?: string;
   resumeUrl?: string;
+  interviewOverallRating?: number;
+  interviewRecommendation?: string;
+  interviewComments?: string;
+  interviewTechnicalScore?: number;
+  interviewSkillRatings?: string;
 }
 
 export interface ManagerInterview {
@@ -255,9 +264,13 @@ export const MANAGER_ROLES: ManagerRole[] = [
 
 export const DECISION_TONES: Record<
   ManagerDecisionStatus,
-  'amber' | 'brand' | 'green'> =
+  'amber' | 'brand' | 'green' | 'red' | 'slate'> =
 {
   'Awaiting feedback': 'amber',
+  'Interview': 'brand',
   'Feedback submitted': 'brand',
-  'Decision shared': 'green'
+  'Decision shared': 'green',
+  'Hired': 'green',
+  'Rejected': 'red',
+  'Under Final Review': 'slate'
 };

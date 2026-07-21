@@ -759,6 +759,165 @@ namespace backend.Services
             return MapApplicant(application, application.JobPosting.Title);
         }
 
+        public async Task<JobApplicantDto> MakeHiringDecisionAsync(Guid applicationId, string decision, string? notes, Guid managerUserId)
+        {
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId);
+
+            if (manager == null || manager.Role != UserRole.HiringManager)
+                throw new KeyNotFoundException("Hiring manager user not found.");
+
+            var departments = await GetManagerDepartmentIdsAsync(manager);
+
+            var application = await _db.JobApplications
+                .Include(a => a.JobPosting)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Experiences)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Skills)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Educations)
+                .Include(a => a.Interviews)
+                .FirstOrDefaultAsync(a => a.Id == applicationId);
+
+            if (application == null)
+                throw new KeyNotFoundException("Application not found.");
+
+            if (application.JobPosting.DepartmentId == null || !departments.Contains(application.JobPosting.DepartmentId.Value))
+                throw new UnauthorizedAccessException("You are not authorized to manage this application.");
+
+            ApplicationStatus targetStatus;
+            var cleanDecision = decision.Trim().ToLower();
+            if (cleanDecision is "hire" or "hired")
+            {
+                targetStatus = ApplicationStatus.Hired;
+                if (string.IsNullOrWhiteSpace(application.Recommendation)) application.Recommendation = "Strong Yes";
+            }
+            else if (cleanDecision is "reject" or "rejected")
+            {
+                targetStatus = ApplicationStatus.Rejected;
+                if (string.IsNullOrWhiteSpace(application.Recommendation)) application.Recommendation = "No";
+            }
+            else if (cleanDecision is "underfinalreview" or "review")
+            {
+                targetStatus = ApplicationStatus.UnderFinalReview;
+            }
+            else if (Enum.TryParse<ApplicationStatus>(decision, true, out var parsed))
+            {
+                targetStatus = parsed;
+            }
+            else
+            {
+                throw new ArgumentException($"Invalid decision status '{decision}'. Expected Hired, Rejected, or UnderFinalReview.");
+            }
+
+            application.Status = targetStatus;
+            if (!string.IsNullOrWhiteSpace(notes))
+            {
+                var prefix = $"[Hiring Decision: {targetStatus}] ";
+                application.Feedback = string.IsNullOrWhiteSpace(application.Feedback)
+                    ? $"{prefix}{notes.Trim()}"
+                    : $"{application.Feedback}\n\n{prefix}{notes.Trim()}";
+            }
+
+            application.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            // Send notification to candidate upon Hire or Reject decision
+            var user = application.CandidateProfile?.User;
+            var candidateEmail = user?.Email;
+            var candidateName = user != null
+                ? $"{user.FirstName} {user.LastName}".Trim()
+                : "Candidate";
+
+            if (!string.IsNullOrWhiteSpace(candidateEmail))
+            {
+                var jobTitle = application.JobPosting.Title;
+                var orgName = manager.Organization?.Name ?? manager.OrganizationName ?? "Hiring Team";
+
+                if (targetStatus == ApplicationStatus.Hired)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var subject = $"Congratulations! Offer Decision for {jobTitle}";
+                            var body = $@"
+                                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;'>
+                                    <div style='text-align: center; padding-bottom: 20px; border-b: 1px solid #f1f5f9;'>
+                                        <h2 style='color: #059669; font-size: 24px; margin: 0;'>🎉 Congratulations!</h2>
+                                        <p style='color: #64748b; font-size: 14px; margin-top: 4px;'>You have been selected for the position</p>
+                                    </div>
+                                    <div style='padding: 20px 0;'>
+                                        <p style='font-size: 16px; color: #1e293b;'>Dear <strong>{candidateName}</strong>,</p>
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            We are thrilled to inform you that following your interviews and evaluations for the <strong>{jobTitle}</strong> position, our hiring manager has decided to <strong>HIRE</strong> you for the role!
+                                        </p>
+                                        {(string.IsNullOrWhiteSpace(notes) ? "" : $"<div style='background-color: #f0fdf4; border-left: 4px solid #10b981; border-radius: 8px; padding: 14px; margin: 20px 0;'><p style='margin:0; font-size: 14px; color: #065f46;'><strong>Hiring Manager Note:</strong> {notes}</p></div>")}
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            Our recruitment team will be reaching out to you shortly with onboarding instructions and formal paperwork.
+                                        </p>
+                                    </div>
+                                    <div style='border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;'>
+                                        <p style='font-size: 14px; color: #64748b; margin: 0;'>Best regards,<br/><strong style='color: #0f172a;'>{orgName}</strong></p>
+                                        <p style='color: #94a3b8; font-size: 12px; margin-top: 16px;'>This is an automated decision notification from TalentPortal.</p>
+                                    </div>
+                                </div>";
+                            await _emailService.SendEmailAsync(candidateEmail, subject, body);
+                        }
+                        catch
+                        {
+                            // Fail silently background task
+                        }
+                    });
+                }
+                else if (targetStatus == ApplicationStatus.Rejected)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var subject = $"Application Update: {jobTitle}";
+                            var body = $@"
+                                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;'>
+                                    <div style='text-align: center; padding-bottom: 20px; border-b: 1px solid #f1f5f9;'>
+                                        <h2 style='color: #475569; font-size: 20px; margin: 0;'>Application Status Update</h2>
+                                    </div>
+                                    <div style='padding: 20px 0;'>
+                                        <p style='font-size: 16px; color: #1e293b;'>Dear <strong>{candidateName}</strong>,</p>
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            Thank you for interviewing and taking the time to discuss the <strong>{jobTitle}</strong> role with our hiring team.
+                                        </p>
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            After careful evaluation of all candidates, we regret to inform you that we have decided to proceed with another applicant whose background more closely matches our immediate technical needs.
+                                        </p>
+                                        {(string.IsNullOrWhiteSpace(notes) ? "" : $"<div style='background-color: #f8fafc; border-left: 4px solid #64748b; border-radius: 8px; padding: 14px; margin: 20px 0;'><p style='margin:0; font-size: 14px; color: #334155;'><strong>Hiring Team Feedback:</strong> {notes}</p></div>")}
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            We appreciate your effort throughout our selection process and wish you success in your job search.
+                                        </p>
+                                    </div>
+                                    <div style='border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;'>
+                                        <p style='font-size: 14px; color: #64748b; margin: 0;'>Best regards,<br/><strong style='color: #0f172a;'>{orgName}</strong></p>
+                                        <p style='color: #94a3b8; font-size: 12px; margin-top: 16px;'>This is an automated decision notification from TalentPortal.</p>
+                                    </div>
+                                </div>";
+                            await _emailService.SendEmailAsync(candidateEmail, subject, body);
+                        }
+                        catch
+                        {
+                            // Fail silently background task
+                        }
+                    });
+                }
+            }
+
+            return MapApplicant(application, application.JobPosting.Title);
+        }
+
         public async Task<InterviewDto> ScheduleInterviewAsync(
             Guid jobId, Guid applicationId, ScheduleInterviewDto dto, Guid recruiterId)
         {

@@ -31,6 +31,11 @@ interface HiringManagerFeedbackProps {
     overallRating: number,
     skillRatingsJson: string
   ) => void;
+  onMakeDecision?: (
+    candidateId: string,
+    decision: 'Hired' | 'Rejected' | 'UnderFinalReview',
+    notes?: string
+  ) => void;
 }
 
 function formatDateRange(start: string, end: string | null, isCurrent?: boolean): string {
@@ -46,6 +51,7 @@ export function HiringManagerFeedback({
   candidates,
   initialCandidateId,
   onSubmitFeedback,
+  onMakeDecision,
 }: HiringManagerFeedbackProps) {
   const pending = candidates.filter(
     (c) => c.decisionStatus === 'Awaiting feedback'
@@ -81,7 +87,7 @@ export function HiringManagerFeedback({
     candidate && recommendation && overallRating > 0 && generalImpression.trim().length >= 10
   );
 
-  const submit = () => {
+  const submit = async () => {
     if (!candidate || !recommendation || !canSubmit) return;
     const combined = `Strengths:\n${strengths.trim() || 'None specified'}\n\nConcerns:\n${concerns.trim() || 'None specified'}\n\nGeneral Impression:\n${generalImpression.trim()}`;
     onSubmitFeedback(candidate.id, recommendation, combined, overallRating, undefined);
@@ -444,6 +450,7 @@ export function HiringManagerFeedback({
                   {generalImpression.trim().length} / 10 min characters
                 </p>
               </div>
+
             </div>
 
             {/* Submit */}

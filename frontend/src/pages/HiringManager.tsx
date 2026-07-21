@@ -31,9 +31,17 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     recommendation = applicant.recommendation as ManagerRecommendation;
   }
 
-  let decisionStatus: ManagerCandidate['decisionStatus'] = 'Awaiting feedback';
-  if (applicant.feedback) {
+  let decisionStatus: ManagerCandidate['decisionStatus'] = 'Interview';
+  if (applicant.status === 'Hired') {
+    decisionStatus = 'Hired';
+  } else if (applicant.status === 'Rejected') {
+    decisionStatus = 'Rejected';
+  } else if (applicant.status === 'UnderFinalReview') {
+    decisionStatus = 'Under Final Review';
+  } else if (applicant.interviewComments || applicant.interviewRecommendation) {
     decisionStatus = 'Feedback submitted';
+  } else {
+    decisionStatus = 'Interview';
   }
 
   const skills = applicant.skills || [];
@@ -88,6 +96,11 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     appliedAt: applicant.appliedAt,
     coverLetter: applicant.coverLetter || undefined,
     resumeUrl: applicant.resumeUrl || undefined,
+    interviewOverallRating: applicant.interviewOverallRating || undefined,
+    interviewRecommendation: applicant.interviewRecommendation || undefined,
+    interviewComments: applicant.interviewComments || undefined,
+    interviewTechnicalScore: applicant.interviewTechnicalScore || undefined,
+    interviewSkillRatings: applicant.interviewSkillRatings || undefined,
   };
 }
 
@@ -231,6 +244,34 @@ export function HiringManager() {
     }
   };
 
+  const handleMakeDecision = async (
+    candidateId: string,
+    decision: 'Hired' | 'Rejected' | 'UnderFinalReview',
+    notes?: string
+  ) => {
+    const candidate = candidates.find((item) => item.id === candidateId);
+    if (!candidate?.applicationId) {
+      showFeedback('Unable to process decision for this candidate.');
+      return;
+    }
+
+    try {
+      await managerApi.makeHiringDecision(candidate.applicationId, {
+        decision,
+        notes,
+      });
+      await loadData();
+      showFeedback(
+        `${candidate.name} decision recorded: ${decision === 'Hired' ? 'Hired 🎉' : decision === 'Rejected' ? 'Rejected' : 'Under Final Review'}.`
+      );
+      setSelectedCandidate(null);
+    } catch (err: unknown) {
+      showFeedback(
+        err instanceof Error ? err.message : 'Failed to update hiring decision.'
+      );
+    }
+  };
+
   const selectCandidate = (candidate: ManagerCandidate) =>
     setSelectedCandidate(candidate);
 
@@ -269,6 +310,7 @@ export function HiringManager() {
                 candidates={candidates}
                 initialCandidateId={feedbackCandidateId}
                 onSubmitFeedback={submitFeedback}
+                onMakeDecision={handleMakeDecision}
               />
             )}
             {view === 'calendar' && (
@@ -286,6 +328,7 @@ export function HiringManager() {
         candidate={selectedCandidate}
         onClose={() => setSelectedCandidate(null)}
         onGiveFeedback={openFeedback}
+        onMakeDecision={handleMakeDecision}
       />
       <AnimatePresence>
         {feedback && (

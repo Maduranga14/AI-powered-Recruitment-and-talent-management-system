@@ -601,6 +601,18 @@ export const managerApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  makeHiringDecision: (
+    applicationId: string,
+    payload: {
+      decision: string;
+      notes?: string;
+    }
+  ) =>
+    request<JobApplicant>(`/manager/applications/${applicationId}/decision`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
 export interface HiringManager {
