@@ -62,5 +62,8 @@ namespace backend.Services
 
         /// <summary>Hiring manager submits post-interview feedback and moves status to UnderFinalReview.</summary>
         Task<InterviewDto> SubmitInterviewFeedbackAsync(Guid interviewId, SubmitInterviewFeedbackDto dto, Guid managerUserId);
+
+        /// <summary>Hiring manager makes final hiring decision (Hire / Reject / UnderFinalReview) on an application.</summary>
+        Task<JobApplicantDto> MakeHiringDecisionAsync(Guid applicationId, string decision, string? notes, Guid managerUserId);
     }
 }

@@ -322,7 +322,7 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
     setApplications([]);
   };
 
-  const updateProfile: AuthContextValue['updateProfile'] = (patch) => {
+  const updateProfile: AuthContextValue['updateProfile'] = React.useCallback((patch) => {
     setUser((prev) => {
       if (!prev) return prev;
       const next = {
@@ -332,7 +332,7 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
       if (patch.name) next.avatar = makeAvatar(patch.name);
       return next;
     });
-  };
+  }, []);
 
   const saveProfile = async () => {
     if (!user) return;

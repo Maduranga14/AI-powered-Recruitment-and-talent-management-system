@@ -205,6 +205,7 @@ function toRecruiterInterview(item: InterviewDto): RecruiterInterview {
 }
 
 export function Recruiter() {
+  const { user, updateProfile } = useAuth();
   const [view, setView] = useState<RecruiterView>('overview');
   const [candidates, setCandidates] = useState<RecruiterCandidate[]>([]);
   const [jobs, setJobs] = useState<RecruiterJob[]>([]);
@@ -217,7 +218,13 @@ export function Recruiter() {
   useEffect(() => {
     recruiterApi
       .getDepartments()
-      .then((res) => setDepartments(res.departments || []))
+      .then((res) => {
+        setDepartments(res.departments || []);
+        const orgName = res.corporateStructure?.name;
+        if (orgName && orgName !== 'TalentPortal Holding' && user?.organizationName !== orgName) {
+          updateProfile({ organizationName: orgName });
+        }
+      })
       .catch(() => setDepartments([]));
   }, []);
   const [selectedJobFilter, setSelectedJobFilter] = useState<{
@@ -464,8 +471,6 @@ export function Recruiter() {
     showFeedback(`"${newJob.title}" created and added to your jobs.`);
   };
 
-  const { user } = useAuth();
-
   return (
     <RecruiterShell
       activeView={view}
@@ -594,6 +599,7 @@ function CreateJobModal({
   defaultPostedBy = '',
   editingJob = null
 }: CreateJobModalProps) {
+  const { user, updateProfile } = useAuth();
   const [step, setStep] = useState<1 | 2>(1);
 
   // Step 1
@@ -622,7 +628,7 @@ function CreateJobModal({
     if (open) {
       setStep(1);
       setTitle('');
-      setPostedBy(defaultPostedBy);
+      setPostedBy(defaultPostedBy || user?.organizationName || '');
       setEmploymentType('FullTime');
       setLocation('');
       setLocationType('onsite');
@@ -641,6 +647,9 @@ function CreateJobModal({
 
       recruiterApi.getDepartments().then((res) => {
         setDepartments(res.departments || []);
+        if (res.corporateStructure?.name && res.corporateStructure.name !== 'TalentPortal Holding') {
+          setPostedBy(res.corporateStructure.name);
+        }
       }).catch((err) => {
         console.error('Failed to load departments:', err);
       });
@@ -688,8 +697,8 @@ function CreateJobModal({
             
             // Parse description and requirements
             const parts = (detail.description || '').split('\n\nRequirements:\n');
-            setDescription(parts[0] || '');
-            setRequirements(parts[1] || '');
+            setDescription(detail.description ? parts[0] : '');
+            setRequirements(detail.requirements || parts[1] || '');
             
             setSkills(detail.requiredSkills || '');
             setSalaryMin(detail.salaryMin !== null ? detail.salaryMin.toString() : '');
@@ -733,21 +742,31 @@ function CreateJobModal({
     setLoading(true);
     setError('');
 
-    const fullDescription = requirements.trim()
-      ? `${description.trim()}\n\nRequirements:\n${requirements.trim()}`
-      : description.trim();
+    const reqText = requirements.trim();
 
     try {
       if (editingJob) {
+        // Always send salary explicitly so the backend can update or clear.
+        // Sending null clears the value; a number updates it.
+        const resolvedSalaryMin =
+          salaryPublic && salaryMinNum !== undefined && !isNaN(salaryMinNum)
+            ? salaryMinNum
+            : null;
+        const resolvedSalaryMax =
+          salaryPublic && salaryMaxNum !== undefined && !isNaN(salaryMaxNum)
+            ? salaryMaxNum
+            : null;
+
         const res = await recruiterApi.updateJob(editingJob.id, {
           title: title.trim(),
-          description: fullDescription,
+          description: description.trim(),
+          requirements: reqText || undefined,
           location: locationString,
           employmentType: EmploymentTypeMap[employmentType] ?? 0,
           status: editingJob.status === 'Active' ? 1 : 2,
           requiredSkills: skills.trim() || undefined,
-          salaryMin: salaryPublic ? salaryMinNum : undefined,
-          salaryMax: salaryPublic ? salaryMaxNum : undefined,
+          salaryMin: resolvedSalaryMin,
+          salaryMax: resolvedSalaryMax,
           salaryCurrency: salaryCurrency.trim() || 'USD',
           postedBy: postedBy.trim() || undefined,
           departmentId: departmentId || undefined,
@@ -757,7 +776,8 @@ function CreateJobModal({
       } else {
         const res = await recruiterApi.createJob({
           title: title.trim(),
-          description: fullDescription,
+          description: description.trim(),
+          requirements: reqText || undefined,
           location: locationString,
           employmentType: EmploymentTypeMap[employmentType] ?? 0,
           status: 1,
@@ -866,12 +886,11 @@ function CreateJobModal({
                     </Select>
                   </div>
 
-                  {/* 3. Posted By (Locked Organization) */}
+                  {/* 3. Posted By (Auto-assigned Organization) */}
                   <Input
-                    label="Posted by"
-                    value={postedBy}
+                    label="Posted by (Organization)"
+                    value={postedBy || defaultPostedBy || user?.organizationName || ''}
                     disabled
-                    onChange={(e) => setPostedBy(e.target.value)}
                   />
 
                   {/* 4. Employment Type */}

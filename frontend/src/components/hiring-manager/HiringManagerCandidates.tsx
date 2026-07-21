@@ -128,9 +128,12 @@ export function HiringManagerCandidates({
               className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
               
               <option>All decisions</option>
+              <option>Interview</option>
               <option>Awaiting feedback</option>
               <option>Feedback submitted</option>
-              <option>Decision shared</option>
+              <option>Hired</option>
+              <option>Rejected</option>
+              <option>Under Final Review</option>
             </select>
             <SlidersHorizontalIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
           </label>

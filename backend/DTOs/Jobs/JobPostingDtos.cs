@@ -13,6 +13,8 @@ namespace backend.DTOs.Jobs
         [Required(ErrorMessage = "Job description is required.")]
         public string Description { get; set; } = string.Empty;
 
+        public string? Requirements { get; set; }
+
         [Required(ErrorMessage = "Location is required.")]
         [StringLength(200, ErrorMessage = "Location cannot exceed 200 characters.")]
         public string Location { get; set; } = string.Empty;
@@ -52,6 +54,8 @@ namespace backend.DTOs.Jobs
         public string? Title { get; set; }
 
         public string? Description { get; set; }
+
+        public string? Requirements { get; set; }
 
         [StringLength(200)]
         public string? Location { get; set; }
@@ -102,6 +106,25 @@ namespace backend.DTOs.Jobs
     }
 
     /// <summary>Applicant row shown on the recruiter "View applicants" pipeline.</summary>
+    public class WorkExperienceDto
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Company { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public bool IsCurrent { get; set; }
+        public string? Description { get; set; }
+    }
+
+    public class EducationDto
+    {
+        public string Institution { get; set; } = string.Empty;
+        public string Degree { get; set; } = string.Empty;
+        public string FieldOfStudy { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+    }
+
     public class JobApplicantDto
     {
         public Guid ApplicationId { get; set; }
@@ -119,6 +142,8 @@ namespace backend.DTOs.Jobs
         public string? CoverLetter { get; set; }
         public DateTime AppliedAt { get; set; }
         public List<string> Skills { get; set; } = [];
+        public List<WorkExperienceDto> Experiences { get; set; } = [];
+        public List<EducationDto> Educations { get; set; } = [];
         public string? ExperienceSummary { get; set; }
         public string? ResumeUrl { get; set; }
         public string? Feedback { get; set; }
@@ -152,6 +177,7 @@ namespace backend.DTOs.Jobs
     public class JobPostingDetailDto : JobPostingListDto
     {
         public string Description { get; set; } = string.Empty;
+        public string? Requirements { get; set; }
         public string? ExperienceRequired { get; set; }
         public string? RequiredSkills { get; set; }
         public Guid? DepartmentId { get; set; }
@@ -165,6 +191,7 @@ namespace backend.DTOs.Jobs
         public Guid Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string? Requirements { get; set; }
         public string Location { get; set; } = string.Empty;
         public string EmploymentType { get; set; } = string.Empty;
         public string? DepartmentName { get; set; }
@@ -209,6 +236,16 @@ namespace backend.DTOs.Jobs
         public int OverallRating { get; set; }
 
         public string? SkillRatings { get; set; }
+    }
+
+    public class MakeHiringDecisionDto
+    {
+        /// <summary>Expected: "Hired" | "Rejected" | "UnderFinalReview"</summary>
+        [Required(ErrorMessage = "Decision is required.")]
+        public string Decision { get; set; } = string.Empty;
+
+        [MaxLength(2000)]
+        public string? Notes { get; set; }
     }
 
     public class ScheduleInterviewDto

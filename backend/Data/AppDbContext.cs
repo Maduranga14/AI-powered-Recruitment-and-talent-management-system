@@ -44,7 +44,17 @@ namespace backend.Data
                 entity.Property(u => u.Status)
                       .HasConversion<string>()
                       .HasDefaultValue(UserStatus.Active);
-                entity.Property(u => u.OrganizationName).HasMaxLength(200);
+                entity.Ignore(u => u.OrganizationName);
+
+                entity.HasOne(u => u.Organization)
+                      .WithMany(o => o.Users)
+                      .HasForeignKey(u => u.OrganizationId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(u => u.Department)
+                      .WithMany()
+                      .HasForeignKey(u => u.DepartmentId)
+                      .OnDelete(DeleteBehavior.SetNull);
 
                 // 1:1 User → CandidateProfile
                 entity.HasOne(u => u.CandidateProfile)
@@ -53,6 +63,16 @@ namespace backend.Data
                       .OnDelete(DeleteBehavior.Cascade);
 
                 entity.Ignore(u => u.FullName);
+            });
+
+            // ── Department ───────────────────────────────────────────────────
+            modelBuilder.Entity<Department>(entity =>
+            {
+                entity.HasKey(d => d.Id);
+                entity.HasOne(d => d.Organization)
+                      .WithMany(o => o.Departments)
+                      .HasForeignKey(d => d.OrganizationId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ── CandidateProfile ──────────────────────────────────────────────
@@ -191,6 +211,7 @@ namespace backend.Data
             {
                 entity.HasKey(j => j.Id);
                 entity.Property(j => j.Title).IsRequired().HasMaxLength(200);
+                entity.Property(j => j.Requirements).HasMaxLength(4000);
                 entity.Property(j => j.Location).IsRequired().HasMaxLength(200);
                 entity.Property(j => j.SalaryCurrency).HasMaxLength(10);
                 entity.Property(j => j.ExperienceRequired).HasMaxLength(100);

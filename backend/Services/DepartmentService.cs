@@ -11,8 +11,12 @@ namespace backend.Services
 
         public async Task<DepartmentDashboardDto> GetDepartmentDashboardAsync(Guid userId, string? filterOrganizationName = null)
         {
-            var user = await _db.Users.FindAsync(userId);
-            var userOrgName = user?.OrganizationName;
+            var user = await _db.Users
+                .Include(u => u.Organization)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            var userOrgName = user?.Organization?.Name ?? user?.OrganizationName;
+            var userOrgId = user?.OrganizationId;
 
             // Enforce tenant isolation for non-admins
             var activeOrgName = (user?.Role == Models.Enums.UserRole.Admin)
@@ -21,14 +25,25 @@ namespace backend.Services
 
             var orgDto = new OrganizationDto
             {
-                Id = Guid.Empty,
-                Name = !string.IsNullOrEmpty(activeOrgName) ? activeOrgName : "TalentAI Global Holding",
-                Sub = !string.IsNullOrEmpty(activeOrgName) ? "Internal Entity" : "Principal Entity • NYC HQ"
+                Id = userOrgId ?? Guid.Empty,
+                Name = !string.IsNullOrEmpty(activeOrgName) ? activeOrgName : "TalentPortal Holding",
+                Sub = !string.IsNullOrEmpty(activeOrgName) ? "Internal Entity" : "Principal Entity"
             };
 
             var query = _db.Departments.AsQueryable();
-            // Filter by organization. Only global Admin (without organization) viewing no specific organization can see all.
-            if (user?.Role != Models.Enums.UserRole.Admin || !string.IsNullOrEmpty(activeOrgName))
+            // Filter by organization.
+            if (user?.Role != Models.Enums.UserRole.Admin)
+            {
+                if (userOrgId.HasValue)
+                {
+                    query = query.Where(d => d.OrganizationId == userOrgId || d.OrganizationName == userOrgName);
+                }
+                else if (!string.IsNullOrEmpty(userOrgName))
+                {
+                    query = query.Where(d => d.OrganizationName == userOrgName);
+                }
+            }
+            else if (!string.IsNullOrEmpty(activeOrgName))
             {
                 query = query.Where(d => d.OrganizationName == activeOrgName);
             }
@@ -38,11 +53,14 @@ namespace backend.Services
                 {
                     Id = d.Id,
                     Name = d.Name,
+                    Description = d.Description,
                     Badge = d.Badge,
                     BadgeColor = d.BadgeColor,
-                    Head = d.Head,
+                    Head = d.Head ?? "Unassigned",
+                    ContactEmail = d.ContactEmail,
                     HeadInitials = d.HeadInitials,
-                    HeadColor = d.HeadColor
+                    HeadColor = d.HeadColor,
+                    OrganizationName = d.OrganizationName
                 })
                 .ToListAsync();
 
@@ -66,16 +84,32 @@ namespace backend.Services
 
         public async Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentDto dto, Guid userId)
         {
-            var user = await _db.Users.FindAsync(userId);
-            // If user is Admin, use OrganizationName from DTO if provided; otherwise fall back to user's own organization
-            var userOrgName = (user?.Role == Models.Enums.UserRole.Admin && !string.IsNullOrEmpty(dto.OrganizationName))
-                ? dto.OrganizationName
-                : user?.OrganizationName;
+            var user = await _db.Users
+                .Include(u => u.Organization)
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
-            var initials = dto.HeadInitials;
-            if (string.IsNullOrWhiteSpace(initials) && !string.IsNullOrWhiteSpace(dto.Head))
+            // Determine organization name from DTO or user
+            var userOrgName = !string.IsNullOrWhiteSpace(dto.OrganizationName)
+                ? dto.OrganizationName.Trim()
+                : (user?.Organization?.Name ?? user?.OrganizationName);
+
+            var userOrgId = user?.OrganizationId;
+
+            // Lookup organization if organization name is provided
+            var org = !string.IsNullOrWhiteSpace(userOrgName)
+                ? await _db.Organizations.FirstOrDefaultAsync(o => o.Name.ToLower() == userOrgName.ToLower())
+                : (userOrgId.HasValue ? await _db.Organizations.FindAsync(userOrgId.Value) : null);
+
+            if (org != null)
             {
-                var parts = dto.Head.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                userOrgName = org.Name;
+            }
+
+            var headName = string.IsNullOrWhiteSpace(dto.Head) ? "Unassigned" : dto.Head.Trim();
+            var initials = dto.HeadInitials;
+            if (string.IsNullOrWhiteSpace(initials) && !string.IsNullOrWhiteSpace(headName))
+            {
+                var parts = headName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length > 1)
                 {
                     initials = $"{parts[0][0]}{parts[^1][0]}".ToUpper();
@@ -104,13 +138,16 @@ namespace backend.Services
 
             var dept = new Department
             {
-                Name = dto.Name,
+                Name = dto.Name.Trim(),
+                Description = dto.Description?.Trim(),
                 Badge = dto.Badge,
                 BadgeColor = badgeColor,
-                Head = dto.Head,
+                Head = headName,
+                ContactEmail = dto.ContactEmail?.Trim(),
                 HeadInitials = initials,
                 HeadColor = headColor,
-                OrganizationName = userOrgName
+                OrganizationName = userOrgName,
+                OrganizationId = org?.Id
             };
 
             _db.Departments.Add(dept);
@@ -120,11 +157,14 @@ namespace backend.Services
             {
                 Id = dept.Id,
                 Name = dept.Name,
+                Description = dept.Description,
                 Badge = dept.Badge,
                 BadgeColor = dept.BadgeColor,
                 Head = dept.Head,
+                ContactEmail = dept.ContactEmail,
                 HeadInitials = dept.HeadInitials,
-                HeadColor = dept.HeadColor
+                HeadColor = dept.HeadColor,
+                OrganizationName = dept.OrganizationName
             };
         }
 

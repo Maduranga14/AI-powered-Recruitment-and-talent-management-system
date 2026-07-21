@@ -1,84 +1,166 @@
-import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { FilterIcon, SearchIcon, UserRoundXIcon } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FilterIcon, SearchIcon, UserRoundXIcon, UserPlusIcon, XIcon, Loader2Icon } from 'lucide-react';
 import type { AccountStatus, AdminPerson, AdminRole } from '../../data/admin';
 import { ACCOUNT_TONES, ROLE_TONES } from '../../data/admin';
 import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import { Input, PasswordInput } from '../ui/Input';
+import { adminApi, type AdminOrganizationDto, type DepartmentDto } from '../../services/api';
+
 interface AdminPeopleProps {
   people: AdminPerson[];
   onPersonSelect: (person: AdminPerson) => void;
+  onRefresh?: () => void;
 }
-export function AdminPeople({ people, onPersonSelect }: AdminPeopleProps) {
+
+export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeopleProps) {
   const [query, setQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'All roles' | AdminRole>(
-    'All roles'
-  );
-  const [statusFilter, setStatusFilter] = useState<
-    'All statuses' | AccountStatus>(
-    'All statuses');
+  const [roleFilter, setRoleFilter] = useState<'All roles' | AdminRole>('All roles');
+  const [statusFilter, setStatusFilter] = useState<'All statuses' | AccountStatus>('All statuses');
+
+  // Add User Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'Recruiter' | 'HiringManager'>('Recruiter');
+  const [selectedOrgId, setSelectedOrgId] = useState('');
+  const [selectedDeptId, setSelectedDeptId] = useState('');
+
+  const [organizations, setOrganizations] = useState<AdminOrganizationDto[]>([]);
+  const [departments, setDepartments] = useState<DepartmentDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isModalOpen) {
+      adminApi.getOrganizations().then(setOrganizations).catch(console.error);
+      adminApi.getDepartments().then((res) => setDepartments(res.departments)).catch(console.error);
+    }
+  }, [isModalOpen]);
+
+  useEffect(() => {
+    if (selectedOrgId) {
+      const org = organizations.find((o) => o.id === selectedOrgId);
+      if (org) {
+        adminApi.getDepartments(org.name).then((res) => {
+          setDepartments(res.departments);
+        }).catch(() => setDepartments([]));
+      }
+    } else if (isModalOpen) {
+      adminApi.getDepartments().then((res) => {
+        setDepartments(res.departments);
+      }).catch(() => setDepartments([]));
+    }
+  }, [selectedOrgId, organizations, isModalOpen]);
+
   const visible = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return people.filter(
       (person) =>
-      (!normalized ||
-      [person.name, person.email, person.organization, person.role].
-      join(' ').
-      toLowerCase().
-      includes(normalized)) && (
-      roleFilter === 'All roles' || person.role === roleFilter) && (
-      statusFilter === 'All statuses' || person.status === statusFilter)
+        (!normalized ||
+          [person.name, person.email, person.organization, person.department, person.role]
+            .join(' ')
+            .toLowerCase()
+            .includes(normalized)) &&
+        (roleFilter === 'All roles' || person.role === roleFilter) &&
+        (statusFilter === 'All statuses' || person.status === statusFilter)
     );
   }, [people, query, roleFilter, statusFilter]);
+
   const clearFilters = () => {
     setQuery('');
     setRoleFilter('All roles');
     setStatusFilter('All statuses');
   };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      await adminApi.createUser({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        password,
+        role,
+        organizationId: selectedOrgId || undefined,
+        departmentId: role === 'HiringManager' ? (selectedDeptId || undefined) : undefined,
+      });
+
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPassword('');
+      setSelectedOrgId('');
+      setSelectedDeptId('');
+      setIsModalOpen(false);
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      setError(err.message || 'Failed to create user account.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <motion.div
-      initial={{
-        opacity: 0,
-        y: 8
-      }}
-      animate={{
-        opacity: 1,
-        y: 0
-      }}
-      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8">
-      
-      <div>
-        <p className="text-sm font-medium text-slate-500">Account governance</p>
-        <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
-          People
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Search platform accounts and take local, documented account actions.
-        </p>
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-slate-500">Account governance</p>
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
+            People
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Provision recruiter & hiring manager accounts and manage user access.
+          </p>
+        </div>
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-soft hover:bg-brand-500"
+        >
+          <UserPlusIcon className="h-4 w-4" />
+          Add User Account
+        </Button>
       </div>
+
       <section
         className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5"
-        aria-label="People filters">
-        
+        aria-label="People filters"
+      >
         <div className="grid gap-3 lg:grid-cols-[1fr_210px_190px]">
           <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
             <SearchIcon className="h-5 w-5 text-slate-400" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search name, email, or organization"
+              placeholder="Search name, email, department, or organization"
               className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-slate-400"
-              aria-label="Search people" />
-            
+              aria-label="Search people"
+            />
           </label>
           <label className="relative">
             <span className="sr-only">Filter by role</span>
             <select
               value={roleFilter}
               onChange={(event) =>
-              setRoleFilter(event.target.value as 'All roles' | AdminRole)
+                setRoleFilter(event.target.value as 'All roles' | AdminRole)
               }
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
-              
+              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            >
               <option>All roles</option>
               <option>Candidate</option>
               <option>Recruiter</option>
@@ -92,12 +174,12 @@ export function AdminPeople({ people, onPersonSelect }: AdminPeopleProps) {
             <select
               value={statusFilter}
               onChange={(event) =>
-              setStatusFilter(
-                event.target.value as 'All statuses' | AccountStatus
-              )
+                setStatusFilter(
+                  event.target.value as 'All statuses' | AccountStatus
+                )
               }
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
-              
+              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            >
               <option>All statuses</option>
               <option>Active</option>
               <option>Suspended</option>
@@ -107,87 +189,240 @@ export function AdminPeople({ people, onPersonSelect }: AdminPeopleProps) {
           </label>
         </div>
       </section>
+
       <div className="mt-5 flex items-center justify-between">
         <p className="text-sm text-slate-500">
-          <strong className="text-slate-900">{visible.length}</strong> people
-          shown
+          <strong className="text-slate-900">{visible.length}</strong> people shown
         </p>
         <button
           onClick={clearFilters}
-          className="text-sm font-semibold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-          
+          className="text-sm font-semibold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        >
           Clear filters
         </button>
       </div>
-      {visible.length ?
-      <section
-        className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
-        aria-label="People directory">
-        
-          <div className="hidden grid-cols-[minmax(260px,1.4fr)_150px_160px_150px_130px] gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid">
-            <span>Person</span>
+
+      {visible.length ? (
+        <section
+          className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
+          aria-label="People list"
+        >
+          <div className="hidden grid-cols-[minmax(220px,1.2fr)_150px_130px_130px_110px_100px] gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid">
+            <span>Name</span>
             <span>Role</span>
             <span>Organization</span>
+            <span>Department</span>
             <span>Status</span>
-            <span>Last active</span>
+            <span>Joined</span>
           </div>
           <div className="divide-y divide-slate-100">
-            {visible.map((person) =>
-          <button
-            key={person.id}
-            onClick={() => onPersonSelect(person)}
-            className="grid w-full gap-4 p-4 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 lg:grid-cols-[minmax(260px,1.4fr)_150px_160px_150px_130px] lg:items-center lg:px-5">
-            
-                <span className="flex min-w-0 items-center gap-3">
-                  <img
-                src={person.avatar}
-                alt=""
-                className="h-10 w-10 rounded-xl" />
-              
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-bold text-slate-800">
-                      {person.name}
-                    </span>
-                    <span className="mt-0.5 block truncate text-xs text-slate-500">
-                      {person.email}
-                    </span>
-                  </span>
-                </span>
-                <span>
+            {visible.map((person) => (
+              <button
+                key={person.id}
+                onClick={() => onPersonSelect(person)}
+                className="grid w-full grid-cols-1 items-center gap-3 px-5 py-4 text-left hover:bg-slate-50/75 lg:grid-cols-[minmax(220px,1.2fr)_150px_130px_130px_110px_100px] lg:gap-4"
+              >
+                <div className="flex items-center gap-3">
+                  <img src={person.avatar} alt="" className="h-10 w-10 flex-shrink-0 rounded-xl" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-900">{person.name}</p>
+                    <p className="truncate text-xs text-slate-500">{person.email}</p>
+                  </div>
+                </div>
+                <div>
                   <Badge tone={ROLE_TONES[person.role]}>{person.role}</Badge>
-                </span>
-                <span className="text-sm font-semibold text-slate-700">
-                  {person.organization}
-                </span>
-                <span>
-                  <Badge tone={ACCOUNT_TONES[person.status]}>
-                    {person.status}
-                  </Badge>
-                </span>
-                <span className="text-xs font-medium text-slate-500">
-                  {person.lastActive}
-                </span>
+                </div>
+                <div className="text-xs font-semibold text-slate-700">{person.organization}</div>
+                <div className="text-xs font-medium text-slate-600 truncate">{person.department || '—'}</div>
+                <div>
+                  <Badge tone={ACCOUNT_TONES[person.status]}>{person.status}</Badge>
+                </div>
+                <div className="text-xs text-slate-500">{person.joined}</div>
               </button>
-          )}
+            ))}
           </div>
-        </section> :
-
-      <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-16 text-center">
-          <UserRoundXIcon className="mx-auto h-10 w-10 text-slate-300" />
-          <h2 className="mt-3 font-semibold text-slate-900">
-            No accounts match these filters
-          </h2>
+        </section>
+      ) : (
+        <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-soft">
+          <UserRoundXIcon className="h-10 w-10 text-slate-300" />
+          <p className="mt-3 font-semibold text-slate-900">No people found</p>
           <p className="mt-1 text-sm text-slate-500">
-            Try another search or reset the filters.
+            Try adjusting your search criteria or add a new user account.
           </p>
-          <button
-          onClick={clearFilters}
-          className="mt-5 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-          
-            Reset filters
-          </button>
+          <Button onClick={() => setIsModalOpen(true)} className="mt-4">
+            <UserPlusIcon className="mr-2 h-4 w-4" /> Add User Account
+          </Button>
         </div>
-      }
-    </motion.div>);
+      )}
 
+      {/* Add User Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl z-10"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                    <UserPlusIcon className="h-5 w-5" />
+                  </span>
+                  <h2 className="font-display text-lg font-bold text-slate-900">
+                    Create User Account
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {error && (
+                <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3 text-xs text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleCreateUser} className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      First Name *
+                    </label>
+                    <Input
+                      placeholder="Jane"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Last Name *
+                    </label>
+                    <Input
+                      placeholder="Doe"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Email Address *
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="jane.doe@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Password *
+                  </label>
+                  <PasswordInput
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Role *
+                    </label>
+                    <select
+                      value={role}
+                      onChange={(e) => {
+                        const newRole = e.target.value as any;
+                        setRole(newRole);
+                        if (newRole === 'Recruiter') setSelectedDeptId('');
+                      }}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    >
+                      <option value="Recruiter">Recruiter</option>
+                      <option value="HiringManager">Hiring Manager</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Assign Organization <span className="text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    <select
+                      value={selectedOrgId}
+                      onChange={(e) => setSelectedOrgId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    >
+                      <option value="">-- Select Organization --</option>
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {role === 'HiringManager' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Assign Department <span className="text-slate-400 font-normal">(optional)</span>
+                    </label>
+                    <select
+                      value={selectedDeptId}
+                      onChange={(e) => setSelectedDeptId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    >
+                      <option value="">-- Select Department --</option>
+                      {departments.map((dept) => (
+                        <option key={dept.id} value={dept.id}>
+                          {dept.name} {dept.organizationName ? `(${dept.organizationName})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsModalOpen(false)}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Create User Account
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
 }

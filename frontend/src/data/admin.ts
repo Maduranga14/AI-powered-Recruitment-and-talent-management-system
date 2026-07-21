@@ -22,6 +22,7 @@ export interface AdminPerson {
   role: AdminRole;
   status: AccountStatus;
   organization: string;
+  department?: string;
   joined: string;
   lastActive: string;
   avatar: string;

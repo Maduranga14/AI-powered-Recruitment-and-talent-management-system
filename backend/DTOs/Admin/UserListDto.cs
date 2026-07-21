@@ -13,6 +13,10 @@ namespace backend.DTOs.Admin
         public string Status { get; set; } = string.Empty;
 
         public string? OrganizationName { get; set; }
+        public Guid? OrganizationId { get; set; }
+
+        public string? DepartmentName { get; set; }
+        public Guid? DepartmentId { get; set; }
 
         public bool IsActive { get; set; }
 

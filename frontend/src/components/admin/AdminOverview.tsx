@@ -6,6 +6,7 @@ import {
   BriefcaseIcon,
   FileCheck2Icon,
   UsersRoundIcon,
+  UserPlusIcon
 } from 'lucide-react';
 import type {
   AdminOrganization,
@@ -19,10 +20,9 @@ interface AdminOverviewProps {
   people: AdminPerson[];
   organizations: AdminOrganization[];
   moderation: ModerationItem[];
-  pendingApprovals?: number;
   publishedJobs?: number;
   onViewChange: (
-    view: 'people' | 'organizations' | 'moderation' | 'audit-settings' | 'pending-approvals'
+    view: 'people' | 'organizations' | 'departments' | 'moderation' | 'audit-settings'
   ) => void;
 }
 
@@ -30,14 +30,12 @@ export function AdminOverview({
   people,
   organizations,
   moderation,
-  pendingApprovals = 0,
   publishedJobs = 0,
   onViewChange,
 }: AdminOverviewProps) {
-  const pending = moderation.filter((item) => item.status === 'Pending');
+  const pendingModeration = moderation.filter((item) => item.status === 'Pending');
   const activePeople = people.filter((p) => p.status === 'Active').length;
   const recruiters = people.filter((p) => p.role === 'Recruiter').length;
-  const openItems = pendingApprovals || pending.length;
 
   const metrics = [
     {
@@ -50,17 +48,17 @@ export function AdminOverview({
     {
       label: 'Active organizations',
       value: organizations.length.toLocaleString(),
-      detail: `${recruiters} recruiters`,
+      detail: `${recruiters} recruiters assigned`,
       icon: Building2Icon,
       tone: 'accent' as const,
     },
     {
-      label: 'Pending approvals',
-      value: openItems,
+      label: 'Moderation Queue',
+      value: pendingModeration.length,
       detail:
-        openItems === 0
+        pendingModeration.length === 0
           ? 'Queue is clear'
-          : `${openItems} awaiting review`,
+          : `${pendingModeration.length} items awaiting review`,
       icon: FileCheck2Icon,
       tone: 'amber' as const,
     },
@@ -80,7 +78,7 @@ export function AdminOverview({
   const activityEvents =
     recentPeople.length > 0
       ? recentPeople.map((p) => ({
-          text: `${p.role} joined: ${p.name}`,
+          text: `${p.role} account created: ${p.name}`,
           meta: p.organization,
         }))
       : [
@@ -110,13 +108,14 @@ export function AdminOverview({
             Platform overview
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Live counts from users, organizations, approvals, and published jobs.
+            Live counts from users, organizations, departments, and published jobs.
           </p>
         </div>
-        <Button onClick={() => onViewChange('pending-approvals')}>
-          <FileCheck2Icon className="h-4 w-4" /> Review approvals
+        <Button onClick={() => onViewChange('people')}>
+          <UserPlusIcon className="h-4 w-4" /> Manage People
         </Button>
       </div>
+
       <section
         aria-label="Platform metrics"
         className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
@@ -150,6 +149,7 @@ export function AdminOverview({
           </motion.article>
         ))}
       </section>
+
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
         <section
           className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
@@ -161,73 +161,55 @@ export function AdminOverview({
                 id="review-queue-title"
                 className="font-display text-lg font-bold"
               >
-                Approval queue
+                Moderation Queue
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Recruiter applications and moderation items awaiting a decision.
+                Job posting reviews and content moderation items awaiting platform decision.
               </p>
             </div>
             <button
-              onClick={() => onViewChange('pending-approvals')}
+              onClick={() => onViewChange('moderation')}
               className="inline-flex items-center gap-1 text-sm font-bold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               View queue <ArrowRightIcon className="h-4 w-4" />
             </button>
           </div>
           <div className="divide-y divide-slate-100">
-            {openItems === 0 && pending.length === 0 && (
+            {pendingModeration.length === 0 ? (
               <p className="px-6 py-10 text-center text-sm text-slate-500">
-                No pending approvals right now.
+                No moderation items awaiting review.
               </p>
-            )}
-            {pendingApprovals > 0 && (
-              <button
-                onClick={() => onViewChange('pending-approvals')}
-                className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-slate-50 sm:px-6"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                  <FileCheck2Icon className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-slate-800">
-                    Recruiter account approvals
-                  </span>
-                  <span className="mt-0.5 block truncate text-xs text-slate-500">
-                    {pendingApprovals} application
-                    {pendingApprovals === 1 ? '' : 's'} waiting
-                  </span>
-                </span>
-                <Badge tone="amber">Pending</Badge>
-              </button>
-            )}
-            {pending.slice(0, 2).map((item) => (
-              <button
-                key={item.id}
-                onClick={() => onViewChange('moderation')}
-                className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-slate-50 sm:px-6"
-              >
-                <span
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                    item.type === 'Report'
-                      ? 'bg-amber-50 text-amber-600'
-                      : 'bg-brand-50 text-brand-600'
-                  }`}
+            ) : (
+              pendingModeration.slice(0, 3).map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => onViewChange('moderation')}
+                  className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-slate-50 sm:px-6"
                 >
-                  <FileCheck2Icon className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold text-slate-800">
-                    {item.title}
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                      item.type === 'Report'
+                        ? 'bg-amber-50 text-amber-600'
+                        : 'bg-brand-50 text-brand-600'
+                    }`}
+                  >
+                    <FileCheck2Icon className="h-5 w-5" />
                   </span>
-                  <span className="mt-0.5 block truncate text-xs text-slate-500">
-                    {item.organization} · {item.submittedAt}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold text-slate-800">
+                      {item.title}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-slate-500">
+                      {item.organization} · {item.submittedAt}
+                    </span>
                   </span>
-                </span>
-                <Badge tone="amber">Pending</Badge>
-              </button>
-            ))}
+                  <Badge tone="amber">Pending</Badge>
+                </button>
+              ))
+            )}
           </div>
         </section>
+
         <aside
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
           aria-labelledby="org-title"
@@ -241,7 +223,7 @@ export function AdminOverview({
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {organizations.length > 0
               ? `${organizations.length} organization${organizations.length === 1 ? '' : 's'} with ${publishedJobs} published role${publishedJobs === 1 ? '' : 's'} across the platform.`
-              : 'Organizations appear as recruiters register with a company name.'}
+              : 'Create organizations from the Organizations tab to get started.'}
           </p>
           <div className="mt-5 space-y-3">
             {organizations.slice(0, 3).map((org) => (
@@ -261,7 +243,7 @@ export function AdminOverview({
               </div>
             ))}
             {organizations.length === 0 && (
-              <p className="text-sm text-slate-500">No organizations yet.</p>
+              <p className="text-sm text-slate-500">No organizations created yet.</p>
             )}
           </div>
           <button
@@ -272,6 +254,7 @@ export function AdminOverview({
           </button>
         </aside>
       </div>
+
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
         <section
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
@@ -305,6 +288,7 @@ export function AdminOverview({
             ))}
           </div>
         </section>
+
         <section
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
           aria-labelledby="usage-title"

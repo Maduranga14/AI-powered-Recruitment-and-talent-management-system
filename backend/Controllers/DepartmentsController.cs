@@ -36,6 +36,7 @@ namespace backend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(DepartmentDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateDepartment([FromBody] CreateDepartmentDto dto)
@@ -52,6 +53,7 @@ namespace backend.Controllers
         }
 
         [HttpPut("policies/{id}/toggle")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(GlobalPolicyDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> TogglePolicy(string id)
@@ -68,6 +70,7 @@ namespace backend.Controllers
         }
 
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteDepartment(Guid id)

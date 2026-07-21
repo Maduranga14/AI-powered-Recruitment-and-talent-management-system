@@ -26,10 +26,16 @@ namespace backend.Services
             if (dto.SalaryMin.HasValue && dto.SalaryMax.HasValue && dto.SalaryMin > dto.SalaryMax)
                 throw new ArgumentException("Salary minimum cannot be greater than maximum.");
 
+            var reqText = dto.Requirements?.Trim();
+            var fullDesc = !string.IsNullOrWhiteSpace(reqText)
+                ? $"{dto.Description.Trim()}\n\nRequirements:\n{reqText}"
+                : dto.Description.Trim();
+
             var posting = new JobPosting
             {
                 Title = dto.Title.Trim(),
-                Description = dto.Description.Trim(),
+                Description = fullDesc,
+                Requirements = reqText,
                 Location = dto.Location.Trim(),
                 EmploymentType = dto.EmploymentType,
                 Status = dto.Status,
@@ -46,16 +52,16 @@ namespace backend.Services
                 PublishedAt = dto.Status == JobStatus.Published ? DateTime.UtcNow : null
             };
 
-            // PostedBy: use what the recruiter entered, fall back to their org name
-            if (!string.IsNullOrWhiteSpace(dto.PostedBy))
-            {
-                posting.PostedBy = dto.PostedBy.Trim();
-            }
-            else
-            {
-                var recruiter = await _db.Users.FindAsync(recruiterId);
-                posting.PostedBy = recruiter?.OrganizationName ?? string.Empty;
-            }
+            // PostedBy: automatically set to the recruiter's organization name
+            var recruiter = await _db.Users
+                .Include(u => u.Organization)
+                .FirstOrDefaultAsync(u => u.Id == recruiterId);
+
+            var recruiterOrgName = recruiter?.Organization?.Name ?? recruiter?.OrganizationName;
+
+            posting.PostedBy = !string.IsNullOrWhiteSpace(recruiterOrgName)
+                ? recruiterOrgName.Trim()
+                : (!string.IsNullOrWhiteSpace(dto.PostedBy) ? dto.PostedBy.Trim() : string.Empty);
 
             _db.JobPostings.Add(posting);
             await _db.SaveChangesAsync();
@@ -150,11 +156,22 @@ namespace backend.Services
 
             
             if (dto.Title != null)          posting.Title = dto.Title.Trim();
-            if (dto.Description != null)    posting.Description = dto.Description.Trim();
+            if (dto.Description != null || dto.Requirements != null)
+            {
+                var curParts = (posting.Description ?? string.Empty).Split("\n\nRequirements:\n");
+                var newDesc = dto.Description?.Trim() ?? curParts[0];
+                var newReq = dto.Requirements?.Trim() ?? (curParts.Length > 1 ? curParts[1] : null);
+                posting.Description = !string.IsNullOrWhiteSpace(newReq)
+                    ? $"{newDesc}\n\nRequirements:\n{newReq}"
+                    : newDesc;
+                posting.Requirements = newReq;
+            }
             if (dto.Location != null)       posting.Location = dto.Location.Trim();
             if (dto.EmploymentType.HasValue) posting.EmploymentType = dto.EmploymentType.Value;
-            if (dto.SalaryMin.HasValue)     posting.SalaryMin = dto.SalaryMin;
-            if (dto.SalaryMax.HasValue)     posting.SalaryMax = dto.SalaryMax;
+            // Salary is always sent in the full update payload — assign unconditionally
+            // so null clears it and a number updates it.
+            posting.SalaryMin = dto.SalaryMin;
+            posting.SalaryMax = dto.SalaryMax;
             if (dto.SalaryCurrency != null) posting.SalaryCurrency = dto.SalaryCurrency.Trim().ToUpper();
             if (dto.ExperienceRequired != null) posting.ExperienceRequired = dto.ExperienceRequired.Trim();
             if (dto.RequiredSkills != null) posting.RequiredSkills = dto.RequiredSkills.Trim();
@@ -224,13 +241,14 @@ namespace backend.Services
             if (type.HasValue)
                 query = query.Where(j => j.EmploymentType == type.Value);
 
-            return await query
+            var list = await query
                 .OrderByDescending(j => j.PublishedAt)
                 .Select(j => new
                 {
                     j.Id,
                     j.Title,
                     j.Description,
+                    j.Requirements,
                     j.Location,
                     j.EmploymentType,
                     DepartmentName = j.Department != null ? j.Department.Name : null,
@@ -246,12 +264,17 @@ namespace backend.Services
                         : string.Empty,
                     j.PostedBy
                 })
-                .ToListAsync()
-                .ContinueWith(t => t.Result.Select(j => new PublicJobPageDto
+                .ToListAsync();
+
+            return list.Select(j =>
+            {
+                var parts = (j.Description ?? string.Empty).Split("\n\nRequirements:\n");
+                return new PublicJobPageDto
                 {
                     Id = j.Id,
                     Title = j.Title,
-                    Description = j.Description,
+                    Description = parts[0],
+                    Requirements = j.Requirements ?? (parts.Length > 1 ? parts[1] : null),
                     Location = j.Location,
                     EmploymentType = j.EmploymentType.ToString(),
                     DepartmentName = j.DepartmentName,
@@ -266,7 +289,8 @@ namespace backend.Services
                     PublishedAt = j.PublishedAt!.Value,
                     OrganizationName = j.OrganizationName,
                     PostedBy = j.PostedBy
-                }).ToList());
+                };
+            }).ToList();
         }
 
         
@@ -278,11 +302,13 @@ namespace backend.Services
                 .FirstOrDefaultAsync(j => j.Id == id && j.Status == JobStatus.Published)
                 ?? throw new KeyNotFoundException("Job posting not found or is no longer available.");
 
+            var descParts = (job.Description ?? string.Empty).Split("\n\nRequirements:\n");
             return new PublicJobPageDto
             {
                 Id = job.Id,
                 Title = job.Title,
-                Description = job.Description,
+                Description = descParts[0],
+                Requirements = job.Requirements ?? (descParts.Length > 1 ? descParts[1] : null),
                 Location = job.Location,
                 EmploymentType = job.EmploymentType.ToString(),
                 DepartmentName = job.Department?.Name,
@@ -445,14 +471,19 @@ namespace backend.Services
         private static JobApplicantDto MapApplicant(JobApplication a, string jobTitle)
         {
             var profile = a.CandidateProfile;
-            var user = profile.User;
-            var latestExp = profile.Experiences
-                .OrderByDescending(e => e.IsCurrent)
-                .ThenByDescending(e => e.StartDate)
-                .FirstOrDefault();
+            var user = profile?.User;
+            var fullName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Candidate";
+            var email = user?.Email ?? string.Empty;
+
+            var latestExp = profile?.Experiences != null
+                ? profile.Experiences
+                    .OrderByDescending(e => e.IsCurrent)
+                    .ThenByDescending(e => e.StartDate)
+                    .FirstOrDefault()
+                : null;
 
             string? experienceSummary = null;
-            if (latestExp != null)
+            if (latestExp != null && profile?.Experiences != null)
             {
                 var years = profile.Experiences.Count;
                 experienceSummary = latestExp.IsCurrent
@@ -469,21 +500,47 @@ namespace backend.Services
             {
                 ApplicationId = a.Id,
                 JobPostingId = a.JobPostingId,
-                CandidateProfileId = profile.Id,
-                UserId = profile.UserId,
-                FullName = $"{user.FirstName} {user.LastName}".Trim(),
-                Email = user.Email,
-                Headline = profile.Headline,
-                Location = profile.Location,
-                PhotoUrl = profile.PhotoUrl,
+                CandidateProfileId = profile?.Id ?? Guid.Empty,
+                UserId = profile?.UserId ?? Guid.Empty,
+                FullName = fullName,
+                Email = email,
+                Headline = profile?.Headline,
+                Location = profile?.Location,
+                PhotoUrl = profile?.PhotoUrl,
                 JobTitle = jobTitle,
                 DepartmentName = a.JobPosting?.Department?.Name,
                 Status = a.Status.ToString(),
                 CoverLetter = a.CoverLetter,
                 AppliedAt = a.AppliedAt,
-                Skills = profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList(),
+                Skills = profile?.Skills != null ? profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList() : [],
+                Experiences = profile?.Experiences != null
+                    ? profile.Experiences
+                        .OrderByDescending(e => e.IsCurrent)
+                        .ThenByDescending(e => e.StartDate)
+                        .Select(e => new WorkExperienceDto
+                        {
+                            Title = e.Title,
+                            Company = e.Company,
+                            StartDate = e.StartDate,
+                            EndDate = e.EndDate,
+                            IsCurrent = e.IsCurrent,
+                            Description = e.Description,
+                        }).ToList()
+                    : [],
+                Educations = profile?.Educations != null
+                    ? profile.Educations
+                        .OrderByDescending(e => e.EndDate ?? DateTime.MaxValue)
+                        .Select(e => new EducationDto
+                        {
+                            Institution = e.Institution,
+                            Degree = e.Degree,
+                            FieldOfStudy = e.FieldOfStudy,
+                            StartDate = e.StartDate,
+                            EndDate = e.EndDate,
+                        }).ToList()
+                    : [],
                 ExperienceSummary = experienceSummary,
-                ResumeUrl = profile.ResumeUrl,
+                ResumeUrl = profile?.ResumeUrl,
                 Feedback = a.Feedback,
                 Recommendation = a.Recommendation,
                 OverallRating = a.OverallRating,
@@ -500,34 +557,62 @@ namespace backend.Services
       
         private async Task<JobPostingDetailDto> BuildDetailDtoAsync(Guid id)
         {
-            return await _db.JobPostings
+            var detail = await _db.JobPostings
                 .Where(j => j.Id == id)
-                .Select(j => new JobPostingDetailDto
+                .Select(j => new
                 {
-                    Id = j.Id,
-                    Title = j.Title,
-                    Description = j.Description,
-                    Location = j.Location,
+                    j.Id,
+                    j.Title,
+                    j.Description,
+                    j.Requirements,
+                    j.Location,
                     EmploymentType = j.EmploymentType.ToString(),
                     Status = j.Status.ToString(),
                     DepartmentName = j.Department != null ? j.Department.Name : null,
-                    DepartmentId = j.DepartmentId,
-                    SalaryMin = j.SalaryMin,
-                    SalaryMax = j.SalaryMax,
-                    SalaryCurrency = j.SalaryCurrency,
-                    ExperienceRequired = j.ExperienceRequired,
-                    RequiredSkills = j.RequiredSkills,
-                    Deadline = j.Deadline,
-                    CreatedAt = j.CreatedAt,
-                    UpdatedAt = j.UpdatedAt,
-                    PublishedAt = j.PublishedAt,
-                    CreatedByRecruiterId = j.CreatedByRecruiterId,
+                    j.DepartmentId,
+                    j.SalaryMin,
+                    j.SalaryMax,
+                    j.SalaryCurrency,
+                    j.ExperienceRequired,
+                    j.RequiredSkills,
+                    j.Deadline,
+                    j.CreatedAt,
+                    j.UpdatedAt,
+                    j.PublishedAt,
+                    j.CreatedByRecruiterId,
                     RecruiterName = j.CreatedByRecruiter != null
                         ? j.CreatedByRecruiter.FirstName + " " + j.CreatedByRecruiter.LastName
                         : string.Empty,
-                    PostedBy = j.PostedBy
+                    j.PostedBy
                 })
                 .FirstAsync();
+
+            var descParts = (detail.Description ?? string.Empty).Split("\n\nRequirements:\n");
+
+            return new JobPostingDetailDto
+            {
+                Id = detail.Id,
+                Title = detail.Title,
+                Description = descParts[0],
+                Requirements = detail.Requirements ?? (descParts.Length > 1 ? descParts[1] : null),
+                Location = detail.Location,
+                EmploymentType = detail.EmploymentType,
+                Status = detail.Status,
+                DepartmentName = detail.DepartmentName,
+                DepartmentId = detail.DepartmentId,
+                SalaryMin = detail.SalaryMin,
+                SalaryMax = detail.SalaryMax,
+                SalaryCurrency = detail.SalaryCurrency,
+                ExperienceRequired = detail.ExperienceRequired,
+                RequiredSkills = detail.RequiredSkills,
+                Deadline = detail.Deadline,
+                CreatedAt = detail.CreatedAt,
+                UpdatedAt = detail.UpdatedAt,
+                PublishedAt = detail.PublishedAt,
+                CreatedByRecruiterId = detail.CreatedByRecruiterId,
+                RecruiterName = detail.RecruiterName,
+                PostedBy = detail.PostedBy
+            };
         }
 
         private static void ValidateStatusTransition(JobStatus current, JobStatus next)
@@ -547,32 +632,80 @@ namespace backend.Services
                     $"Allowed: {(allowed.Length > 0 ? string.Join(", ", allowed.Select(s => s.ToString())) : "none")}.");
         }
 
+        private async Task<List<Guid>> GetManagerDepartmentIdsAsync(User manager)
+        {
+            var deptIds = new List<Guid>();
+
+            if (manager.DepartmentId.HasValue)
+            {
+                deptIds.Add(manager.DepartmentId.Value);
+            }
+
+            var managerFullName = manager.FullName.Trim().ToLower();
+            var managerAltName = $"{manager.FirstName} {manager.LastName}".Trim().ToLower();
+            var userOrgName = manager.Organization?.Name ?? manager.OrganizationName;
+
+            var headedDepts = await _db.Departments
+                .Where(d => d.Head != null &&
+                            (d.Head.ToLower() == managerFullName || d.Head.ToLower() == managerAltName) &&
+                            (userOrgName == null || d.OrganizationName == userOrgName || d.OrganizationId == manager.OrganizationId))
+                .Select(d => d.Id)
+                .ToListAsync();
+
+            deptIds.AddRange(headedDepts);
+
+            if (deptIds.Count == 0 && (manager.OrganizationId.HasValue || !string.IsNullOrWhiteSpace(userOrgName)))
+            {
+                var cleanOrgName = userOrgName?.ToLower();
+                var orgDepts = await _db.Departments
+                    .Where(d => (manager.OrganizationId.HasValue && d.OrganizationId == manager.OrganizationId.Value)
+                             || (cleanOrgName != null && d.OrganizationName != null && d.OrganizationName.ToLower() == cleanOrgName))
+                    .ToListAsync();
+
+                var managerDeptName = manager.Department?.Name;
+                if (!string.IsNullOrWhiteSpace(managerDeptName))
+                {
+                    var cleanDeptName = managerDeptName.ToLower();
+                    var matched = orgDepts.Where(d => d.Name != null && d.Name.ToLower() == cleanDeptName).Select(d => d.Id);
+                    deptIds.AddRange(matched);
+                }
+
+                if (deptIds.Count == 0)
+                {
+                    deptIds.AddRange(orgDepts.Select(d => d.Id));
+                }
+            }
+
+            return deptIds.Distinct().ToList();
+        }
+
         public async Task<List<JobApplicantDto>> GetManagerApplicantsAsync(Guid managerUserId)
         {
-            var manager = await _db.Users.FindAsync(managerUserId);
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId);
+
             if (manager == null || manager.Role != UserRole.HiringManager)
                 throw new KeyNotFoundException("Hiring manager user not found.");
 
-            var managerName = manager.FullName;
-
-            // Find all departments headed by this manager in the manager's organization
-            var departments = await _db.Departments
-                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
-                .Select(d => d.Id)
-                .ToListAsync();
+            var departments = await GetManagerDepartmentIdsAsync(manager);
 
             if (departments.Count == 0)
                 return new List<JobApplicantDto>();
 
-            // Query applications for postings in those departments where status != Applied (once shortlisted/under review)
             var applications = await _db.JobApplications
+                .AsSplitQuery()
                 .Include(a => a.JobPosting)
+                    .ThenInclude(j => j.Department)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.User)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Experiences)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Skills)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Educations)
                 .Include(a => a.Interviews)
                 .Where(a => a.JobPosting.DepartmentId != null &&
                             departments.Contains(a.JobPosting.DepartmentId.Value) &&
@@ -585,17 +718,15 @@ namespace backend.Services
 
         public async Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId)
         {
-            var manager = await _db.Users.FindAsync(managerUserId);
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId);
+
             if (manager == null || manager.Role != UserRole.HiringManager)
                 throw new KeyNotFoundException("Hiring manager user not found.");
 
-            var managerName = manager.FullName;
-
-            // Find all departments headed by this manager
-            var departments = await _db.Departments
-                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
-                .Select(d => d.Id)
-                .ToListAsync();
+            var departments = await GetManagerDepartmentIdsAsync(manager);
 
             var application = await _db.JobApplications
                 .Include(a => a.JobPosting)
@@ -624,6 +755,165 @@ namespace backend.Services
 
             application.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
+
+            return MapApplicant(application, application.JobPosting.Title);
+        }
+
+        public async Task<JobApplicantDto> MakeHiringDecisionAsync(Guid applicationId, string decision, string? notes, Guid managerUserId)
+        {
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId);
+
+            if (manager == null || manager.Role != UserRole.HiringManager)
+                throw new KeyNotFoundException("Hiring manager user not found.");
+
+            var departments = await GetManagerDepartmentIdsAsync(manager);
+
+            var application = await _db.JobApplications
+                .Include(a => a.JobPosting)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Experiences)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Skills)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Educations)
+                .Include(a => a.Interviews)
+                .FirstOrDefaultAsync(a => a.Id == applicationId);
+
+            if (application == null)
+                throw new KeyNotFoundException("Application not found.");
+
+            if (application.JobPosting.DepartmentId == null || !departments.Contains(application.JobPosting.DepartmentId.Value))
+                throw new UnauthorizedAccessException("You are not authorized to manage this application.");
+
+            ApplicationStatus targetStatus;
+            var cleanDecision = decision.Trim().ToLower();
+            if (cleanDecision is "hire" or "hired")
+            {
+                targetStatus = ApplicationStatus.Hired;
+                if (string.IsNullOrWhiteSpace(application.Recommendation)) application.Recommendation = "Strong Yes";
+            }
+            else if (cleanDecision is "reject" or "rejected")
+            {
+                targetStatus = ApplicationStatus.Rejected;
+                if (string.IsNullOrWhiteSpace(application.Recommendation)) application.Recommendation = "No";
+            }
+            else if (cleanDecision is "underfinalreview" or "review")
+            {
+                targetStatus = ApplicationStatus.UnderFinalReview;
+            }
+            else if (Enum.TryParse<ApplicationStatus>(decision, true, out var parsed))
+            {
+                targetStatus = parsed;
+            }
+            else
+            {
+                throw new ArgumentException($"Invalid decision status '{decision}'. Expected Hired, Rejected, or UnderFinalReview.");
+            }
+
+            application.Status = targetStatus;
+            if (!string.IsNullOrWhiteSpace(notes))
+            {
+                var prefix = $"[Hiring Decision: {targetStatus}] ";
+                application.Feedback = string.IsNullOrWhiteSpace(application.Feedback)
+                    ? $"{prefix}{notes.Trim()}"
+                    : $"{application.Feedback}\n\n{prefix}{notes.Trim()}";
+            }
+
+            application.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            // Send notification to candidate upon Hire or Reject decision
+            var user = application.CandidateProfile?.User;
+            var candidateEmail = user?.Email;
+            var candidateName = user != null
+                ? $"{user.FirstName} {user.LastName}".Trim()
+                : "Candidate";
+
+            if (!string.IsNullOrWhiteSpace(candidateEmail))
+            {
+                var jobTitle = application.JobPosting.Title;
+                var orgName = manager.Organization?.Name ?? manager.OrganizationName ?? "Hiring Team";
+
+                if (targetStatus == ApplicationStatus.Hired)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var subject = $"Congratulations! Offer Decision for {jobTitle}";
+                            var body = $@"
+                                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;'>
+                                    <div style='text-align: center; padding-bottom: 20px; border-b: 1px solid #f1f5f9;'>
+                                        <h2 style='color: #059669; font-size: 24px; margin: 0;'>🎉 Congratulations!</h2>
+                                        <p style='color: #64748b; font-size: 14px; margin-top: 4px;'>You have been selected for the position</p>
+                                    </div>
+                                    <div style='padding: 20px 0;'>
+                                        <p style='font-size: 16px; color: #1e293b;'>Dear <strong>{candidateName}</strong>,</p>
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            We are thrilled to inform you that following your interviews and evaluations for the <strong>{jobTitle}</strong> position, our hiring manager has decided to <strong>HIRE</strong> you for the role!
+                                        </p>
+                                        {(string.IsNullOrWhiteSpace(notes) ? "" : $"<div style='background-color: #f0fdf4; border-left: 4px solid #10b981; border-radius: 8px; padding: 14px; margin: 20px 0;'><p style='margin:0; font-size: 14px; color: #065f46;'><strong>Hiring Manager Note:</strong> {notes}</p></div>")}
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            Our recruitment team will be reaching out to you shortly with onboarding instructions and formal paperwork.
+                                        </p>
+                                    </div>
+                                    <div style='border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;'>
+                                        <p style='font-size: 14px; color: #64748b; margin: 0;'>Best regards,<br/><strong style='color: #0f172a;'>{orgName}</strong></p>
+                                        <p style='color: #94a3b8; font-size: 12px; margin-top: 16px;'>This is an automated decision notification from TalentPortal.</p>
+                                    </div>
+                                </div>";
+                            await _emailService.SendEmailAsync(candidateEmail, subject, body);
+                        }
+                        catch
+                        {
+                            // Fail silently background task
+                        }
+                    });
+                }
+                else if (targetStatus == ApplicationStatus.Rejected)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            var subject = $"Application Update: {jobTitle}";
+                            var body = $@"
+                                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;'>
+                                    <div style='text-align: center; padding-bottom: 20px; border-b: 1px solid #f1f5f9;'>
+                                        <h2 style='color: #475569; font-size: 20px; margin: 0;'>Application Status Update</h2>
+                                    </div>
+                                    <div style='padding: 20px 0;'>
+                                        <p style='font-size: 16px; color: #1e293b;'>Dear <strong>{candidateName}</strong>,</p>
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            Thank you for interviewing and taking the time to discuss the <strong>{jobTitle}</strong> role with our hiring team.
+                                        </p>
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            After careful evaluation of all candidates, we regret to inform you that we have decided to proceed with another applicant whose background more closely matches our immediate technical needs.
+                                        </p>
+                                        {(string.IsNullOrWhiteSpace(notes) ? "" : $"<div style='background-color: #f8fafc; border-left: 4px solid #64748b; border-radius: 8px; padding: 14px; margin: 20px 0;'><p style='margin:0; font-size: 14px; color: #334155;'><strong>Hiring Team Feedback:</strong> {notes}</p></div>")}
+                                        <p style='font-size: 15px; color: #334155; line-height: 1.6;'>
+                                            We appreciate your effort throughout our selection process and wish you success in your job search.
+                                        </p>
+                                    </div>
+                                    <div style='border-top: 1px solid #f1f5f9; padding-top: 20px; text-align: center;'>
+                                        <p style='font-size: 14px; color: #64748b; margin: 0;'>Best regards,<br/><strong style='color: #0f172a;'>{orgName}</strong></p>
+                                        <p style='color: #94a3b8; font-size: 12px; margin-top: 16px;'>This is an automated decision notification from TalentPortal.</p>
+                                    </div>
+                                </div>";
+                            await _emailService.SendEmailAsync(candidateEmail, subject, body);
+                        }
+                        catch
+                        {
+                            // Fail silently background task
+                        }
+                    });
+                }
+            }
 
             return MapApplicant(application, application.JobPosting.Title);
         }
@@ -731,34 +1021,39 @@ namespace backend.Services
                     .ThenInclude(a => a.CandidateProfile)
                         .ThenInclude(cp => cp.User)
                 .Where(i => i.CreatedByRecruiterId == recruiterId
-                         || i.JobApplication.JobPosting.CreatedByRecruiterId == recruiterId)
+                         || (i.JobApplication != null && i.JobApplication.JobPosting != null && i.JobApplication.JobPosting.CreatedByRecruiterId == recruiterId))
                 .OrderBy(i => i.ScheduledAt)
                 .ToListAsync();
 
-            return interviews.Select(i =>
+            return interviews
+                .Where(i => i.JobApplication?.CandidateProfile != null)
+                .Select(i =>
             {
                 var user = i.JobApplication.CandidateProfile.User;
-                var name = $"{user.FirstName} {user.LastName}".Trim();
+                var name = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Candidate";
+                var email = user?.Email ?? string.Empty;
+                var jobTitle = i.JobApplication.JobPosting?.Title ?? "Job Position";
+
                 return MapInterview(
                     i,
                     i.JobApplication,
-                    i.JobApplication.JobPosting.Title,
+                    jobTitle,
                     name,
-                    user.Email);
+                    email);
             }).ToList();
         }
 
         public async Task<List<InterviewDto>> GetManagerInterviewsAsync(Guid managerUserId)
         {
-            var manager = await _db.Users.FindAsync(managerUserId);
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId);
+
             if (manager == null || manager.Role != UserRole.HiringManager)
                 throw new KeyNotFoundException("Hiring manager user not found.");
 
-            var managerName = manager.FullName;
-            var departments = await _db.Departments
-                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
-                .Select(d => d.Id)
-                .ToListAsync();
+            var departments = await GetManagerDepartmentIdsAsync(manager);
 
             if (departments.Count == 0)
                 return [];
@@ -989,17 +1284,16 @@ namespace backend.Services
         public async Task<InterviewDto> SubmitInterviewFeedbackAsync(
             Guid interviewId, SubmitInterviewFeedbackDto dto, Guid managerUserId)
         {
-            var manager = await _db.Users.FindAsync(managerUserId)
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId)
                 ?? throw new KeyNotFoundException("Hiring manager user not found.");
 
             if (manager.Role != UserRole.HiringManager)
                 throw new UnauthorizedAccessException("Only hiring managers can submit interview feedback.");
 
-            // Resolve departments this manager is responsible for
-            var departments = await _db.Departments
-                .Where(d => d.Head == manager.FullName && d.OrganizationName == manager.OrganizationName)
-                .Select(d => d.Id)
-                .ToListAsync();
+            var departments = await GetManagerDepartmentIdsAsync(manager);
 
             var interview = await _db.Interviews
                 .Include(i => i.JobApplication)

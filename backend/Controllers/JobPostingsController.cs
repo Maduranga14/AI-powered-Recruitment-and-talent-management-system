@@ -342,6 +342,39 @@ namespace backend.Controllers
             }
         }
 
+        /// <summary>Submit final hiring decision (Hire / Reject / UnderFinalReview) for an applicant</summary>
+        [HttpPost("api/manager/applications/{applicationId:guid}/decision")]
+        [Authorize(Roles = "HiringManager")]
+        [ProducesResponseType(typeof(JobApplicantDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> MakeHiringDecision(Guid applicationId, [FromBody] MakeHiringDecisionDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var managerId = GetRecruiterId();
+            if (managerId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.MakeHiringDecisionAsync(applicationId, dto.Decision, dto.Notes, managerId.Value);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
         /// <summary>Schedule an interview for an applicant (sets status to Interview and emails the candidate)</summary>
         [HttpPost("api/recruiter/jobs/{id:guid}/applicants/{applicationId:guid}/interview")]
         [Authorize(Roles = "Recruiter")]

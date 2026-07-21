@@ -31,9 +31,17 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     recommendation = applicant.recommendation as ManagerRecommendation;
   }
 
-  let decisionStatus: ManagerCandidate['decisionStatus'] = 'Awaiting feedback';
-  if (applicant.feedback) {
+  let decisionStatus: ManagerCandidate['decisionStatus'] = 'Interview';
+  if (applicant.status === 'Hired') {
+    decisionStatus = 'Hired';
+  } else if (applicant.status === 'Rejected') {
+    decisionStatus = 'Rejected';
+  } else if (applicant.status === 'UnderFinalReview') {
+    decisionStatus = 'Under Final Review';
+  } else if (applicant.interviewComments || applicant.interviewRecommendation) {
     decisionStatus = 'Feedback submitted';
+  } else {
+    decisionStatus = 'Interview';
   }
 
   const skills = applicant.skills || [];
@@ -55,6 +63,21 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     decisionStatus,
     matchScore: 0,
     skills,
+    experiences: (applicant.experiences || []).map(e => ({
+      title: e.title,
+      company: e.company,
+      startDate: e.startDate,
+      endDate: e.endDate,
+      isCurrent: e.isCurrent,
+      description: e.description,
+    })),
+    educations: (applicant.educations || []).map(e => ({
+      institution: e.institution,
+      degree: e.degree,
+      fieldOfStudy: e.fieldOfStudy,
+      startDate: e.startDate,
+      endDate: e.endDate,
+    })),
     experience: applicant.experienceSummary || 'Not specified',
     applied: applicant.appliedAt
       ? new Date(applicant.appliedAt).toLocaleDateString()
@@ -67,8 +90,20 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     evidence: applicant.feedback || undefined,
     overallRating: applicant.overallRating || undefined,
     skillRatings: applicant.skillRatings || undefined,
+    email: applicant.email,
+    status: applicant.status,
+    departmentName: applicant.departmentName || undefined,
+    appliedAt: applicant.appliedAt,
+    coverLetter: applicant.coverLetter || undefined,
+    resumeUrl: applicant.resumeUrl || undefined,
+    interviewOverallRating: applicant.interviewOverallRating || undefined,
+    interviewRecommendation: applicant.interviewRecommendation || undefined,
+    interviewComments: applicant.interviewComments || undefined,
+    interviewTechnicalScore: applicant.interviewTechnicalScore || undefined,
+    interviewSkillRatings: applicant.interviewSkillRatings || undefined,
   };
 }
+
 
 function formatInterviewTime(iso: string): string {
   const at = new Date(iso);
@@ -209,6 +244,34 @@ export function HiringManager() {
     }
   };
 
+  const handleMakeDecision = async (
+    candidateId: string,
+    decision: 'Hired' | 'Rejected' | 'UnderFinalReview',
+    notes?: string
+  ) => {
+    const candidate = candidates.find((item) => item.id === candidateId);
+    if (!candidate?.applicationId) {
+      showFeedback('Unable to process decision for this candidate.');
+      return;
+    }
+
+    try {
+      await managerApi.makeHiringDecision(candidate.applicationId, {
+        decision,
+        notes,
+      });
+      await loadData();
+      showFeedback(
+        `${candidate.name} decision recorded: ${decision === 'Hired' ? 'Hired 🎉' : decision === 'Rejected' ? 'Rejected' : 'Under Final Review'}.`
+      );
+      setSelectedCandidate(null);
+    } catch (err: unknown) {
+      showFeedback(
+        err instanceof Error ? err.message : 'Failed to update hiring decision.'
+      );
+    }
+  };
+
   const selectCandidate = (candidate: ManagerCandidate) =>
     setSelectedCandidate(candidate);
 
@@ -247,6 +310,7 @@ export function HiringManager() {
                 candidates={candidates}
                 initialCandidateId={feedbackCandidateId}
                 onSubmitFeedback={submitFeedback}
+                onMakeDecision={handleMakeDecision}
               />
             )}
             {view === 'calendar' && (
@@ -264,6 +328,7 @@ export function HiringManager() {
         candidate={selectedCandidate}
         onClose={() => setSelectedCandidate(null)}
         onGiveFeedback={openFeedback}
+        onMakeDecision={handleMakeDecision}
       />
       <AnimatePresence>
         {feedback && (

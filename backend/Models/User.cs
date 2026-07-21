@@ -19,8 +19,18 @@ namespace backend.Models
         
         public UserStatus Status { get; set; } = UserStatus.Active;
 
-        
-        public string? OrganizationName { get; set; }
+        private string? _organizationName;
+        public string? OrganizationName
+        {
+            get => Organization?.Name ?? _organizationName;
+            set => _organizationName = value;
+        }
+
+        public Guid? OrganizationId { get; set; }
+        public Organization? Organization { get; set; }
+
+        public Guid? DepartmentId { get; set; }
+        public Department? Department { get; set; }
 
         public bool IsActive { get; set; } = true;
 

@@ -199,8 +199,8 @@ export function HiringManagerCalendar({
                       )}
                       {interview.feedbackSubmitted && (
                         <Badge tone="green">
-                          <ClipboardCheckIcon className="h-3 w-3" />
-                          Feedback submitted
+                          <CheckCircle2Icon className="h-3 w-3" />
+                          Completed
                         </Badge>
                       )}
                     </div>
@@ -247,7 +247,7 @@ export function HiringManagerCalendar({
                         setReason(interview.rescheduleReason || '');
                         setRescheduleTarget(interview);
                       }}
-                      disabled={interview.rescheduleRequested}
+                      disabled={interview.rescheduleRequested || interview.feedbackSubmitted}
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                     >
                       {interview.rescheduleRequested
@@ -261,7 +261,7 @@ export function HiringManagerCalendar({
                   <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5">
                     <CheckCircle2Icon className="h-4 w-4 text-emerald-600" />
                     <span className="text-sm font-semibold text-emerald-700">
-                      Feedback submitted &mdash; application is Under Final Review
+                      Interview Completed &mdash; Feedback submitted
                     </span>
                   </div>
                 ) : (

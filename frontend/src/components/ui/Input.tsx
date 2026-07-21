@@ -1,10 +1,11 @@
-﻿import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 interface FieldProps {
   label?: string;
   hint?: string;
+  helperText?: string;
   error?: string;
   id?: string;
 }
@@ -19,8 +20,9 @@ const inputBase =
 export const Input = forwardRef<
   HTMLInputElement,
   FieldProps & React.InputHTMLAttributes<HTMLInputElement>
->(({ label, hint, error, id, className, ...props }, ref) => {
+>(({ label, hint, helperText, error, id, className, ...props }, ref) => {
   const inputId = id || props.name;
+  const displayHint = hint || helperText;
   return (
     <div className="w-full">
       {label && (
@@ -41,8 +43,8 @@ export const Input = forwardRef<
       />
       {error ? (
         <p className="mt-1.5 text-xs font-medium text-red-600">{error}</p>
-      ) : hint ? (
-        <p className="mt-1.5 text-xs text-slate-500">{hint}</p>
+      ) : displayHint ? (
+        <p className="mt-1.5 text-xs text-slate-500">{displayHint}</p>
       ) : null}
     </div>
   );
