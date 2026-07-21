@@ -9,7 +9,9 @@ namespace backend.Services
         Task<UserListDto> CreateUserAsync(CreateUserDto dto);
         Task<PagedResultDto<UserListDto>> GetAllUsersAsync(UserRole? roleFilter, int page, int pageSize);
         Task<UserListDto?> GetUserByIdAsync(Guid id);
+        Task<UserListDto> UpdateUserAsync(Guid id, UpdateUserDto dto);
         Task<bool> ToggleUserActiveAsync(Guid id);
+        Task DeleteUserAsync(Guid id);
         Task ResetUserPasswordAsync(Guid id, string newPassword);
 
         // Recruiter approval workflow

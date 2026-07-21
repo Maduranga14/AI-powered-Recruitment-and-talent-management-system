@@ -221,10 +221,34 @@ export const adminApi = {
       method: 'PUT',
     }),
 
+  toggleUserStatus: (id: string) =>
+    request<{ message: string; isActive: boolean }>(`/admin/users/${id}/toggle-status`, {
+      method: 'PUT',
+    }),
+
   getUsers: (role?: string, page = 1, pageSize = 100) => {
     const roleParam = role ? `&role=${encodeURIComponent(role)}` : '';
     return request<PagedResult<BackendUser>>(`/admin/users?page=${page}&pageSize=${pageSize}${roleParam}`);
   },
+
+  updateUser: (id: string, payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role?: string;
+    status?: string;
+    organizationId?: string;
+    departmentId?: string;
+  }) =>
+    request<{ message: string; data: BackendUser }>(`/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteUser: (id: string) =>
+    request<{ message: string }>(`/admin/users/${id}`, {
+      method: 'DELETE',
+    }),
 
   createUser: (payload: {
     firstName: string;

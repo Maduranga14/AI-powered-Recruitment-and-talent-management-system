@@ -105,6 +105,18 @@ export function Admin() {
     }
   };
 
+  const handlePersonUpdated = (updated: AdminPerson) => {
+    setPeople((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    setSelectedPerson(updated);
+    showFeedback(`${updated.name}'s account updated.`);
+  };
+
+  const handlePersonDeleted = (personId: string) => {
+    setPeople((prev) => prev.filter((p) => p.id !== personId));
+    setSelectedPerson(null);
+    showFeedback('Account deleted successfully.');
+  };
+
   const toggleSetting = (key: 'reviewAlerts' | 'strictSafeguards') => {
     setSettings((s) => ({ ...s, [key]: !s[key] }));
     showFeedback('Safeguard setting updated');
@@ -188,6 +200,8 @@ export function Admin() {
         person={selectedPerson}
         onClose={() => setSelectedPerson(null)}
         onToggleStatus={togglePersonStatus}
+        onUpdated={handlePersonUpdated}
+        onDeleted={handlePersonDeleted}
       />
 
       <AdminOrganizationDrawer
