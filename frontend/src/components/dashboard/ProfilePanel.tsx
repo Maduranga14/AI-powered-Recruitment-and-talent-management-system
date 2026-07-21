@@ -17,6 +17,7 @@ import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../context/AuthContext';
+import { getPhoneValidationError, sanitizePhoneInput } from '../../utils/phone';
 
 export function ProfilePanel() {
   const { 
@@ -34,6 +35,7 @@ export function ProfilePanel() {
   const [errorMsg, setErrorMsg] = useState('');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
 
   // Experience form state
   const [showExpForm, setShowExpForm] = useState(false);
@@ -72,6 +74,12 @@ export function ProfilePanel() {
   const [skillInput, setSkillInput] = useState('');
 
   const save = async () => {
+    const phoneValidationError = getPhoneValidationError(user.phone);
+    if (phoneValidationError) {
+      setPhoneError(phoneValidationError);
+      return;
+    }
+
     setSaving(true);
     try {
       await saveProfile();
@@ -249,13 +257,17 @@ export function ProfilePanel() {
 
             <Input
               label="Phone number"
-              placeholder="e.g. +1 555-0199"
+              placeholder="e.g. 9876543210"
+              inputMode="numeric"
+              maxLength={10}
               value={user.phone || ''}
-              onChange={(e) =>
-                updateProfile({
-                  phone: e.target.value
-                })
-              } 
+              error={phoneError}
+              hint={!phoneError ? 'Enter exactly 10 digits (numbers only)' : undefined}
+              onChange={(e) => {
+                const phone = sanitizePhoneInput(e.target.value);
+                setPhoneError(getPhoneValidationError(phone) ?? '');
+                updateProfile({ phone });
+              }}
             />
           </div>
         </div>

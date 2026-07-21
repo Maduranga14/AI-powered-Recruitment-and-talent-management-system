@@ -6,9 +6,10 @@ import React, {
   useContext,
   Component } from
 'react';
-import { 
-  authApi, 
-  candidateApi, 
+import { getPhoneValidationError } from '../utils/phone';
+import {
+  authApi,
+  candidateApi,
   UpdateCandidateProfileDto, 
   WorkExperienceResponseDto, 
   EducationResponseDto, 
@@ -336,6 +337,12 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
 
   const saveProfile = async () => {
     if (!user) return;
+
+    const phoneValidationError = getPhoneValidationError(user.phone);
+    if (phoneValidationError) {
+      throw new Error(phoneValidationError);
+    }
+
     try {
       const payload: UpdateCandidateProfileDto = {
         phone: user.phone || '',
