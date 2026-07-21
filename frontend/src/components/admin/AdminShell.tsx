@@ -153,11 +153,11 @@ export function AdminShell({
           className="flex items-center gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
           aria-label="Talenta Admin home"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
-            <ShieldCheckIcon className="h-5 w-5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
+            <SparklesIcon className="h-5 w-5" />
           </span>
           <span>
-            <span className="block font-display text-lg font-extrabold tracking-tight">
+            <span className="block font-display text-lg font-extrabold tracking-tight text-slate-900">
               Talenta
             </span>
             <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-accent-700">
@@ -320,8 +320,8 @@ export function AdminShell({
                   onClick={() => changeView('overview')}
                   className="flex items-center gap-2 font-display font-extrabold"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
-                    <ShieldCheckIcon className="h-5 w-5" />
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
+                    <SparklesIcon className="h-5 w-5" />
                   </span>
                   Talenta Admin
                 </button>
