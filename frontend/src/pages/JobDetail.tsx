@@ -263,6 +263,17 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
                 ))}
               </div>
 
+              {job.requirements && (
+                <div className="mt-8 border-t border-slate-100 pt-6">
+                  <h2 className="font-display text-lg font-bold text-slate-900">
+                    Key Requirements
+                  </h2>
+                  <div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">
+                    {job.requirements}
+                  </div>
+                </div>
+              )}
+
               {job.requiredSkills.length > 0 && (
                 <div className="mt-8">
                   <Section title="What we're looking for" items={job.requiredSkills} />

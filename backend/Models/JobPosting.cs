@@ -16,6 +16,8 @@ namespace backend.Models
         [Required]
         public string Description { get; set; } = string.Empty;
 
+        public string? Requirements { get; set; }
+
         [Required]
         [MaxLength(200)]
         public string Location { get; set; } = string.Empty;

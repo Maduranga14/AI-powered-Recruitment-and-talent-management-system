@@ -13,6 +13,7 @@ import {
   MailIcon
 } from 'lucide-react';
 import { recruiterApi, adminApi, type DepartmentDto, type DepartmentDashboardDto, type AdminOrganizationDto } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
@@ -24,6 +25,9 @@ interface RecruiterDepartmentsProps {
 }
 
 export function RecruiterDepartments({ organizationName, jobs }: RecruiterDepartmentsProps = {}) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+
   const [dashboard, setDashboard] = useState<DepartmentDashboardDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -210,21 +214,27 @@ export function RecruiterDepartments({ organizationName, jobs }: RecruiterDepart
               Departments
             </h1>
             <p className="mt-1.5 text-sm text-slate-500">
-              Manage departments, organizational teams, and contacts across all client tenants.
+              {isAdmin
+                ? "Manage departments, organizational teams, and contacts across all client tenants."
+                : "View department structures and contacts established for your organization."}
             </p>
           </div>
-          <Button onClick={() => setCreateOpen(true)} className="self-start sm:self-auto flex items-center gap-2">
-            <PlusIcon className="h-4 w-4" /> Add Department
-          </Button>
+          {isAdmin && (
+            <Button onClick={() => setCreateOpen(true)} className="self-start sm:self-auto flex items-center gap-2">
+              <PlusIcon className="h-4 w-4" /> Add Department
+            </Button>
+          )}
         </div>
       ) : (
         <div className="flex items-center justify-between">
           <h3 className="font-display text-base font-bold text-slate-900">
             Departments ({departments.length})
           </h3>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <PlusIcon className="h-3.5 w-3.5 mr-1" /> Add
-          </Button>
+          {isAdmin && (
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <PlusIcon className="h-3.5 w-3.5 mr-1" /> Add
+            </Button>
+          )}
         </div>
       )}
 
@@ -345,16 +355,18 @@ export function RecruiterDepartments({ organizationName, jobs }: RecruiterDepart
                         {dept.badge}
                       </span>
                     )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteConfirmId(dept.id);
-                      }}
-                      className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 focus:opacity-100"
-                      title="Delete Department"
-                    >
-                      <Trash2Icon className="h-4 w-4" />
-                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmId(dept.id);
+                        }}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 focus:opacity-100"
+                        title="Delete Department"
+                      >
+                        <Trash2Icon className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               );
@@ -423,15 +435,17 @@ export function RecruiterDepartments({ organizationName, jobs }: RecruiterDepart
                   </div>
 
                   {/* Action */}
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => setDeleteConfirmId(dept.id)}
-                      className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                      title="Delete Department"
-                    >
-                      <Trash2Icon className="h-4 w-4" />
-                    </button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => setDeleteConfirmId(dept.id)}
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        title="Delete Department"
+                      >
+                        <Trash2Icon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

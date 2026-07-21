@@ -26,10 +26,16 @@ namespace backend.Services
             if (dto.SalaryMin.HasValue && dto.SalaryMax.HasValue && dto.SalaryMin > dto.SalaryMax)
                 throw new ArgumentException("Salary minimum cannot be greater than maximum.");
 
+            var reqText = dto.Requirements?.Trim();
+            var fullDesc = !string.IsNullOrWhiteSpace(reqText)
+                ? $"{dto.Description.Trim()}\n\nRequirements:\n{reqText}"
+                : dto.Description.Trim();
+
             var posting = new JobPosting
             {
                 Title = dto.Title.Trim(),
-                Description = dto.Description.Trim(),
+                Description = fullDesc,
+                Requirements = reqText,
                 Location = dto.Location.Trim(),
                 EmploymentType = dto.EmploymentType,
                 Status = dto.Status,
@@ -46,16 +52,16 @@ namespace backend.Services
                 PublishedAt = dto.Status == JobStatus.Published ? DateTime.UtcNow : null
             };
 
-            // PostedBy: use what the recruiter entered, fall back to their org name
-            if (!string.IsNullOrWhiteSpace(dto.PostedBy))
-            {
-                posting.PostedBy = dto.PostedBy.Trim();
-            }
-            else
-            {
-                var recruiter = await _db.Users.FindAsync(recruiterId);
-                posting.PostedBy = recruiter?.OrganizationName ?? string.Empty;
-            }
+            // PostedBy: automatically set to the recruiter's organization name
+            var recruiter = await _db.Users
+                .Include(u => u.Organization)
+                .FirstOrDefaultAsync(u => u.Id == recruiterId);
+
+            var recruiterOrgName = recruiter?.Organization?.Name ?? recruiter?.OrganizationName;
+
+            posting.PostedBy = !string.IsNullOrWhiteSpace(recruiterOrgName)
+                ? recruiterOrgName.Trim()
+                : (!string.IsNullOrWhiteSpace(dto.PostedBy) ? dto.PostedBy.Trim() : string.Empty);
 
             _db.JobPostings.Add(posting);
             await _db.SaveChangesAsync();
@@ -150,7 +156,16 @@ namespace backend.Services
 
             
             if (dto.Title != null)          posting.Title = dto.Title.Trim();
-            if (dto.Description != null)    posting.Description = dto.Description.Trim();
+            if (dto.Description != null || dto.Requirements != null)
+            {
+                var curParts = (posting.Description ?? string.Empty).Split("\n\nRequirements:\n");
+                var newDesc = dto.Description?.Trim() ?? curParts[0];
+                var newReq = dto.Requirements?.Trim() ?? (curParts.Length > 1 ? curParts[1] : null);
+                posting.Description = !string.IsNullOrWhiteSpace(newReq)
+                    ? $"{newDesc}\n\nRequirements:\n{newReq}"
+                    : newDesc;
+                posting.Requirements = newReq;
+            }
             if (dto.Location != null)       posting.Location = dto.Location.Trim();
             if (dto.EmploymentType.HasValue) posting.EmploymentType = dto.EmploymentType.Value;
             if (dto.SalaryMin.HasValue)     posting.SalaryMin = dto.SalaryMin;
@@ -224,13 +239,14 @@ namespace backend.Services
             if (type.HasValue)
                 query = query.Where(j => j.EmploymentType == type.Value);
 
-            return await query
+            var list = await query
                 .OrderByDescending(j => j.PublishedAt)
                 .Select(j => new
                 {
                     j.Id,
                     j.Title,
                     j.Description,
+                    j.Requirements,
                     j.Location,
                     j.EmploymentType,
                     DepartmentName = j.Department != null ? j.Department.Name : null,
@@ -246,12 +262,17 @@ namespace backend.Services
                         : string.Empty,
                     j.PostedBy
                 })
-                .ToListAsync()
-                .ContinueWith(t => t.Result.Select(j => new PublicJobPageDto
+                .ToListAsync();
+
+            return list.Select(j =>
+            {
+                var parts = (j.Description ?? string.Empty).Split("\n\nRequirements:\n");
+                return new PublicJobPageDto
                 {
                     Id = j.Id,
                     Title = j.Title,
-                    Description = j.Description,
+                    Description = parts[0],
+                    Requirements = j.Requirements ?? (parts.Length > 1 ? parts[1] : null),
                     Location = j.Location,
                     EmploymentType = j.EmploymentType.ToString(),
                     DepartmentName = j.DepartmentName,
@@ -266,7 +287,8 @@ namespace backend.Services
                     PublishedAt = j.PublishedAt!.Value,
                     OrganizationName = j.OrganizationName,
                     PostedBy = j.PostedBy
-                }).ToList());
+                };
+            }).ToList();
         }
 
         
@@ -278,11 +300,13 @@ namespace backend.Services
                 .FirstOrDefaultAsync(j => j.Id == id && j.Status == JobStatus.Published)
                 ?? throw new KeyNotFoundException("Job posting not found or is no longer available.");
 
+            var descParts = (job.Description ?? string.Empty).Split("\n\nRequirements:\n");
             return new PublicJobPageDto
             {
                 Id = job.Id,
                 Title = job.Title,
-                Description = job.Description,
+                Description = descParts[0],
+                Requirements = job.Requirements ?? (descParts.Length > 1 ? descParts[1] : null),
                 Location = job.Location,
                 EmploymentType = job.EmploymentType.ToString(),
                 DepartmentName = job.Department?.Name,
@@ -445,14 +469,19 @@ namespace backend.Services
         private static JobApplicantDto MapApplicant(JobApplication a, string jobTitle)
         {
             var profile = a.CandidateProfile;
-            var user = profile.User;
-            var latestExp = profile.Experiences
-                .OrderByDescending(e => e.IsCurrent)
-                .ThenByDescending(e => e.StartDate)
-                .FirstOrDefault();
+            var user = profile?.User;
+            var fullName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Candidate";
+            var email = user?.Email ?? string.Empty;
+
+            var latestExp = profile?.Experiences != null
+                ? profile.Experiences
+                    .OrderByDescending(e => e.IsCurrent)
+                    .ThenByDescending(e => e.StartDate)
+                    .FirstOrDefault()
+                : null;
 
             string? experienceSummary = null;
-            if (latestExp != null)
+            if (latestExp != null && profile?.Experiences != null)
             {
                 var years = profile.Experiences.Count;
                 experienceSummary = latestExp.IsCurrent
@@ -469,21 +498,21 @@ namespace backend.Services
             {
                 ApplicationId = a.Id,
                 JobPostingId = a.JobPostingId,
-                CandidateProfileId = profile.Id,
-                UserId = profile.UserId,
-                FullName = $"{user.FirstName} {user.LastName}".Trim(),
-                Email = user.Email,
-                Headline = profile.Headline,
-                Location = profile.Location,
-                PhotoUrl = profile.PhotoUrl,
+                CandidateProfileId = profile?.Id ?? Guid.Empty,
+                UserId = profile?.UserId ?? Guid.Empty,
+                FullName = fullName,
+                Email = email,
+                Headline = profile?.Headline,
+                Location = profile?.Location,
+                PhotoUrl = profile?.PhotoUrl,
                 JobTitle = jobTitle,
                 DepartmentName = a.JobPosting?.Department?.Name,
                 Status = a.Status.ToString(),
                 CoverLetter = a.CoverLetter,
                 AppliedAt = a.AppliedAt,
-                Skills = profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList(),
+                Skills = profile?.Skills != null ? profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList() : [],
                 ExperienceSummary = experienceSummary,
-                ResumeUrl = profile.ResumeUrl,
+                ResumeUrl = profile?.ResumeUrl,
                 Feedback = a.Feedback,
                 Recommendation = a.Recommendation,
                 OverallRating = a.OverallRating,
@@ -500,34 +529,62 @@ namespace backend.Services
       
         private async Task<JobPostingDetailDto> BuildDetailDtoAsync(Guid id)
         {
-            return await _db.JobPostings
+            var detail = await _db.JobPostings
                 .Where(j => j.Id == id)
-                .Select(j => new JobPostingDetailDto
+                .Select(j => new
                 {
-                    Id = j.Id,
-                    Title = j.Title,
-                    Description = j.Description,
-                    Location = j.Location,
+                    j.Id,
+                    j.Title,
+                    j.Description,
+                    j.Requirements,
+                    j.Location,
                     EmploymentType = j.EmploymentType.ToString(),
                     Status = j.Status.ToString(),
                     DepartmentName = j.Department != null ? j.Department.Name : null,
-                    DepartmentId = j.DepartmentId,
-                    SalaryMin = j.SalaryMin,
-                    SalaryMax = j.SalaryMax,
-                    SalaryCurrency = j.SalaryCurrency,
-                    ExperienceRequired = j.ExperienceRequired,
-                    RequiredSkills = j.RequiredSkills,
-                    Deadline = j.Deadline,
-                    CreatedAt = j.CreatedAt,
-                    UpdatedAt = j.UpdatedAt,
-                    PublishedAt = j.PublishedAt,
-                    CreatedByRecruiterId = j.CreatedByRecruiterId,
+                    j.DepartmentId,
+                    j.SalaryMin,
+                    j.SalaryMax,
+                    j.SalaryCurrency,
+                    j.ExperienceRequired,
+                    j.RequiredSkills,
+                    j.Deadline,
+                    j.CreatedAt,
+                    j.UpdatedAt,
+                    j.PublishedAt,
+                    j.CreatedByRecruiterId,
                     RecruiterName = j.CreatedByRecruiter != null
                         ? j.CreatedByRecruiter.FirstName + " " + j.CreatedByRecruiter.LastName
                         : string.Empty,
-                    PostedBy = j.PostedBy
+                    j.PostedBy
                 })
                 .FirstAsync();
+
+            var descParts = (detail.Description ?? string.Empty).Split("\n\nRequirements:\n");
+
+            return new JobPostingDetailDto
+            {
+                Id = detail.Id,
+                Title = detail.Title,
+                Description = descParts[0],
+                Requirements = detail.Requirements ?? (descParts.Length > 1 ? descParts[1] : null),
+                Location = detail.Location,
+                EmploymentType = detail.EmploymentType,
+                Status = detail.Status,
+                DepartmentName = detail.DepartmentName,
+                DepartmentId = detail.DepartmentId,
+                SalaryMin = detail.SalaryMin,
+                SalaryMax = detail.SalaryMax,
+                SalaryCurrency = detail.SalaryCurrency,
+                ExperienceRequired = detail.ExperienceRequired,
+                RequiredSkills = detail.RequiredSkills,
+                Deadline = detail.Deadline,
+                CreatedAt = detail.CreatedAt,
+                UpdatedAt = detail.UpdatedAt,
+                PublishedAt = detail.PublishedAt,
+                CreatedByRecruiterId = detail.CreatedByRecruiterId,
+                RecruiterName = detail.RecruiterName,
+                PostedBy = detail.PostedBy
+            };
         }
 
         private static void ValidateStatusTransition(JobStatus current, JobStatus next)
@@ -731,20 +788,25 @@ namespace backend.Services
                     .ThenInclude(a => a.CandidateProfile)
                         .ThenInclude(cp => cp.User)
                 .Where(i => i.CreatedByRecruiterId == recruiterId
-                         || i.JobApplication.JobPosting.CreatedByRecruiterId == recruiterId)
+                         || (i.JobApplication != null && i.JobApplication.JobPosting != null && i.JobApplication.JobPosting.CreatedByRecruiterId == recruiterId))
                 .OrderBy(i => i.ScheduledAt)
                 .ToListAsync();
 
-            return interviews.Select(i =>
+            return interviews
+                .Where(i => i.JobApplication?.CandidateProfile != null)
+                .Select(i =>
             {
                 var user = i.JobApplication.CandidateProfile.User;
-                var name = $"{user.FirstName} {user.LastName}".Trim();
+                var name = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Candidate";
+                var email = user?.Email ?? string.Empty;
+                var jobTitle = i.JobApplication.JobPosting?.Title ?? "Job Position";
+
                 return MapInterview(
                     i,
                     i.JobApplication,
-                    i.JobApplication.JobPosting.Title,
+                    jobTitle,
                     name,
-                    user.Email);
+                    email);
             }).ToList();
         }
 

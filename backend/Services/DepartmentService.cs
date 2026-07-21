@@ -11,8 +11,12 @@ namespace backend.Services
 
         public async Task<DepartmentDashboardDto> GetDepartmentDashboardAsync(Guid userId, string? filterOrganizationName = null)
         {
-            var user = await _db.Users.FindAsync(userId);
-            var userOrgName = user?.OrganizationName;
+            var user = await _db.Users
+                .Include(u => u.Organization)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            var userOrgName = user?.Organization?.Name ?? user?.OrganizationName;
+            var userOrgId = user?.OrganizationId;
 
             // Enforce tenant isolation for non-admins
             var activeOrgName = (user?.Role == Models.Enums.UserRole.Admin)
@@ -21,14 +25,25 @@ namespace backend.Services
 
             var orgDto = new OrganizationDto
             {
-                Id = Guid.Empty,
+                Id = userOrgId ?? Guid.Empty,
                 Name = !string.IsNullOrEmpty(activeOrgName) ? activeOrgName : "TalentPortal Holding",
                 Sub = !string.IsNullOrEmpty(activeOrgName) ? "Internal Entity" : "Principal Entity"
             };
 
             var query = _db.Departments.AsQueryable();
-            // Filter by organization. Only global Admin (without organization) viewing no specific organization can see all.
-            if (user?.Role != Models.Enums.UserRole.Admin || !string.IsNullOrEmpty(activeOrgName))
+            // Filter by organization.
+            if (user?.Role != Models.Enums.UserRole.Admin)
+            {
+                if (userOrgId.HasValue)
+                {
+                    query = query.Where(d => d.OrganizationId == userOrgId || d.OrganizationName == userOrgName);
+                }
+                else if (!string.IsNullOrEmpty(userOrgName))
+                {
+                    query = query.Where(d => d.OrganizationName == userOrgName);
+                }
+            }
+            else if (!string.IsNullOrEmpty(activeOrgName))
             {
                 query = query.Where(d => d.OrganizationName == activeOrgName);
             }
@@ -69,17 +84,21 @@ namespace backend.Services
 
         public async Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentDto dto, Guid userId)
         {
-            var user = await _db.Users.FindAsync(userId);
+            var user = await _db.Users
+                .Include(u => u.Organization)
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
             // Determine organization name from DTO or user
             var userOrgName = !string.IsNullOrWhiteSpace(dto.OrganizationName)
                 ? dto.OrganizationName.Trim()
-                : user?.OrganizationName;
+                : (user?.Organization?.Name ?? user?.OrganizationName);
+
+            var userOrgId = user?.OrganizationId;
 
             // Lookup organization if organization name is provided
             var org = !string.IsNullOrWhiteSpace(userOrgName)
                 ? await _db.Organizations.FirstOrDefaultAsync(o => o.Name.ToLower() == userOrgName.ToLower())
-                : null;
+                : (userOrgId.HasValue ? await _db.Organizations.FindAsync(userOrgId.Value) : null);
 
             if (org != null)
             {

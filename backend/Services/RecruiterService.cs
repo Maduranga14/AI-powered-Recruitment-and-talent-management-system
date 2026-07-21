@@ -35,8 +35,22 @@ namespace backend.Services
                 .Where(d => d.OrganizationName == orgName)
                 .ToListAsync();
 
-            var users = await _db.Users
-                .Where(u => u.Role == UserRole.HiringManager && u.OrganizationName == orgName)
+            var query = _db.Users
+                .Include(u => u.Department)
+                .Include(u => u.Organization)
+                .Where(u => u.Role == UserRole.HiringManager);
+
+            if (recruiter.OrganizationId.HasValue)
+            {
+                var targetOrgId = recruiter.OrganizationId.Value;
+                query = query.Where(u => u.OrganizationId == targetOrgId || (u.Organization != null && u.Organization.Name == orgName));
+            }
+            else if (!string.IsNullOrWhiteSpace(orgName))
+            {
+                query = query.Where(u => u.Organization != null && u.Organization.Name == orgName);
+            }
+
+            var users = await query
                 .OrderBy(u => u.FirstName)
                 .ThenBy(u => u.LastName)
                 .ToListAsync();
@@ -44,7 +58,7 @@ namespace backend.Services
             var managers = users.Select(u =>
             {
                 var fullName = $"{u.FirstName} {u.LastName}".Trim();
-                var dept = departments.FirstOrDefault(d => d.Head.Equals(fullName, StringComparison.OrdinalIgnoreCase));
+                var dept = u.Department ?? departments.FirstOrDefault(d => !string.IsNullOrEmpty(d.Head) && string.Equals(d.Head, fullName, StringComparison.OrdinalIgnoreCase));
                 return new HiringManagerDto
                 {
                     Id = u.Id,

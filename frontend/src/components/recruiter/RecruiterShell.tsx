@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { InviteHiringManagerModal } from './InviteHiringManagerModal';
 import {
   BellIcon,
   BriefcaseBusinessIcon,
@@ -86,7 +85,6 @@ export function RecruiterShell({
 }: RecruiterShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -207,14 +205,6 @@ export function RecruiterShell({
                 
                 <PlusIcon className="h-4 w-4" /> Create job
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="hidden sm:inline-flex"
-                onClick={() => setInviteOpen(true)}>
-                Invite Manager
-              </Button>
-              <InviteHiringManagerModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen((o) => !o)}

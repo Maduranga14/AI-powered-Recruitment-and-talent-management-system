@@ -267,6 +267,7 @@ export interface JobPostingDetail {
   id: string;
   title: string;
   description: string;
+  requirements?: string | null;
   location: string;
   employmentType: string;
   status: string;
@@ -395,6 +396,7 @@ export interface PagedJobsResult {
 export interface CreateJobPostingPayload {
   title: string;
   description: string;
+  requirements?: string;
   location: string;
   employmentType: number;
   status: number; // 0=Draft, 1=Published
@@ -616,6 +618,7 @@ export interface PublicJob {
   id: string;
   title: string;
   description: string;
+  requirements?: string | null;
   location: string;
   employmentType: string;
   departmentName: string | null;

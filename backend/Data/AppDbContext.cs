@@ -211,6 +211,7 @@ namespace backend.Data
             {
                 entity.HasKey(j => j.Id);
                 entity.Property(j => j.Title).IsRequired().HasMaxLength(200);
+                entity.Property(j => j.Requirements).HasMaxLength(4000);
                 entity.Property(j => j.Location).IsRequired().HasMaxLength(200);
                 entity.Property(j => j.SalaryCurrency).HasMaxLength(10);
                 entity.Property(j => j.ExperienceRequired).HasMaxLength(100);

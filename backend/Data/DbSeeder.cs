@@ -42,6 +42,7 @@ namespace backend.Data
             await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Departments]') AND name = 'OrganizationId') BEGIN ALTER TABLE [dbo].[Departments] ADD [OrganizationId] UNIQUEIDENTIFIER NULL; END");
             await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = 'OrganizationId') BEGIN ALTER TABLE [dbo].[Users] ADD [OrganizationId] UNIQUEIDENTIFIER NULL; END");
             await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND name = 'DepartmentId') BEGIN ALTER TABLE [dbo].[Users] ADD [DepartmentId] UNIQUEIDENTIFIER NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[JobPostings]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[JobPostings]') AND name = 'Requirements') BEGIN ALTER TABLE [dbo].[JobPostings] ADD [Requirements] NVARCHAR(MAX) NULL; END");
 
             await SeedAdminAsync(db);
             await SeedDepartmentDashboardAsync(db);

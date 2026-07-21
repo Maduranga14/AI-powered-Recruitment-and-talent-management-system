@@ -13,6 +13,8 @@ namespace backend.DTOs.Jobs
         [Required(ErrorMessage = "Job description is required.")]
         public string Description { get; set; } = string.Empty;
 
+        public string? Requirements { get; set; }
+
         [Required(ErrorMessage = "Location is required.")]
         [StringLength(200, ErrorMessage = "Location cannot exceed 200 characters.")]
         public string Location { get; set; } = string.Empty;
@@ -52,6 +54,8 @@ namespace backend.DTOs.Jobs
         public string? Title { get; set; }
 
         public string? Description { get; set; }
+
+        public string? Requirements { get; set; }
 
         [StringLength(200)]
         public string? Location { get; set; }
@@ -152,6 +156,7 @@ namespace backend.DTOs.Jobs
     public class JobPostingDetailDto : JobPostingListDto
     {
         public string Description { get; set; } = string.Empty;
+        public string? Requirements { get; set; }
         public string? ExperienceRequired { get; set; }
         public string? RequiredSkills { get; set; }
         public Guid? DepartmentId { get; set; }
@@ -165,6 +170,7 @@ namespace backend.DTOs.Jobs
         public Guid Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public string? Requirements { get; set; }
         public string Location { get; set; } = string.Empty;
         public string EmploymentType { get; set; } = string.Empty;
         public string? DepartmentName { get; set; }

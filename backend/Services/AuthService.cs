@@ -109,6 +109,7 @@ namespace backend.Services
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
             var user = await _db.Users
+                .Include(u => u.Organization)
                 .FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower());
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
@@ -305,7 +306,7 @@ namespace backend.Services
             FullName = user.FullName,
             Role = user.Role.ToString(),
             Status = user.Status.ToString(),
-            OrganizationName = user.OrganizationName,
+            OrganizationName = user.Organization?.Name ?? user.OrganizationName,
             ExpiresAt = _jwtService.GetExpiry()
         };
     }

@@ -8,7 +8,6 @@ import { AdminOrganizationDrawer } from '../components/admin/AdminOrganizationDr
 import { AdminOrganizations } from '../components/admin/AdminOrganizations';
 import { AdminOverview } from '../components/admin/AdminOverview';
 import { AdminPeople } from '../components/admin/AdminPeople';
-import { AdminPendingApprovals } from '../components/admin/AdminPendingApprovals';
 import { AdminPersonDrawer } from '../components/admin/AdminPersonDrawer';
 import { AdminShell, type AdminView } from '../components/admin/AdminShell';
 import { RecruiterDepartments } from '../components/recruiter/RecruiterDepartments';
@@ -20,22 +19,18 @@ import {
   type ModerationItem,
   type AdminRole,
   type AccountStatus
-} from
-  '../data/admin';
+} from '../data/admin';
 import { adminApi, publicApi } from '../services/api';
+
 export function Admin() {
   const [view, setView] = useState<AdminView>('overview');
   const [people, setPeople] = useState<AdminPerson[]>([]);
   const [organizations, setOrganizations] = useState<AdminOrganization[]>([]);
   const [moderation, setModeration] = useState(ADMIN_MODERATION);
-  const [pendingApprovals, setPendingApprovals] = useState(0);
   const [publishedJobs, setPublishedJobs] = useState(0);
   const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState<
-    string | null>(
-      null);
-  const [selectedModeration, setSelectedModeration] =
-    useState<ModerationItem | null>(null);
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState<string | null>(null);
+  const [selectedModeration, setSelectedModeration] = useState<ModerationItem | null>(null);
   const [settings, setSettings] = useState({
     reviewAlerts: true,
     strictSafeguards: true
@@ -44,17 +39,14 @@ export function Admin() {
 
   const refreshData = async () => {
     try {
-      const [res, pending, jobs, liveOrgs] = await Promise.all([
+      const [res, jobs, liveOrgs] = await Promise.all([
         adminApi.getUsers(undefined, 1, 100),
-        adminApi.getPendingRecruiters().catch(() => []),
         publicApi.getPublishedJobs().catch(() => []),
         adminApi.getOrganizations().catch(() => []),
       ]);
 
-      setPendingApprovals(pending.length);
       setPublishedJobs(jobs.length);
 
-      // 1. Map backend users to AdminPerson
       const backendPeople: AdminPerson[] = res.items.map((u) => {
         let mappedRole: AdminRole = 'Candidate';
         if (u.role === 'Admin') mappedRole = 'Administrator';
@@ -96,166 +88,132 @@ export function Admin() {
     setFeedback(message);
     window.setTimeout(() => setFeedback(''), 2800);
   };
-  const togglePersonStatus = (person: AdminPerson) => {
-    const nextStatus = person.status === 'Suspended' ? 'Active' : 'Suspended';
-    setPeople((current) =>
-      current.map((item) =>
-        item.id === person.id ?
-          {
-            ...item,
-            status: nextStatus
-          } :
-          item
-      )
-    );
-    setSelectedPerson((current) =>
-      current?.id === person.id ?
-        {
-          ...current,
-          status: nextStatus
-        } :
-        current
-    );
-    showFeedback(
-      `${person.name} ${nextStatus === 'Active' ? 'reactivated' : 'suspended'} locally.`
-    );
+
+  const togglePersonStatus = async (person: AdminPerson) => {
+    try {
+      await adminApi.toggleUserStatus(person.id);
+      const nextStatus = person.status === 'Suspended' ? 'Active' : 'Suspended';
+      setPeople((prev) =>
+        prev.map((item) =>
+          item.id === person.id ? { ...item, status: nextStatus } : item
+        )
+      );
+      showFeedback(`${person.name} is now ${nextStatus.toLowerCase()}`);
+    } catch (err: any) {
+      showFeedback(err.message || 'Failed to update user status.');
+    }
   };
+
+  const toggleSetting = (key: 'reviewAlerts' | 'strictSafeguards') => {
+    setSettings((s) => ({ ...s, [key]: !s[key] }));
+    showFeedback('Safeguard setting updated');
+  };
+
   const decideModeration = (
-    item: ModerationItem,
-    status: 'Approved' | 'Declined') => {
-    setModeration((current) =>
-      current.map((entry) =>
-        entry.id === item.id ?
-          {
-            ...entry,
-            status
-          } :
-          entry
+    id: string,
+    decision: 'Approved' | 'Restricted'
+  ) => {
+    setModeration((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, status: decision } : item
       )
     );
-    setSelectedModeration((current) =>
-      current?.id === item.id ?
-        {
-          ...current,
-          status
-        } :
-        current
-    );
-    showFeedback(`${item.title} ${status.toLowerCase()} locally.`);
-  };
-  const toggleSetting = (setting: 'reviewAlerts' | 'strictSafeguards') => {
-    setSettings((current) => ({
-      ...current,
-      [setting]: !current[setting]
-    }));
     showFeedback(
-      `${setting === 'reviewAlerts' ? 'Review queue alerts' : 'Strict session safeguards'} updated.`
+      `Item ${decision.toLowerCase()} and logged in platform audit`
     );
   };
+
   const selectedOrganization =
-    organizations.find((item) => item.id === selectedOrganizationId) ??
-    null;
-  const pendingCount = pendingApprovals;
+    organizations.find((o) => o.id === selectedOrganizationId) || null;
+
   return (
     <AdminShell
       activeView={view}
-      moderationCount={pendingCount}
-      onViewChange={setView}>
-
+      moderationCount={moderation.filter((i) => i.status === 'Pending').length}
+      onViewChange={setView}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={view}
-          initial={{
-            opacity: 0
-          }}
-          animate={{
-            opacity: 1
-          }}
-          exit={{
-            opacity: 0
-          }}
-          transition={{
-            duration: 0.16
-          }}>
-
-          {view === 'overview' &&
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.16 }}
+        >
+          {view === 'overview' && (
             <AdminOverview
               people={people}
               organizations={organizations}
               moderation={moderation}
-              pendingApprovals={pendingApprovals}
               publishedJobs={publishedJobs}
-              onViewChange={setView} />
+              onViewChange={setView}
+            />
+          )}
 
-          }
-          {view === 'people' &&
+          {view === 'people' && (
             <AdminPeople people={people} onPersonSelect={setSelectedPerson} onRefresh={refreshData} />
-          }
-          {view === 'organizations' &&
+          )}
+
+          {view === 'organizations' && (
             <AdminOrganizations
               organizations={organizations}
               onOrganizationSelect={(organization) =>
                 setSelectedOrganizationId(organization.id)
               }
-              onRefresh={refreshData} />
+              onRefresh={refreshData}
+            />
+          )}
 
-          }
-          {view === 'departments' &&
-            <RecruiterDepartments />
-          }
-          {view === 'moderation' &&
+          {view === 'departments' && <RecruiterDepartments />}
+
+          {view === 'moderation' && (
             <AdminModeration
               moderation={moderation}
-              onItemSelect={setSelectedModeration} />
+              onItemSelect={setSelectedModeration}
+            />
+          )}
 
-          }
-          {view === 'pending-approvals' && <AdminPendingApprovals />}
-          {view === 'audit-settings' &&
+          {view === 'audit-settings' && (
             <AdminAuditSettings
               auditEvents={ADMIN_AUDIT_EVENTS}
               settings={settings}
-              onToggle={toggleSetting} />
-
-          }
+              onToggle={toggleSetting}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
+
       <AdminPersonDrawer
         person={selectedPerson}
         onClose={() => setSelectedPerson(null)}
-        onToggleStatus={togglePersonStatus} />
+        onToggleStatus={togglePersonStatus}
+      />
 
       <AdminOrganizationDrawer
         organization={selectedOrganization}
-        onClose={() => setSelectedOrganizationId(null)} />
+        onClose={() => setSelectedOrganizationId(null)}
+      />
 
       <AdminModerationDrawer
         item={selectedModeration}
         onClose={() => setSelectedModeration(null)}
-        onDecision={decideModeration} />
+        onDecision={decideModeration}
+      />
 
       <AnimatePresence>
-        {feedback &&
+        {feedback && (
           <motion.div
-            initial={{
-              opacity: 0,
-              y: 12
-            }}
-            animate={{
-              opacity: 1,
-              y: 0
-            }}
-            exit={{
-              opacity: 0,
-              y: 12
-            }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
             role="status"
-            className="fixed bottom-20 left-4 right-4 z-[60] flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl sm:bottom-6 sm:left-auto sm:right-6 sm:w-auto">
-
+            className="fixed bottom-20 left-4 right-4 z-[60] flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl sm:bottom-6 sm:left-auto sm:right-6 sm:w-auto"
+          >
             <CheckCircle2Icon className="h-4 w-4 text-accent-400" />
             {feedback}
           </motion.div>
-        }
+        )}
       </AnimatePresence>
-    </AdminShell>);
-
+    </AdminShell>
+  );
 }
