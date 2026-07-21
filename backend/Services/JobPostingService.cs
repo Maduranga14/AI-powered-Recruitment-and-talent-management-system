@@ -168,8 +168,10 @@ namespace backend.Services
             }
             if (dto.Location != null)       posting.Location = dto.Location.Trim();
             if (dto.EmploymentType.HasValue) posting.EmploymentType = dto.EmploymentType.Value;
-            if (dto.SalaryMin.HasValue)     posting.SalaryMin = dto.SalaryMin;
-            if (dto.SalaryMax.HasValue)     posting.SalaryMax = dto.SalaryMax;
+            // Salary is always sent in the full update payload — assign unconditionally
+            // so null clears it and a number updates it.
+            posting.SalaryMin = dto.SalaryMin;
+            posting.SalaryMax = dto.SalaryMax;
             if (dto.SalaryCurrency != null) posting.SalaryCurrency = dto.SalaryCurrency.Trim().ToUpper();
             if (dto.ExperienceRequired != null) posting.ExperienceRequired = dto.ExperienceRequired.Trim();
             if (dto.RequiredSkills != null) posting.RequiredSkills = dto.RequiredSkills.Trim();
@@ -511,6 +513,32 @@ namespace backend.Services
                 CoverLetter = a.CoverLetter,
                 AppliedAt = a.AppliedAt,
                 Skills = profile?.Skills != null ? profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList() : [],
+                Experiences = profile?.Experiences != null
+                    ? profile.Experiences
+                        .OrderByDescending(e => e.IsCurrent)
+                        .ThenByDescending(e => e.StartDate)
+                        .Select(e => new WorkExperienceDto
+                        {
+                            Title = e.Title,
+                            Company = e.Company,
+                            StartDate = e.StartDate,
+                            EndDate = e.EndDate,
+                            IsCurrent = e.IsCurrent,
+                            Description = e.Description,
+                        }).ToList()
+                    : [],
+                Educations = profile?.Educations != null
+                    ? profile.Educations
+                        .OrderByDescending(e => e.EndDate ?? DateTime.MaxValue)
+                        .Select(e => new EducationDto
+                        {
+                            Institution = e.Institution,
+                            Degree = e.Degree,
+                            FieldOfStudy = e.FieldOfStudy,
+                            StartDate = e.StartDate,
+                            EndDate = e.EndDate,
+                        }).ToList()
+                    : [],
                 ExperienceSummary = experienceSummary,
                 ResumeUrl = profile?.ResumeUrl,
                 Feedback = a.Feedback,
@@ -604,32 +632,80 @@ namespace backend.Services
                     $"Allowed: {(allowed.Length > 0 ? string.Join(", ", allowed.Select(s => s.ToString())) : "none")}.");
         }
 
+        private async Task<List<Guid>> GetManagerDepartmentIdsAsync(User manager)
+        {
+            var deptIds = new List<Guid>();
+
+            if (manager.DepartmentId.HasValue)
+            {
+                deptIds.Add(manager.DepartmentId.Value);
+            }
+
+            var managerFullName = manager.FullName.Trim().ToLower();
+            var managerAltName = $"{manager.FirstName} {manager.LastName}".Trim().ToLower();
+            var userOrgName = manager.Organization?.Name ?? manager.OrganizationName;
+
+            var headedDepts = await _db.Departments
+                .Where(d => d.Head != null &&
+                            (d.Head.ToLower() == managerFullName || d.Head.ToLower() == managerAltName) &&
+                            (userOrgName == null || d.OrganizationName == userOrgName || d.OrganizationId == manager.OrganizationId))
+                .Select(d => d.Id)
+                .ToListAsync();
+
+            deptIds.AddRange(headedDepts);
+
+            if (deptIds.Count == 0 && (manager.OrganizationId.HasValue || !string.IsNullOrWhiteSpace(userOrgName)))
+            {
+                var cleanOrgName = userOrgName?.ToLower();
+                var orgDepts = await _db.Departments
+                    .Where(d => (manager.OrganizationId.HasValue && d.OrganizationId == manager.OrganizationId.Value)
+                             || (cleanOrgName != null && d.OrganizationName != null && d.OrganizationName.ToLower() == cleanOrgName))
+                    .ToListAsync();
+
+                var managerDeptName = manager.Department?.Name;
+                if (!string.IsNullOrWhiteSpace(managerDeptName))
+                {
+                    var cleanDeptName = managerDeptName.ToLower();
+                    var matched = orgDepts.Where(d => d.Name != null && d.Name.ToLower() == cleanDeptName).Select(d => d.Id);
+                    deptIds.AddRange(matched);
+                }
+
+                if (deptIds.Count == 0)
+                {
+                    deptIds.AddRange(orgDepts.Select(d => d.Id));
+                }
+            }
+
+            return deptIds.Distinct().ToList();
+        }
+
         public async Task<List<JobApplicantDto>> GetManagerApplicantsAsync(Guid managerUserId)
         {
-            var manager = await _db.Users.FindAsync(managerUserId);
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId);
+
             if (manager == null || manager.Role != UserRole.HiringManager)
                 throw new KeyNotFoundException("Hiring manager user not found.");
 
-            var managerName = manager.FullName;
-
-            // Find all departments headed by this manager in the manager's organization
-            var departments = await _db.Departments
-                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
-                .Select(d => d.Id)
-                .ToListAsync();
+            var departments = await GetManagerDepartmentIdsAsync(manager);
 
             if (departments.Count == 0)
                 return new List<JobApplicantDto>();
 
-            // Query applications for postings in those departments where status != Applied (once shortlisted/under review)
             var applications = await _db.JobApplications
+                .AsSplitQuery()
                 .Include(a => a.JobPosting)
+                    .ThenInclude(j => j.Department)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.User)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Experiences)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.Skills)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.Educations)
                 .Include(a => a.Interviews)
                 .Where(a => a.JobPosting.DepartmentId != null &&
                             departments.Contains(a.JobPosting.DepartmentId.Value) &&
@@ -642,17 +718,15 @@ namespace backend.Services
 
         public async Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId)
         {
-            var manager = await _db.Users.FindAsync(managerUserId);
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId);
+
             if (manager == null || manager.Role != UserRole.HiringManager)
                 throw new KeyNotFoundException("Hiring manager user not found.");
 
-            var managerName = manager.FullName;
-
-            // Find all departments headed by this manager
-            var departments = await _db.Departments
-                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
-                .Select(d => d.Id)
-                .ToListAsync();
+            var departments = await GetManagerDepartmentIdsAsync(manager);
 
             var application = await _db.JobApplications
                 .Include(a => a.JobPosting)
@@ -812,15 +886,15 @@ namespace backend.Services
 
         public async Task<List<InterviewDto>> GetManagerInterviewsAsync(Guid managerUserId)
         {
-            var manager = await _db.Users.FindAsync(managerUserId);
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId);
+
             if (manager == null || manager.Role != UserRole.HiringManager)
                 throw new KeyNotFoundException("Hiring manager user not found.");
 
-            var managerName = manager.FullName;
-            var departments = await _db.Departments
-                .Where(d => d.Head == managerName && d.OrganizationName == manager.OrganizationName)
-                .Select(d => d.Id)
-                .ToListAsync();
+            var departments = await GetManagerDepartmentIdsAsync(manager);
 
             if (departments.Count == 0)
                 return [];
@@ -1051,17 +1125,16 @@ namespace backend.Services
         public async Task<InterviewDto> SubmitInterviewFeedbackAsync(
             Guid interviewId, SubmitInterviewFeedbackDto dto, Guid managerUserId)
         {
-            var manager = await _db.Users.FindAsync(managerUserId)
+            var manager = await _db.Users
+                .Include(u => u.Organization)
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == managerUserId)
                 ?? throw new KeyNotFoundException("Hiring manager user not found.");
 
             if (manager.Role != UserRole.HiringManager)
                 throw new UnauthorizedAccessException("Only hiring managers can submit interview feedback.");
 
-            // Resolve departments this manager is responsible for
-            var departments = await _db.Departments
-                .Where(d => d.Head == manager.FullName && d.OrganizationName == manager.OrganizationName)
-                .Select(d => d.Id)
-                .ToListAsync();
+            var departments = await GetManagerDepartmentIdsAsync(manager);
 
             var interview = await _db.Interviews
                 .Include(i => i.JobApplication)

@@ -304,10 +304,27 @@ export function ScheduleInterviewModal({
     rescheduleInterview,
   ]);
 
+  // Auto-switch to first available free slot when date, manager, duration, or busySlots change
+  useEffect(() => {
+    if (!date || !selectedManagerId || selectedManagerId === 'custom' || workingHours.length === 0) return;
+    const currentStatus = getSlotStatus(time);
+    if (currentStatus === 'busy') {
+      const firstFree = workingHours.find((s) => getSlotStatus(s.time) === 'free');
+      if (firstFree) {
+        setTime(firstFree.time);
+      }
+    }
+  }, [date, selectedManagerId, busySlots, duration]);
+
+  const selectedTimeIsBusy = Boolean(
+    date && time && selectedManagerId && selectedManagerId !== 'custom' && getSlotStatus(time) === 'busy'
+  );
+
   const canSubmit = isReschedule
     ? !!rescheduleInterview?.id &&
       !!date &&
       !!time &&
+      !selectedTimeIsBusy &&
       interviewerName.trim().length > 1 &&
       (interviewType !== 'Video' || meetingLink.trim().length > 0) &&
       (interviewType !== 'Onsite' || location.trim().length > 0)
@@ -315,6 +332,7 @@ export function ScheduleInterviewModal({
       !!selected?.jobId &&
       !!date &&
       !!time &&
+      !selectedTimeIsBusy &&
       interviewerName.trim().length > 1 &&
       (interviewType !== 'Video' || meetingLink.trim().length > 0) &&
       (interviewType !== 'Onsite' || location.trim().length > 0);
@@ -485,12 +503,27 @@ export function ScheduleInterviewModal({
                   min={toLocalDateValue(new Date())}
                   onChange={(e) => setDate(e.target.value)}
                 />
-                <Input
-                  label="Time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                />
+                <div>
+                  <Input
+                    label="Time"
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                  />
+                  {date && time && selectedManagerId && selectedManagerId !== 'custom' && (
+                    <div className="mt-1">
+                      {selectedTimeIsBusy ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
+                          <XIcon className="h-3 w-3" /> Busy slot (Conflict)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                          <CheckIcon className="h-3 w-3" /> Slot available
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -613,29 +646,33 @@ export function ScheduleInterviewModal({
                       {workingHours.map((slot) => {
                         const status = getSlotStatus(slot.time);
                         const isSelected = time === slot.time;
+                        const isBusy = status === 'busy';
                         return (
                           <button
                             key={slot.time}
                             type="button"
-                            disabled={status === 'busy'}
+                            disabled={isBusy}
                             onClick={() => setTime(slot.time)}
+                            title={isBusy ? `Interviewer is busy at ${slot.label} (Conflict)` : `Select ${slot.label}`}
                             className={`group relative flex flex-col items-center justify-center rounded-xl p-2.5 text-center transition-all border ${
-                              status === 'busy'
-                                ? 'bg-slate-100 border-slate-200 text-slate-450 cursor-not-allowed opacity-60'
+                              isBusy
+                                ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50 select-none'
                                 : isSelected
                                   ? 'bg-brand-600 border-brand-600 text-white shadow-md shadow-brand-100 scale-105'
                                   : 'bg-white border-slate-200 text-slate-700 hover:border-brand-500 hover:bg-brand-50/50'
                             }`}
                           >
-                            <span className="text-xs font-bold">{slot.label}</span>
-                            <span className={`mt-1 text-[9px] font-semibold tracking-wide uppercase ${
-                              status === 'busy'
-                                ? 'text-slate-400'
+                            <span className={`text-xs font-bold ${isBusy ? 'line-through text-slate-400' : ''}`}>
+                              {slot.label}
+                            </span>
+                            <span className={`mt-1 text-[9px] font-bold tracking-wide uppercase ${
+                              isBusy
+                                ? 'text-red-500'
                                 : isSelected
                                   ? 'text-brand-100'
                                   : 'text-emerald-600'
                             }`}>
-                              {status === 'busy' ? 'Busy' : 'Free'}
+                              {isBusy ? 'Busy' : 'Free'}
                             </span>
                           </button>
                         );

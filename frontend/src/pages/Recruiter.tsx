@@ -746,6 +746,17 @@ function CreateJobModal({
 
     try {
       if (editingJob) {
+        // Always send salary explicitly so the backend can update or clear.
+        // Sending null clears the value; a number updates it.
+        const resolvedSalaryMin =
+          salaryPublic && salaryMinNum !== undefined && !isNaN(salaryMinNum)
+            ? salaryMinNum
+            : null;
+        const resolvedSalaryMax =
+          salaryPublic && salaryMaxNum !== undefined && !isNaN(salaryMaxNum)
+            ? salaryMaxNum
+            : null;
+
         const res = await recruiterApi.updateJob(editingJob.id, {
           title: title.trim(),
           description: description.trim(),
@@ -754,8 +765,8 @@ function CreateJobModal({
           employmentType: EmploymentTypeMap[employmentType] ?? 0,
           status: editingJob.status === 'Active' ? 1 : 2,
           requiredSkills: skills.trim() || undefined,
-          salaryMin: salaryPublic ? salaryMinNum : undefined,
-          salaryMax: salaryPublic ? salaryMaxNum : undefined,
+          salaryMin: resolvedSalaryMin,
+          salaryMax: resolvedSalaryMax,
           salaryCurrency: salaryCurrency.trim() || 'USD',
           postedBy: postedBy.trim() || undefined,
           departmentId: departmentId || undefined,

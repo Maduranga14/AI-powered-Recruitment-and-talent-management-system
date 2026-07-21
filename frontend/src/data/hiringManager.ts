@@ -5,6 +5,23 @@ export type ManagerDecisionStatus =
 
 export type ManagerRecommendation = 'Strong Yes' | 'Yes' | 'Maybe' | 'No' | 'Strong No';
 
+export interface ExperienceEntry {
+  title: string;
+  company: string;
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean;
+  description: string | null;
+}
+
+export interface EducationEntry {
+  institution: string;
+  degree: string;
+  fieldOfStudy: string;
+  startDate: string;
+  endDate: string | null;
+}
+
 export interface ManagerCandidate {
   id: string;
   name: string;
@@ -15,6 +32,8 @@ export interface ManagerCandidate {
   decisionStatus: ManagerDecisionStatus;
   matchScore: number;
   skills: string[];
+  experiences: ExperienceEntry[];
+  educations: EducationEntry[];
   experience: string;
   applied: string;
   summary: string;
@@ -26,6 +45,12 @@ export interface ManagerCandidate {
   applicationId?: string;
   overallRating?: number;
   skillRatings?: string;
+  email?: string;
+  status?: string;
+  departmentName?: string;
+  appliedAt?: string;
+  coverLetter?: string;
+  resumeUrl?: string;
 }
 
 export interface ManagerInterview {
@@ -68,6 +93,8 @@ export const MANAGER_CANDIDATES: ManagerCandidate[] = [
   decisionStatus: 'Awaiting feedback',
   matchScore: 96,
   skills: ['React', 'TypeScript', 'GraphQL', 'Accessibility'],
+  experiences: [],
+  educations: [],
   experience: '6 years · Staff Engineer at Radian',
   applied: 'Applied today',
   summary:
@@ -91,6 +118,8 @@ export const MANAGER_CANDIDATES: ManagerCandidate[] = [
   decisionStatus: 'Awaiting feedback',
   matchScore: 92,
   skills: ['Figma', 'Research', 'Prototyping', 'Design Systems'],
+  experiences: [],
+  educations: [],
   experience: '5 years · Lead Product Designer at Fieldwork',
   applied: 'Applied yesterday',
   summary:
@@ -114,6 +143,8 @@ export const MANAGER_CANDIDATES: ManagerCandidate[] = [
   decisionStatus: 'Feedback submitted',
   matchScore: 89,
   skills: ['Python', 'PyTorch', 'MLOps', 'LLMs'],
+  experiences: [],
+  educations: [],
   experience: '5 years · ML Engineer at SignalPath',
   applied: 'Applied 2 days ago',
   summary:
@@ -139,6 +170,8 @@ export const MANAGER_CANDIDATES: ManagerCandidate[] = [
   decisionStatus: 'Decision shared',
   matchScore: 85,
   skills: ['Go', 'PostgreSQL', 'Kubernetes', 'AWS'],
+  experiences: [],
+  educations: [],
   experience: '5 years · Platform Engineer at Finch',
   applied: 'Applied 3 days ago',
   summary:
@@ -154,6 +187,7 @@ export const MANAGER_CANDIDATES: ManagerCandidate[] = [
   evidence:
   'Solid technical profile. The team is comparing the final interview panel before committing to the next step.'
 }];
+
 
 
 export const MANAGER_INTERVIEWS: ManagerInterview[] = [

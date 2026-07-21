@@ -92,6 +92,9 @@ export function AdminPersonDrawer({
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Badge tone={ROLE_TONES[person.role]}>{person.role}</Badge>
                     <Badge tone="slate">{person.organization}</Badge>
+                    {person.department && person.department !== '—' && (
+                      <Badge tone="blue">Department: {person.department}</Badge>
+                    )}
                   </div>
                 </div>
               </div>

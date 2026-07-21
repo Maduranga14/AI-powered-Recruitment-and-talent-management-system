@@ -62,6 +62,7 @@ export function Admin() {
           role: mappedRole,
           status: mappedStatus,
           organization: u.organizationName || 'Independent',
+          department: u.departmentName || '—',
           joined: new Date(u.createdAt).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',

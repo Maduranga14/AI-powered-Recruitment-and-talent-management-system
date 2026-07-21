@@ -61,7 +61,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
     return people.filter(
       (person) =>
         (!normalized ||
-          [person.name, person.email, person.organization, person.role]
+          [person.name, person.email, person.organization, person.department, person.role]
             .join(' ')
             .toLowerCase()
             .includes(normalized)) &&
@@ -147,7 +147,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search name, email, or organization"
+              placeholder="Search name, email, department, or organization"
               className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-slate-400"
               aria-label="Search people"
             />
@@ -207,10 +207,11 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
           className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
           aria-label="People list"
         >
-          <div className="hidden grid-cols-[minmax(240px,1.4fr)_170px_130px_130px_110px] gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid">
+          <div className="hidden grid-cols-[minmax(220px,1.2fr)_150px_130px_130px_110px_100px] gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid">
             <span>Name</span>
             <span>Role</span>
             <span>Organization</span>
+            <span>Department</span>
             <span>Status</span>
             <span>Joined</span>
           </div>
@@ -219,7 +220,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
               <button
                 key={person.id}
                 onClick={() => onPersonSelect(person)}
-                className="grid w-full grid-cols-1 items-center gap-3 px-5 py-4 text-left hover:bg-slate-50/75 lg:grid-cols-[minmax(240px,1.4fr)_170px_130px_130px_110px] lg:gap-4"
+                className="grid w-full grid-cols-1 items-center gap-3 px-5 py-4 text-left hover:bg-slate-50/75 lg:grid-cols-[minmax(220px,1.2fr)_150px_130px_130px_110px_100px] lg:gap-4"
               >
                 <div className="flex items-center gap-3">
                   <img src={person.avatar} alt="" className="h-10 w-10 flex-shrink-0 rounded-xl" />
@@ -232,6 +233,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
                   <Badge tone={ROLE_TONES[person.role]}>{person.role}</Badge>
                 </div>
                 <div className="text-xs font-semibold text-slate-700">{person.organization}</div>
+                <div className="text-xs font-medium text-slate-600 truncate">{person.department || '—'}</div>
                 <div>
                   <Badge tone={ACCOUNT_TONES[person.status]}>{person.status}</Badge>
                 </div>

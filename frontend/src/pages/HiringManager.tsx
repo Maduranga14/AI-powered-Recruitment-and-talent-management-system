@@ -55,6 +55,21 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     decisionStatus,
     matchScore: 0,
     skills,
+    experiences: (applicant.experiences || []).map(e => ({
+      title: e.title,
+      company: e.company,
+      startDate: e.startDate,
+      endDate: e.endDate,
+      isCurrent: e.isCurrent,
+      description: e.description,
+    })),
+    educations: (applicant.educations || []).map(e => ({
+      institution: e.institution,
+      degree: e.degree,
+      fieldOfStudy: e.fieldOfStudy,
+      startDate: e.startDate,
+      endDate: e.endDate,
+    })),
     experience: applicant.experienceSummary || 'Not specified',
     applied: applicant.appliedAt
       ? new Date(applicant.appliedAt).toLocaleDateString()
@@ -67,8 +82,15 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     evidence: applicant.feedback || undefined,
     overallRating: applicant.overallRating || undefined,
     skillRatings: applicant.skillRatings || undefined,
+    email: applicant.email,
+    status: applicant.status,
+    departmentName: applicant.departmentName || undefined,
+    appliedAt: applicant.appliedAt,
+    coverLetter: applicant.coverLetter || undefined,
+    resumeUrl: applicant.resumeUrl || undefined,
   };
 }
+
 
 function formatInterviewTime(iso: string): string {
   const at = new Date(iso);

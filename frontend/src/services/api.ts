@@ -306,6 +306,23 @@ export interface JobPostingListItem {
   interviewCount?: number;
 }
 
+export interface WorkExperienceItem {
+  title: string;
+  company: string;
+  startDate: string;
+  endDate: string | null;
+  isCurrent: boolean;
+  description: string | null;
+}
+
+export interface EducationItem {
+  institution: string;
+  degree: string;
+  fieldOfStudy: string;
+  startDate: string;
+  endDate: string | null;
+}
+
 export interface JobApplicant {
   applicationId: string;
   jobPostingId: string;
@@ -322,6 +339,8 @@ export interface JobApplicant {
   coverLetter: string | null;
   appliedAt: string;
   skills: string[];
+  experiences: WorkExperienceItem[];
+  educations: EducationItem[];
   experienceSummary: string | null;
   resumeUrl: string | null;
   feedback?: string | null;
@@ -400,8 +419,8 @@ export interface CreateJobPostingPayload {
   location: string;
   employmentType: number;
   status: number; // 0=Draft, 1=Published
-  salaryMin?: number;
-  salaryMax?: number;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
   salaryCurrency?: string;
   experienceRequired?: string;
   requiredSkills?: string;
@@ -409,6 +428,7 @@ export interface CreateJobPostingPayload {
   departmentId?: string;
   postedBy?: string;
 }
+
 
 // Employment type enum values matching the backend
 export const EmploymentTypeMap: Record<string, number> = {
