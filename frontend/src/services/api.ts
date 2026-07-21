@@ -283,6 +283,9 @@ export const adminApi = {
     request<{ message: string }>(`/admin/organizations/${id}`, {
       method: 'DELETE',
     }),
+
+  getAnalytics: () =>
+    request<DashboardAnalyticsDto>('/admin/analytics/dashboard'),
 };
 
 
@@ -952,4 +955,45 @@ export interface DepartmentDashboardDto {
     desc: string;
     enabled: boolean;
   }[];
+}
+
+// ── Recruitment Analytics ─────────────────────────────────────────────────────
+
+export interface PipelineFunnelDto {
+  received: number;
+  underReview: number;
+  interviewScheduled: number;
+  hired: number;
+}
+
+export interface OrgHiringDto {
+  organizationName: string;
+  totalJobs: number;
+  totalApplications: number;
+  hired: number;
+}
+
+export interface DepartmentJobsDto {
+  departmentName: string;
+  jobCount: number;
+}
+
+export interface ActivityLogItemDto {
+  type: 'job_posted' | 'hired' | 'application' | 'interview' | string;
+  message: string;
+  meta: string;
+  occurredAt: string;
+}
+
+export interface DashboardAnalyticsDto {
+  totalJobsPosted: number;
+  totalApplicants: number;
+  totalHired: number;
+  totalActiveOrganizations: number;
+  pipeline: PipelineFunnelDto;
+  topOrganizations: OrgHiringDto[];
+  departmentBreakdown: DepartmentJobsDto[];
+  averageMatchScore: number;
+  averageTimeToHireDays: number;
+  recentActivity: ActivityLogItemDto[];
 }

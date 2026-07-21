@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   BellIcon,
   Building2Icon,
-  FileCheck2Icon,
+  BarChart3Icon,
   LayoutDashboardIcon,
   MenuIcon,
   ScaleIcon,
@@ -25,7 +25,7 @@ export type AdminView =
   | 'people'
   | 'organizations'
   | 'departments'
-  | 'moderation'
+  | 'analytics'
   | 'audit-settings';
 
 interface AdminShellProps {
@@ -43,37 +43,12 @@ interface NavigationItem {
 }
 
 const navigation: NavigationItem[] = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    icon: LayoutDashboardIcon,
-  },
-  {
-    id: 'people',
-    label: 'People',
-    icon: UsersRoundIcon,
-  },
-  {
-    id: 'organizations',
-    label: 'Organizations',
-    icon: Building2Icon,
-  },
-  {
-    id: 'departments',
-    label: 'Departments',
-    icon: Building2Icon,
-  },
-  {
-    id: 'moderation',
-    label: 'Moderation',
-    icon: FileCheck2Icon,
-    badge: true,
-  },
-  {
-    id: 'audit-settings',
-    label: 'Audit & settings',
-    icon: Settings2Icon,
-  },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboardIcon },
+  { id: 'people', label: 'People', icon: UsersRoundIcon },
+  { id: 'organizations', label: 'Organizations', icon: Building2Icon },
+  { id: 'departments', label: 'Departments', icon: Building2Icon },
+  { id: 'analytics', label: 'Recruitment Analytics', icon: BarChart3Icon },
+  { id: 'audit-settings', label: 'Audit & settings', icon: Settings2Icon },
 ];
 
 export function AdminShell({
@@ -168,19 +143,19 @@ export function AdminShell({
         <div className="mt-8">{navigationContent()}</div>
         <section
           className="mt-auto rounded-2xl bg-slate-900 p-4 text-white"
-          aria-label="Platform safeguards"
+          aria-label="Platform analytics"
         >
           <div className="flex items-center gap-2 text-sm font-bold">
-            <ScaleIcon className="h-4 w-4 text-accent-400" /> Governance pulse
+            <ScaleIcon className="h-4 w-4 text-accent-400" /> Analytics
           </div>
           <p className="mt-2 text-xs leading-5 text-slate-300">
-            {moderationCount} moderation items need a documented platform decision.
+            View recruitment performance and platform KPIs.
           </p>
           <button
-            onClick={() => changeView('moderation')}
+            onClick={() => changeView('analytics')}
             className="mt-3 text-xs font-bold text-white underline decoration-accent-400 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            Open review queue
+            Open analytics
           </button>
         </section>
       </aside>
@@ -204,14 +179,11 @@ export function AdminShell({
             </div>
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
               <button
-                onClick={() => changeView('moderation')}
+                onClick={() => changeView('analytics')}
                 className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                aria-label="Open moderation queue"
+                aria-label="Open analytics"
               >
                 <BellIcon className="h-5 w-5" />
-                {moderationCount > 0 && (
-                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
-                )}
               </button>
               <button
                 onClick={() => changeView('audit-settings')}
@@ -341,10 +313,10 @@ export function AdminShell({
                 <LogOutIcon className="h-4 w-4" /> Log out
               </button>
               <button
-                onClick={() => changeView('moderation')}
+                onClick={() => changeView('analytics')}
                 className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
-                <SparklesIcon className="h-4 w-4" /> Review queue
+                <SparklesIcon className="h-4 w-4" /> Analytics
               </button>
             </motion.aside>
           </div>

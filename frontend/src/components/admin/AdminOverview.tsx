@@ -22,7 +22,7 @@ interface AdminOverviewProps {
   moderation: ModerationItem[];
   publishedJobs?: number;
   onViewChange: (
-    view: 'people' | 'organizations' | 'departments' | 'moderation' | 'audit-settings'
+    view: 'people' | 'organizations' | 'departments' | 'analytics' | 'audit-settings'
   ) => void;
 }
 
@@ -168,7 +168,7 @@ export function AdminOverview({
               </p>
             </div>
             <button
-              onClick={() => onViewChange('moderation')}
+              onClick={() => onViewChange('analytics')}
               className="inline-flex items-center gap-1 text-sm font-bold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               View queue <ArrowRightIcon className="h-4 w-4" />
@@ -183,7 +183,7 @@ export function AdminOverview({
               pendingModeration.slice(0, 3).map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => onViewChange('moderation')}
+                  onClick={() => onViewChange('analytics')}
                   className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-slate-50 sm:px-6"
                 >
                   <span
