@@ -918,8 +918,9 @@ namespace backend.Services
                 var jobTitle = application.JobPosting.Title;
                 var orgName = manager.Organization?.Name ?? manager.OrganizationName ?? "Hiring Team";
 
-                if (targetStatus == ApplicationStatus.Hired)
+                if (targetStatus == ApplicationStatus.Offer || targetStatus == ApplicationStatus.Hired)
                 {
+
                     _ = Task.Run(async () =>
                     {
                         try
