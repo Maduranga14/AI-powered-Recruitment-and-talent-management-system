@@ -179,9 +179,9 @@ export function AdminShell({
             </div>
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
               <button
-                onClick={() => changeView('analytics')}
+                onClick={() => changeView('audit-settings')}
                 className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                aria-label="Open analytics"
+                aria-label="Open audit & settings"
               >
                 <BellIcon className="h-5 w-5" />
               </button>
