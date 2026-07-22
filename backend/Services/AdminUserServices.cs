@@ -7,10 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services
 {
-    public class AdminUserService(AppDbContext dbContext, IEmailService emailService) : IAdminUserService
+    public class AdminUserService(
+        AppDbContext dbContext,
+        IEmailService emailService,
+        IAuditLogService auditLogService) : IAdminUserService
     {
         private readonly AppDbContext _db = dbContext;
         private readonly IEmailService _emailService = emailService;
+        private readonly IAuditLogService _auditLogService = auditLogService;
 
         public async Task<UserListDto> CreateUserAsync(CreateUserDto dto)
         {
@@ -38,6 +42,11 @@ namespace backend.Services
 
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogActivityAsync(
+                action: "USER_CREATED",
+                module: "Users",
+                details: new { userId = user.Id, email = user.Email, role = user.Role.ToString() });
 
             // Load navigation properties for mapping
             if (user.OrganizationId.HasValue)
@@ -127,6 +136,11 @@ namespace backend.Services
 
             await _db.SaveChangesAsync();
 
+            await _auditLogService.LogActivityAsync(
+                action: "USER_UPDATED",
+                module: "Users",
+                details: new { userId = user.Id, email = user.Email, role = user.Role.ToString() });
+
             // Reload navigation props
             await _db.Entry(user).Reference(u => u.Organization).LoadAsync();
             await _db.Entry(user).Reference(u => u.Department).LoadAsync();
@@ -144,6 +158,11 @@ namespace backend.Services
 
             _db.Users.Remove(user);
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogActivityAsync(
+                action: "USER_DELETED",
+                module: "Users",
+                details: new { userId = user.Id, email = user.Email, role = user.Role.ToString() });
         }
 
         public async Task<bool> ToggleUserActiveAsync(Guid id)
@@ -158,6 +177,12 @@ namespace backend.Services
             user.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogActivityAsync(
+                action: user.IsActive ? "USER_ACTIVATED" : "USER_DEACTIVATED",
+                module: "Users",
+                details: new { userId = user.Id, email = user.Email });
+
             return user.IsActive;
         }
 
@@ -170,6 +195,11 @@ namespace backend.Services
             user.UpdatedAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
+
+            await _auditLogService.LogActivityAsync(
+                action: "USER_PASSWORD_RESET",
+                module: "Users",
+                details: new { userId = user.Id, email = user.Email });
         }
 
         // ─── Recruiter Approval Workflow ─────────────────────────────────────

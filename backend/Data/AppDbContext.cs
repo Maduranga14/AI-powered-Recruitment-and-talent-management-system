@@ -27,6 +27,10 @@ namespace backend.Data
         public DbSet<ChatConversation> ChatConversations { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
 
+        // ── Admin governance tables ───────────────────────────────────────────
+        public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<SystemSetting> SystemSettings { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -274,6 +278,31 @@ namespace backend.Data
                 entity.Property(m => m.Content).IsRequired();
                 entity.HasIndex(m => m.ConversationId);
                 entity.HasIndex(m => m.CreatedAt);
+            });
+
+            // ── AuditLog ──────────────────────────────────────────────────────
+            modelBuilder.Entity<AuditLog>(entity =>
+            {
+                entity.HasKey(a => a.Id);
+                entity.Property(a => a.UserName).IsRequired().HasMaxLength(200);
+                entity.Property(a => a.Action).IsRequired().HasMaxLength(100);
+                entity.Property(a => a.Module).IsRequired().HasMaxLength(50);
+                entity.Property(a => a.IpAddress).IsRequired().HasMaxLength(45);
+                entity.Property(a => a.Details).HasMaxLength(4000);
+                entity.HasIndex(a => a.Timestamp);
+                entity.HasIndex(a => a.Module);
+                entity.HasIndex(a => a.Action);
+            });
+
+            // ── SystemSetting ───────────────────────────────────────────────────
+            modelBuilder.Entity<SystemSetting>(entity =>
+            {
+                entity.HasKey(s => s.Id);
+                entity.Property(s => s.Key).IsRequired().HasMaxLength(100);
+                entity.Property(s => s.Value).IsRequired().HasMaxLength(500);
+                entity.Property(s => s.Description).HasMaxLength(500);
+                entity.Property(s => s.UpdatedBy).HasMaxLength(200);
+                entity.HasIndex(s => s.Key).IsUnique();
             });
         }
     }

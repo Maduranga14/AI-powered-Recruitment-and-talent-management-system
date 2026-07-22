@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2Icon } from 'lucide-react';
 import { AdminAnalytics } from '../components/admin/AdminAnalytics';
@@ -11,7 +11,6 @@ import { AdminPersonDrawer } from '../components/admin/AdminPersonDrawer';
 import { AdminShell, type AdminView } from '../components/admin/AdminShell';
 import { RecruiterDepartments } from '../components/recruiter/RecruiterDepartments';
 import {
-  ADMIN_AUDIT_EVENTS,
   ADMIN_MODERATION,
   type AdminPerson,
   type AdminOrganization,
@@ -27,7 +26,6 @@ export function Admin() {
   const [publishedJobs, setPublishedJobs] = useState(0);
   const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
   const [selectedOrganizationId, setSelectedOrganizationId] = useState<string | null>(null);
-  const [settings, setSettings] = useState({ reviewAlerts: true, strictSafeguards: true });
   const [feedback, setFeedback] = useState('');
 
   const refreshData = async () => {
@@ -99,11 +97,6 @@ export function Admin() {
     showFeedback('Account deleted successfully.');
   };
 
-  const toggleSetting = (key: 'reviewAlerts' | 'strictSafeguards') => {
-    setSettings((s) => ({ ...s, [key]: !s[key] }));
-    showFeedback('Safeguard setting updated');
-  };
-
   const selectedOrganization = organizations.find((o) => o.id === selectedOrganizationId) || null;
 
   return (
@@ -138,11 +131,7 @@ export function Admin() {
           {view === 'departments' && <RecruiterDepartments />}
           {view === 'analytics' && <AdminAnalytics />}
           {view === 'audit-settings' && (
-            <AdminAuditSettings
-              auditEvents={ADMIN_AUDIT_EVENTS}
-              settings={settings}
-              onToggle={toggleSetting}
-            />
+            <AdminAuditSettings />
           )}
         </motion.div>
       </AnimatePresence>

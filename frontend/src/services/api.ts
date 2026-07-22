@@ -286,6 +286,27 @@ export const adminApi = {
 
   getAnalytics: () =>
     request<DashboardAnalyticsDto>('/admin/analytics/dashboard'),
+
+  // ─── Audit Logs ──────────────────────────────────────────────────────────
+  getAuditLogs: (page = 1, pageSize = 20, search?: string, module?: string) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (search) params.set('search', search);
+    if (module) params.set('module', module);
+    return request<PagedResult<AuditLogEntry>>(`/admin/audit-logs?${params}`);
+  },
+
+  getAuditModules: () =>
+    request<string[]>('/admin/audit-logs/modules'),
+
+  // ─── System Settings ─────────────────────────────────────────────────────
+  getSettings: () =>
+    request<SystemSettingEntry[]>('/admin/settings'),
+
+  updateSettings: (settings: { key: string; value: string }[]) =>
+    request<{ message: string; data: SystemSettingEntry[] }>('/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ settings }),
+    }),
 };
 
 
@@ -996,4 +1017,26 @@ export interface DashboardAnalyticsDto {
   averageMatchScore: number;
   averageTimeToHireDays: number;
   recentActivity: ActivityLogItemDto[];
+}
+
+// ── Audit & Settings ──────────────────────────────────────────────────────────
+
+export interface AuditLogEntry {
+  id: number;
+  userId?: string | null;
+  userName: string;
+  action: string;
+  module: string;
+  ipAddress: string;
+  timestamp: string;
+  details?: string | null;
+}
+
+export interface SystemSettingEntry {
+  id: number;
+  key: string;
+  value: string;
+  description: string;
+  updatedAt: string;
+  updatedBy: string;
 }
