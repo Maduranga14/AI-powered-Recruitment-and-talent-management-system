@@ -11,7 +11,6 @@ import { AdminPersonDrawer } from '../components/admin/AdminPersonDrawer';
 import { AdminShell, type AdminView } from '../components/admin/AdminShell';
 import { RecruiterDepartments } from '../components/recruiter/RecruiterDepartments';
 import {
-  ADMIN_MODERATION,
   type AdminPerson,
   type AdminOrganization,
   type AdminRole,
@@ -113,7 +112,6 @@ export function Admin() {
             <AdminOverview
               people={people}
               organizations={organizations}
-              moderation={ADMIN_MODERATION}
               publishedJobs={publishedJobs}
               onViewChange={setView}
             />
