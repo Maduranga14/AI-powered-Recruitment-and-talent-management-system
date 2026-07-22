@@ -267,14 +267,9 @@ export function CandidateInterviews({ interviews }: CandidateInterviewsProps) {
   const upcoming = interviews
     .filter((i) => new Date(i.scheduledAt).getTime() >= now - 60 * 60 * 1000)
     .sort((a, b) => {
-      // Surface pending / recently rescheduled interviews first
-      const rank = (i: InterviewDto) =>
-        i.rescheduleRequested ? 0 : i.lastRescheduledAt ? 1 : 2;
-      const r = rank(a) - rank(b);
-      if (r !== 0) return r;
-      return (
-        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
-      );
+      const ta = new Date(a.scheduledAt).getTime();
+      const tb = new Date(b.scheduledAt).getTime();
+      return ta - tb;
     });
   const past = interviews
     .filter((i) => new Date(i.scheduledAt).getTime() < now - 60 * 60 * 1000)

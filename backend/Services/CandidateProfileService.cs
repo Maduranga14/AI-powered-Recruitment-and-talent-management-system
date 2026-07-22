@@ -257,8 +257,8 @@ namespace backend.Services
                     EmploymentType = a.JobPosting.EmploymentType.ToString(),
                     Status = a.Status.ToString(),
                     CoverLetter = a.CoverLetter,
-                    AppliedAt = a.AppliedAt,
-                    UpdatedAt = a.UpdatedAt
+                    AppliedAt = DateTime.SpecifyKind(a.AppliedAt, DateTimeKind.Utc),
+                    UpdatedAt = DateTime.SpecifyKind(a.UpdatedAt, DateTimeKind.Utc)
                 })
                 .ToListAsync();
         }
@@ -349,8 +349,8 @@ namespace backend.Services
                 EmploymentType = job.EmploymentType.ToString(),
                 Status = application.Status.ToString(),
                 CoverLetter = application.CoverLetter,
-                AppliedAt = application.AppliedAt,
-                UpdatedAt = application.UpdatedAt
+                AppliedAt = DateTime.SpecifyKind(application.AppliedAt, DateTimeKind.Utc),
+                UpdatedAt = DateTime.SpecifyKind(application.UpdatedAt, DateTimeKind.Utc)
             };
         }
 
@@ -404,8 +404,8 @@ namespace backend.Services
                     EmploymentType = a.JobPosting.EmploymentType.ToString(),
                     Status = a.Status.ToString(),
                     CoverLetter = a.CoverLetter,
-                    AppliedAt = a.AppliedAt,
-                    UpdatedAt = a.UpdatedAt
+                    AppliedAt = DateTime.SpecifyKind(a.AppliedAt, DateTimeKind.Utc),
+                    UpdatedAt = DateTime.SpecifyKind(a.UpdatedAt, DateTimeKind.Utc)
                 })
                 .ToListAsync();
 

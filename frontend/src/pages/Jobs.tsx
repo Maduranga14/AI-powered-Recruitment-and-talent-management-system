@@ -107,6 +107,11 @@ export function Jobs() {
   const [sort, setSort] = useState<SortKey>('recent');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // AI Recommendations filter state
+  const [showAiRecs, setShowAiRecs] = useState(false);
+  const [recsMap, setRecsMap] = useState<Record<string, number>>({});
+  const [recsLoading, setRecsLoading] = useState(false);
+
   // Backend jobs state
   const [apiJobs, setApiJobs] = useState<Job[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
@@ -116,53 +121,47 @@ export function Jobs() {
     setApiError('');
     setApiLoading(true);
 
-    const loadJobsPromise = isAuthenticated
-      ? candidateApi.getRecommendations().then((recs) =>
-          recs.map((r) => {
-            const companyName = r.company || 'Company';
-            const bg = stringToColor(companyName);
-            return {
-              id: r.jobId,
-              title: r.jobTitle,
-              company: companyName,
-              companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bg}&color=fff&bold=true&size=128&format=png`,
-              location: r.location,
-              workMode: r.employmentType === 'Remote' ? 'Remote' : 'On-site',
-              type: EMPLOYMENT_TYPE_LABEL[r.employmentType] ?? 'Full-time',
-              level: 'Mid',
-              salaryMin: r.salaryMin ?? -1,
-              salaryMax: r.salaryMax ?? -1,
-              salaryCurrency: r.salaryCurrency || 'USD',
-              postedDaysAgo: 1, // Default or mock
-              category: 'General',
-              skills: r.requiredSkills,
-              shortDescription: r.description ? r.description.slice(0, 300) : '',
-              responsibilities: [],
-              requirements: r.requiredSkills,
-              benefits: [],
-              applicants: 0,
-              matchScore: r.matchScore,
-              featured: false,
-            } as Job;
-          })
-        )
-      : publicApi.getPublishedJobs().then((jobs) => jobs.map(toJob));
-
-    loadJobsPromise
-      .then(setApiJobs)
+    publicApi.getPublishedJobs()
+      .then((jobs) => setApiJobs(jobs.map(toJob)))
       .catch((err) => {
         console.error('[Jobs] failed to load live jobs:', err);
         setApiError(err?.message ?? 'Could not load live jobs.');
         setApiJobs([]);
       })
       .finally(() => setApiLoading(false));
-  }, [isAuthenticated]);
+  }, []);
+
+  const toggleAiRecommendations = async () => {
+    const nextVal = !showAiRecs;
+    setShowAiRecs(nextVal);
+    if (nextVal) {
+      setSort('match');
+      if (Object.keys(recsMap).length === 0 && isAuthenticated) {
+        setRecsLoading(true);
+        try {
+          const recs = await candidateApi.getRecommendations();
+          const map: Record<string, number> = {};
+          recs.forEach((r) => { map[r.jobId] = r.matchScore; });
+          setRecsMap(map);
+        } catch (err) {
+          console.error('[Jobs] Failed to fetch AI recommendations:', err);
+        } finally {
+          setRecsLoading(false);
+        }
+      }
+    }
+  };
 
   const toggle = <T,>(arr: T[], set: (v: T[]) => void, value: T) =>
     set(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);
 
-  // Only show real backend jobs
-  const allJobs = useMemo(() => apiJobs, [apiJobs]);
+  // Map AI recommendation scores onto jobs
+  const allJobs = useMemo(() => {
+    return apiJobs.map((j) => ({
+      ...j,
+      matchScore: showAiRecs ? (recsMap[j.id] ?? 50) : 0,
+    }));
+  }, [apiJobs, showAiRecs, recsMap]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -179,9 +178,9 @@ export function Jobs() {
       return matchesQuery && matchesCat && matchesMode && matchesType;
     });
     result.sort((a, b) => {
-      if (sort === 'recent') return a.postedDaysAgo - b.postedDaysAgo;
+      if (sort === 'match') return b.matchScore - a.matchScore;
       if (sort === 'salary') return b.salaryMax - a.salaryMax;
-      return b.matchScore - a.matchScore;
+      return a.postedDaysAgo - b.postedDaysAgo;
     });
     return result;
   }, [allJobs, query, categories, modes, types, sort]);
@@ -212,6 +211,26 @@ export function Jobs() {
           </button>
         )}
       </div>
+
+      {isAuthenticated && (
+        <div className="rounded-xl border border-brand-200 bg-gradient-to-br from-brand-50/80 to-indigo-50/80 p-3.5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <SparklesIcon className="h-4 w-4 text-brand-600" />
+              <span className="text-xs font-bold text-slate-900">AI Recommendations</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={showAiRecs}
+              onChange={toggleAiRecommendations}
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+            />
+          </div>
+          <p className="mt-1.5 text-[11px] leading-snug text-slate-600">
+            Enable to see personalized AI match percentages on all job cards.
+          </p>
+        </div>
+      )}
 
       <div>
         <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -334,18 +353,35 @@ export function Jobs() {
                 </>
               )}
             </p>
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              Sort by
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortKey)}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
-              >
-                <option value="recent">Most recent</option>
-                <option value="match">AI match</option>
-                <option value="salary">Salary</option>
-              </select>
-            </label>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={toggleAiRecommendations}
+                  disabled={recsLoading}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition shadow-xs ${
+                    showAiRecs
+                      ? 'bg-brand-600 text-white shadow-brand-500/20 hover:bg-brand-700'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:border-brand-300 hover:text-brand-600'
+                  }`}
+                >
+                  <SparklesIcon className={`h-3.5 w-3.5 ${showAiRecs ? 'text-amber-300 animate-pulse' : 'text-brand-500'}`} />
+                  {recsLoading ? 'Analyzing AI Match...' : showAiRecs ? 'AI Recommendations: ON' : 'AI Recommendations'}
+                </button>
+              )}
+              <label className="flex items-center gap-2 text-sm text-slate-600">
+                Sort by
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as SortKey)}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                >
+                  <option value="recent">Most recent</option>
+                  <option value="match">AI match</option>
+                  <option value="salary">Salary</option>
+                </select>
+              </label>
+            </div>
           </div>
 
           {activeFilterCount > 0 && (
@@ -377,7 +413,7 @@ export function Jobs() {
           ) : filtered.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2">
               {filtered.map((job) => (
-                <JobCard key={job.id} job={job} showMatch={isAuthenticated} />
+                <JobCard key={job.id} job={job} showMatch={showAiRecs} />
               ))}
             </div>
           ) : (

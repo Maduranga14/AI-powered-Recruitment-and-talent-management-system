@@ -115,9 +115,24 @@ export function HiringManagerCalendar({
   };
 
   const upcoming = [...interviews].sort((a, b) => {
+    const nowMs = Date.now();
     const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
     const tb = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
-    return ta - tb;
+
+    if (!ta && !tb) return 0;
+    if (!ta) return 1;
+    if (!tb) return -1;
+
+    const diffA = ta - nowMs;
+    const diffB = tb - nowMs;
+
+    // Both in future: nearest future interview first (smallest positive diff)
+    if (diffA >= 0 && diffB >= 0) return diffA - diffB;
+    // Future comes before past
+    if (diffA >= 0 && diffB < 0) return -1;
+    if (diffA < 0 && diffB >= 0) return 1;
+    // Both in past: most recent past interview first
+    return Math.abs(diffA) - Math.abs(diffB);
   });
 
   return (

@@ -167,7 +167,7 @@ export function ManagerCandidateDrawer({
                     {hasFeedback ? 'Feedback Submitted' : 'Give feedback'}
                   </Button>
                   <Link
-                    to={`/candidate-profile/${candidate.id}`}
+                    to={`/candidate-profile/${candidate.candidateProfileId ?? candidate.id}`}
                     className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 text-xs font-bold shadow-sm transition"
                   >
                     <BrainCircuitIcon className="h-4 w-4" /> View Full Profile

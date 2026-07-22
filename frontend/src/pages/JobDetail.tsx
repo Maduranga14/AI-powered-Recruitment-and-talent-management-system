@@ -12,11 +12,13 @@ import {
   CheckCircle2Icon,
   Share2Icon,
   Loader2Icon,
+  SparklesIcon,
 } from 'lucide-react';
 import { publicApi, candidateApi, type PublicJob, type JobRecommendationDto } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { ApplyModal } from '../components/ApplyModal';
+import { MatchScore } from '../components/ui/MatchScore';
 import { useAuth } from '../context/AuthContext';
 
 function stringToColor(str: string): string {
@@ -118,10 +120,13 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
       .catch(() => {});
   }, [isAuthenticated, user?.skills]);
 
+  const matchRec = useMemo(() => {
+    return recommendations.find((r) => r.jobId === job.id);
+  }, [recommendations, job.id]);
+
   const realMatchScore = useMemo(() => {
     if (!isAuthenticated || !user) return undefined;
-    const rec = recommendations.find((r) => r.jobId === job.id);
-    if (rec) return rec.matchScore;
+    if (matchRec) return matchRec.matchScore;
 
     const userSkills = (user.skills || []).map((s) => s.toLowerCase().trim());
     const jobSkills = (job.requiredSkills ?? []).map((s) => s.toLowerCase().trim());
@@ -129,7 +134,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
 
     const overlap = jobSkills.filter((s) => userSkills.includes(s));
     return Math.round((overlap.length * 100) / jobSkills.length);
-  }, [isAuthenticated, user, recommendations, job.id, job.requiredSkills]);
+  }, [isAuthenticated, user, matchRec, job.requiredSkills]);
 
   const saved = isSaved(job.id);
   const applied = hasApplied(job.id);
@@ -214,6 +219,26 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
                 </div>
               </div>
             </div>
+
+            {isAuthenticated && !hideCandidateActions && realMatchScore !== undefined && (
+              <div className="flex items-center gap-3.5 rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50/80 to-indigo-50/80 p-4 shadow-xs">
+                <MatchScore score={realMatchScore} size={54} />
+                <div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-900">
+                    <SparklesIcon className="h-3.5 w-3.5 text-brand-600" />
+                    <span>AI Match Score</span>
+                  </div>
+                  <p className="mt-0.5 text-xs font-medium text-slate-600 max-w-[220px] line-clamp-2">
+                    {matchRec?.matchExplanation ||
+                      (realMatchScore >= 80
+                        ? 'Strong alignment with your profile skills & experience.'
+                        : realMatchScore >= 60
+                        ? 'Good skill overlap with role requirements.'
+                        : 'Moderate alignment with required skill set.')}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 flex flex-wrap gap-2">

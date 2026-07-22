@@ -3,18 +3,30 @@ using backend.DTOs.Jobs;
 using backend.Models;
 using backend.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace backend.Services
 {
-    public class JobPostingService(AppDbContext db, IEmailService emailService) : IJobPostingService
+    public class JobPostingService(
+        AppDbContext db,
+        IEmailService emailService,
+        IHttpClientFactory httpClientFactory,
+        IOptions<OpenAiSettings> openAiOptions,
+        ILogger<JobPostingService> logger) : IJobPostingService
     {
         private readonly AppDbContext _db = db;
         private readonly IEmailService _emailService = emailService;
+        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+        private readonly OpenAiSettings _openAiSettings = openAiOptions.Value;
+        private readonly ILogger<JobPostingService> _logger = logger;
 
-        // ─── Create ───────────────────────────────────────────────────────────
         public async Task<JobPostingDetailDto> CreateAsync(CreateJobPostingDto dto, Guid recruiterId)
         {
-            // Validate department if provided
+            
             if (dto.DepartmentId.HasValue)
             {
                 var deptExists = await _db.Departments.AnyAsync(d => d.Id == dto.DepartmentId.Value);
@@ -348,12 +360,18 @@ namespace backend.Services
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
+            var aiScores = await CalculateAiMatchScoresAsync(jobId, applications);
+
             return new JobApplicantsResultDto
             {
                 JobId = job.Id,
                 JobTitle = job.Title,
                 JobStatus = job.Status.ToString(),
-                Applicants = applications.Select(a => MapApplicant(a, a.JobPosting?.Title ?? job.Title)).ToList()
+                Applicants = applications.Select(a =>
+                {
+                    aiScores.TryGetValue(a.Id, out int s);
+                    return MapApplicant(a, a.JobPosting?.Title ?? job.Title, s > 0 ? s : (int?)null);
+                }).ToList()
             };
         }
 
@@ -374,9 +392,18 @@ namespace backend.Services
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
-            return applications
-                .Select(a => MapApplicant(a, a.JobPosting?.Title ?? string.Empty))
-                .ToList();
+            var aiScores = new Dictionary<Guid, int>();
+            foreach (var group in applications.GroupBy(a => a.JobPostingId))
+            {
+                var jobScores = await CalculateAiMatchScoresAsync(group.Key, group.ToList());
+                foreach (var kvp in jobScores) aiScores[kvp.Key] = kvp.Value;
+            }
+
+            return applications.Select(a =>
+            {
+                aiScores.TryGetValue(a.Id, out int s);
+                return MapApplicant(a, a.JobPosting?.Title ?? string.Empty, s > 0 ? s : (int?)null);
+            }).ToList();
         }
 
         public async Task<JobApplicantDto> UpdateApplicationStatusAsync(
@@ -466,10 +493,12 @@ namespace backend.Services
                 }
             }
 
-            return MapApplicant(application, job.Title);
+            var aiScores = await CalculateAiMatchScoresAsync(jobId, new List<JobApplication> { application });
+            aiScores.TryGetValue(application.Id, out int aiScore);
+            return MapApplicant(application, job.Title, aiScore > 0 ? aiScore : null);
         }
 
-        private static JobApplicantDto MapApplicant(JobApplication a, string jobTitle)
+        private static JobApplicantDto MapApplicant(JobApplication a, string jobTitle, int? overrideMatchScore = null)
         {
             var profile = a.CandidateProfile;
             var user = profile?.User;
@@ -477,21 +506,33 @@ namespace backend.Services
             var email = user?.Email ?? string.Empty;
 
             int matchScore = 0;
-            if (profile != null && a.JobPosting != null)
+            if (a.Status == ApplicationStatus.Reviewed)
             {
-                var jobSkills = string.IsNullOrEmpty(a.JobPosting.RequiredSkills)
-                    ? new List<string>()
-                    : a.JobPosting.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToLowerInvariant()).ToList();
+                matchScore = CalculateScoreFromManagerReview(a);
+            }
+            else if (a.Status == ApplicationStatus.UnderFinalReview)
+            {
+                matchScore = CalculateScoreForFinalReview(a);
+            }
+            else if (a.Status == ApplicationStatus.Applied || a.Status == ApplicationStatus.UnderReview)
+            {
+                matchScore = overrideMatchScore ?? 0;
+                if (overrideMatchScore == null && profile != null && a.JobPosting != null)
+                {
+                    var jobSkills = string.IsNullOrEmpty(a.JobPosting.RequiredSkills)
+                        ? new List<string>()
+                        : a.JobPosting.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToLowerInvariant()).ToList();
 
-                if (jobSkills.Count > 0)
-                {
-                    var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
-                    int overlapCount = jobSkills.Count(js => candidateSkills.Contains(js));
-                    matchScore = (overlapCount * 100) / jobSkills.Count;
-                }
-                else
-                {
-                    matchScore = 50;
+                    if (jobSkills.Count > 0)
+                    {
+                        var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
+                        int overlapCount = jobSkills.Count(js => candidateSkills.Contains(js));
+                        matchScore = (overlapCount * 100) / jobSkills.Count;
+                    }
+                    else
+                    {
+                        matchScore = 50;
+                    }
                 }
             }
 
@@ -531,7 +572,7 @@ namespace backend.Services
                 DepartmentName = a.JobPosting?.Department?.Name,
                 Status = a.Status.ToString(),
                 CoverLetter = a.CoverLetter,
-                AppliedAt = a.AppliedAt,
+                AppliedAt = DateTime.SpecifyKind(a.AppliedAt, DateTimeKind.Utc),
                 MatchScore = matchScore,
                 Skills = profile?.Skills != null ? profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList() : [],
                 Experiences = profile?.Experiences != null
@@ -734,7 +775,21 @@ namespace backend.Services
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
-            return applications.Select(a => MapApplicant(a, a.JobPosting.Title)).ToList();
+            var aiScores = new Dictionary<Guid, int>();
+            var groupedByJob = applications.GroupBy(a => a.JobPostingId);
+            foreach (var group in groupedByJob)
+            {
+                var jobScores = await CalculateAiMatchScoresAsync(group.Key, group.ToList());
+                foreach (var kvp in jobScores)
+                {
+                    aiScores[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return applications.Select(a => {
+                aiScores.TryGetValue(a.Id, out int aiScore);
+                return MapApplicant(a, a.JobPosting.Title, aiScore > 0 ? aiScore : null);
+            }).ToList();
         }
 
         public async Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId)
@@ -936,7 +991,9 @@ namespace backend.Services
                 }
             }
 
-            return MapApplicant(application, application.JobPosting.Title);
+            var aiScores = await CalculateAiMatchScoresAsync(application.JobPostingId, new List<JobApplication> { application });
+            aiScores.TryGetValue(application.Id, out int aiScore);
+            return MapApplicant(application, application.JobPosting.Title, aiScore > 0 ? aiScore : null);
         }
 
         public async Task<InterviewDto> ScheduleInterviewAsync(
@@ -1334,12 +1391,12 @@ namespace backend.Services
                 throw new InvalidOperationException(
                     $"Feedback can only be submitted when the application status is 'Interview'. Current status: '{application.Status}'.");
 
-            // Validate recommendation value
+            
             var allowed = new[] { "Strong Yes", "Yes", "Maybe", "No", "Strong No" };
             if (!allowed.Contains(dto.Recommendation, StringComparer.OrdinalIgnoreCase))
                 throw new ArgumentException("Recommendation must be one of: Strong Yes, Yes, Maybe, No, Strong No.");
 
-            // Persist feedback on the Interview record
+            
             interview.FeedbackOverallRating = dto.OverallRating;
             interview.FeedbackRecommendation = dto.Recommendation;
             interview.FeedbackComments = dto.Comments.Trim();
@@ -1357,5 +1414,229 @@ namespace backend.Services
             var candidateName = $"{user.FirstName} {user.LastName}".Trim();
             return MapInterview(interview, application, posting.Title, candidateName, user.Email);
         }
+
+        private async Task<Dictionary<Guid, int>> CalculateAiMatchScoresAsync(Guid jobId, List<JobApplication> applications)
+        {
+            if (applications.Count == 0)
+                return new Dictionary<Guid, int>();
+
+            var keywordScores = CalcKeywordScores(applications);
+
+            // Only calculate AI match scores for Applied (new) and UnderReview (shortlisted) candidates
+            var activeApps = applications
+                .Where(a => a.Status == ApplicationStatus.Applied || a.Status == ApplicationStatus.UnderReview)
+                .ToList();
+
+            if (activeApps.Count == 0)
+                return keywordScores;
+
+            var apiKey = ResolveOpenAiApiKey();
+            if (string.IsNullOrWhiteSpace(apiKey))
+                return keywordScores;
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(6));
+
+            try
+            {
+                var job = await _db.JobPostings.AsNoTracking().FirstOrDefaultAsync(j => j.Id == jobId, cts.Token);
+                if (job == null) return keywordScores;
+
+                var client = _httpClientFactory.CreateClient("OpenAI");
+                var modelName = string.IsNullOrWhiteSpace(_openAiSettings.Model) ? "gpt-4o-mini" : _openAiSettings.Model;
+
+                var candidatesList = activeApps.Select(a => new
+                {
+                    ApplicationId = a.Id,
+                    Headline = a.CandidateProfile?.Headline ?? string.Empty,
+                    Skills = a.CandidateProfile?.Skills.Select(s => s.Name).ToList() ?? new List<string>(),
+                    Experiences = a.CandidateProfile != null
+                        ? a.CandidateProfile.Experiences.Select(e => new { e.Title, e.Company, e.Description }).ToList()
+                        : new List<object>().Select(e => new { Title = string.Empty, Company = string.Empty, Description = (string?)null }).ToList()
+                }).ToList();
+
+                var payload = new
+                {
+                    model = modelName,
+                    temperature = 0.2,
+                    max_tokens = 512,
+                    response_format = new { type = "json_object" },
+                    messages = new[]
+                    {
+                        new { role = "system", content = @"You are a recruiter AI inside TalentPortal AI.
+For each candidate, calculate matchScore (0-100) based on how well their skills, title, work history, and experience match the job title, description, and required skills.
+Return ONLY a valid JSON object: {""scores"":[{""applicationId"":""<guid>"",""matchScore"":92}]}. No markdown." },
+                        new { role = "user", content = $"Job Title: {job.Title}\nJob Description: {job.Description}\nRequired Skills: {job.RequiredSkills}\n\nCandidates:\n{JsonSerializer.Serialize(candidatesList)}" }
+                    }
+                };
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+                };
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+
+                using var response = await client.SendAsync(request, cts.Token);
+                if (!response.IsSuccessStatusCode) return keywordScores;
+
+                var body = await response.Content.ReadAsStringAsync(cts.Token);
+                using var doc = JsonDocument.Parse(body);
+                var content = doc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    using var contentDoc = JsonDocument.Parse(content);
+                    if (contentDoc.RootElement.TryGetProperty("scores", out var scoresProperty))
+                    {
+                        foreach (var item in scoresProperty.EnumerateArray())
+                        {
+                            var appIdStr = item.GetProperty("applicationId").GetString();
+                            if (Guid.TryParse(appIdStr, out var appId))
+                                keywordScores[appId] = item.GetProperty("matchScore").GetInt32();
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("AI match score calculation timed out for job {JobId}. Using keyword scores.", jobId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during batch AI match score calculation for job {JobId}.", jobId);
+            }
+
+            return keywordScores;
+        }
+
+        private static int CalculateScoreFromManagerReview(JobApplication a)
+        {
+            if (a.OverallRating.HasValue && a.OverallRating.Value > 0)
+            {
+                return a.OverallRating.Value switch
+                {
+                    5 => 95,
+                    4 => 80,
+                    3 => 65,
+                    2 => 40,
+                    1 => 20,
+                    _ => Math.Min(100, a.OverallRating.Value * 20)
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(a.Recommendation))
+            {
+                var rec = a.Recommendation.Trim().ToLowerInvariant();
+                if (rec.Contains("strong yes")) return 95;
+                if (rec.Contains("yes")) return 80;
+                if (rec.Contains("maybe")) return 60;
+                if (rec.Contains("strong no")) return 15;
+                if (rec.Contains("no")) return 35;
+            }
+
+            return 70;
+        }
+
+        private static int CalculateScoreForFinalReview(JobApplication a)
+        {
+            int preScore = CalculateScoreFromManagerReview(a);
+
+            var interview = a.Interviews?
+                .Where(i => i.FeedbackSubmittedAt.HasValue || !string.IsNullOrEmpty(i.FeedbackRecommendation))
+                .OrderByDescending(i => i.FeedbackSubmittedAt ?? i.ScheduledAt)
+                .FirstOrDefault();
+
+            if (interview == null)
+            {
+                return preScore;
+            }
+
+            int postScore = 70;
+            if (interview.FeedbackTechnicalScore.HasValue && interview.FeedbackTechnicalScore.Value > 0)
+            {
+                postScore = interview.FeedbackTechnicalScore.Value;
+            }
+            else if (interview.FeedbackOverallRating.HasValue && interview.FeedbackOverallRating.Value > 0)
+            {
+                postScore = interview.FeedbackOverallRating.Value switch
+                {
+                    5 => 95,
+                    4 => 80,
+                    3 => 65,
+                    2 => 40,
+                    1 => 20,
+                    _ => Math.Min(100, interview.FeedbackOverallRating.Value * 20)
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(interview.FeedbackRecommendation))
+            {
+                var rec = interview.FeedbackRecommendation.Trim().ToLowerInvariant();
+                int recScore = rec switch
+                {
+                    var r when r.Contains("strong yes") => 95,
+                    var r when r.Contains("yes") => 80,
+                    var r when r.Contains("maybe") => 60,
+                    var r when r.Contains("strong no") => 15,
+                    var r when r.Contains("no") => 35,
+                    _ => postScore
+                };
+                postScore = (postScore + recScore) / 2;
+            }
+
+            int combined = (int)Math.Round((preScore * 0.3) + (postScore * 0.7));
+            return Math.Clamp(combined, 0, 100);
+        }
+
+        private static Dictionary<Guid, int> CalcKeywordScores(List<JobApplication> applications)
+        {
+            var scores = new Dictionary<Guid, int>();
+            foreach (var a in applications)
+            {
+                if (a.Status != ApplicationStatus.Applied && a.Status != ApplicationStatus.UnderReview)
+                {
+                    scores[a.Id] = 0;
+                    continue;
+                }
+
+                var profile = a.CandidateProfile;
+                int score = 50;
+                if (profile != null && a.JobPosting != null)
+                {
+                    var rawSkills = string.IsNullOrEmpty(a.JobPosting.RequiredSkills)
+                        ? new List<string>()
+                        : a.JobPosting.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(s => s.Trim().ToLowerInvariant()).ToList();
+
+                    if (rawSkills.Count > 0)
+                    {
+                        var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
+                        int overlap = rawSkills.Count(js => candidateSkills.Contains(js));
+                        score = (overlap * 100) / rawSkills.Count;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(a.JobPosting.Description) && profile.Skills.Count > 0)
+                    {
+                        var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToList();
+                        int matches = candidateSkills.Count(cs => a.JobPosting.Description.Contains(cs, StringComparison.OrdinalIgnoreCase));
+                        if (matches > 0)
+                        {
+                            score = Math.Min(100, 60 + (matches * 10));
+                        }
+                    }
+                }
+                scores[a.Id] = score;
+            }
+            return scores;
+        }
+
+        private string ResolveOpenAiApiKey()
+        {
+            if (!string.IsNullOrWhiteSpace(_openAiSettings.ApiKey))
+                return _openAiSettings.ApiKey.Trim();
+
+            return Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+                ?? Environment.GetEnvironmentVariable("TalentPortal_OpenAI__ApiKey")
+                ?? string.Empty;
+        }
     }
 }
+

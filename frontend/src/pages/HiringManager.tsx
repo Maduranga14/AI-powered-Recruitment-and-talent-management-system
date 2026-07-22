@@ -38,10 +38,10 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     decisionStatus = 'Rejected';
   } else if (applicant.status === 'UnderFinalReview') {
     decisionStatus = 'Under Final Review';
-  } else if (applicant.interviewComments || applicant.interviewRecommendation) {
+  } else if (applicant.status === 'Reviewed' || applicant.interviewComments || applicant.interviewRecommendation) {
     decisionStatus = 'Feedback submitted';
   } else {
-    decisionStatus = 'Interview';
+    decisionStatus = 'Awaiting feedback';
   }
 
   const skills = applicant.skills || [];
@@ -53,7 +53,8 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
   ];
 
   return {
-    id: applicant.candidateProfileId,
+    id: applicant.applicationId,
+    candidateProfileId: applicant.candidateProfileId,
     applicationId: applicant.applicationId,
     name: applicant.fullName,
     title: applicant.headline || 'Applicant',
