@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -13,7 +13,7 @@ import {
   Share2Icon,
   Loader2Icon,
 } from 'lucide-react';
-import { publicApi, type PublicJob } from '../services/api';
+import { publicApi, candidateApi, type PublicJob, type JobRecommendationDto } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { ApplyModal } from '../components/ApplyModal';
@@ -108,6 +108,28 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
   const navigate = useNavigate();
   const { isAuthenticated, isSaved, toggleSaveJob, hasApplied, user } = useAuth();
   const [applyOpen, setApplyOpen] = useState(false);
+  const [recommendations, setRecommendations] = useState<JobRecommendationDto[]>([]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    candidateApi
+      .getRecommendations()
+      .then(setRecommendations)
+      .catch(() => {});
+  }, [isAuthenticated, user?.skills]);
+
+  const realMatchScore = useMemo(() => {
+    if (!isAuthenticated || !user) return undefined;
+    const rec = recommendations.find((r) => r.jobId === job.id);
+    if (rec) return rec.matchScore;
+
+    const userSkills = (user.skills || []).map((s) => s.toLowerCase().trim());
+    const jobSkills = (job.requiredSkills ?? []).map((s) => s.toLowerCase().trim());
+    if (jobSkills.length === 0) return 50;
+
+    const overlap = jobSkills.filter((s) => userSkills.includes(s));
+    return Math.round((overlap.length * 100) / jobSkills.length);
+  }, [isAuthenticated, user, recommendations, job.id, job.requiredSkills]);
 
   const saved = isSaved(job.id);
   const applied = hasApplied(job.id);
@@ -126,6 +148,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
     companyLogo: logoUrl,
     location: job.location,
     skills: job.requiredSkills ?? [],
+    matchScore: realMatchScore,
   };
 
   const onApply = () => {

@@ -1,3 +1,8 @@
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
 using backend.Data;
 using backend.DTOs.Candidate;
 using backend.Models;
@@ -9,12 +14,22 @@ namespace backend.Services
         AppDbContext db,
         IWebHostEnvironment env,
         IHttpContextAccessor httpContextAccessor,
-        ICloudStorageService cloudStorage) : ICandidateProfileService
+        ICloudStorageService cloudStorage,
+        IHttpClientFactory httpClientFactory,
+        IOptions<OpenAiSettings> openAiOptions) : ICandidateProfileService
     {
         private readonly AppDbContext _db = db;
         private readonly IWebHostEnvironment _env = env;
         private readonly IHttpContextAccessor _http = httpContextAccessor;
         private readonly ICloudStorageService _cloudStorage = cloudStorage;
+        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+        private readonly OpenAiSettings _openAiSettings = openAiOptions.Value;
+
+        private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            PropertyNameCaseInsensitive = true
+        };
 
         // Allowed resume file extensions and size limit (5 MB)
         private static readonly string[] AllowedExtensions = [".pdf", ".doc", ".docx"];
@@ -595,6 +610,248 @@ namespace backend.Services
             {
                 // Swallow file-not-found errors — DB update must still proceed
             }
+        }
+
+        public async Task<List<JobRecommendationDto>> GetJobRecommendationsAsync(Guid userId)
+        {
+            var profile = await _db.CandidateProfiles
+                .Include(cp => cp.Skills)
+                .Include(cp => cp.Experiences)
+                .Include(cp => cp.Educations)
+                .FirstOrDefaultAsync(cp => cp.UserId == userId && !cp.IsDeleted);
+
+            var activeJobs = await _db.JobPostings
+                .AsNoTracking()
+                .Where(j => j.Status == backend.Models.Enums.JobStatus.Published)
+                .OrderByDescending(j => j.PublishedAt)
+                .Take(25) // Limit to top 25 recent jobs to keep token size fast and cost-effective
+                .ToListAsync();
+
+            if (activeJobs.Count == 0)
+            {
+                return new List<JobRecommendationDto>();
+            }
+
+            var result = new List<JobRecommendationDto>();
+
+            // If the candidate profile doesn't exist or has no skills and no headline, return jobs with 0 score
+            if (profile == null || (profile.Skills.Count == 0 && string.IsNullOrWhiteSpace(profile.Headline)))
+            {
+                return activeJobs.Select(j => new JobRecommendationDto
+                {
+                    JobId = j.Id,
+                    JobTitle = j.Title,
+                    Company = j.PostedBy,
+                    Location = j.Location,
+                    EmploymentType = j.EmploymentType.ToString(),
+                    Description = j.Description ?? string.Empty,
+                    SalaryMin = j.SalaryMin,
+                    SalaryMax = j.SalaryMax,
+                    SalaryCurrency = j.SalaryCurrency,
+                    RequiredSkills = string.IsNullOrEmpty(j.RequiredSkills)
+                        ? new List<string>()
+                        : j.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
+                    MatchScore = 0,
+                    MatchExplanation = "Please upload your resume or add skills to your profile to get personalized AI matching."
+                }).ToList();
+            }
+
+            var apiKey = ResolveOpenAiApiKey();
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                // Fallback to basic keyword-based matching if OpenAI API Key is missing
+                return RunKeywordMatchingFallback(profile, activeJobs);
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("OpenAI");
+                var modelName = string.IsNullOrWhiteSpace(_openAiSettings.Model) ? "gpt-4o-mini" : _openAiSettings.Model;
+
+                var candidateInfo = new
+                {
+                    Headline = profile.Headline ?? string.Empty,
+                    Location = profile.Location ?? string.Empty,
+                    Skills = profile.Skills.Select(s => s.Name).ToList(),
+                    Experiences = profile.Experiences.Select(e => new
+                    {
+                        e.Company,
+                        e.Title,
+                        StartDate = e.StartDate.ToString("yyyy-MM"),
+                        EndDate = e.IsCurrent ? "Present" : e.EndDate?.ToString("yyyy-MM"),
+                        e.Description
+                    }).ToList()
+                };
+
+                var jobsInfo = activeJobs.Select(j => new
+                {
+                    j.Id,
+                    j.Title,
+                    Company = j.PostedBy,
+                    j.Location,
+                    j.Description,
+                    RequiredSkills = string.IsNullOrEmpty(j.RequiredSkills)
+                        ? new List<string>()
+                        : j.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList()
+                }).ToList();
+
+                var systemPrompt = @"You are a high-performance recruiter assistant AI inside TalentPortal AI.
+Compare the candidate's profile with the list of active job postings.
+For each job, calculate:
+1. matchScore: an integer from 0 to 100 representing how well their skills, title, and work history align with the job posting requirements.
+2. matchExplanation: a 1-2 sentence description explaining the fit (e.g., highlighting matching skills or gaps in experience).
+
+Rule: Your response MUST be a single, valid JSON object with a 'matches' array. Each item in the array must contain 'jobId' (string matching the input job ID), 'matchScore' (integer), and 'matchExplanation' (string). Do not add markdown formatting, backticks, or any conversational text.
+Example structure:
+{
+  ""matches"": [
+    {
+      ""jobId"": ""3fa85f64-5717-4562-b3fc-2c963f66afa6"",
+      ""matchScore"": 85,
+      ""matchExplanation"": ""Your experience with React matches their front-end needs perfectly, though you lack Go experience.""
+    }
+  ]
+}";
+
+                var payload = new
+                {
+                    model = modelName,
+                    temperature = 0.2,
+                    response_format = new { type = "json_object" },
+                    messages = new[]
+                    {
+                        new { role = "system", content = systemPrompt },
+                        new { role = "user", content = $"Candidate Profile:\n{JsonSerializer.Serialize(candidateInfo, JsonOpts)}\n\nActive Jobs:\n{JsonSerializer.Serialize(jobsInfo, JsonOpts)}" }
+                    }
+                };
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(payload, JsonOpts), Encoding.UTF8, "application/json")
+                };
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+
+                using var response = await client.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return RunKeywordMatchingFallback(profile, activeJobs);
+                }
+
+                var body = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(body);
+                var jsonText = doc.RootElement
+                    .GetProperty("choices")[0]
+                    .GetProperty("message")
+                    .GetProperty("content")
+                    .GetString();
+
+                if (string.IsNullOrWhiteSpace(jsonText))
+                {
+                    return RunKeywordMatchingFallback(profile, activeJobs);
+                }
+
+                using var responseDoc = JsonDocument.Parse(jsonText);
+                var matchesElement = responseDoc.RootElement.GetProperty("matches");
+
+                var matchDict = matchesElement.EnumerateArray().ToDictionary(
+                    item => Guid.Parse(item.GetProperty("jobId").GetString()!),
+                    item => new {
+                        Score = item.GetProperty("matchScore").GetInt32(),
+                        Exp = item.GetProperty("matchExplanation").GetString() ?? string.Empty
+                    }
+                );
+
+                foreach (var job in activeJobs)
+                {
+                    int score = 0;
+                    string exp = "No specific match feedback available.";
+
+                    if (matchDict.TryGetValue(job.Id, out var matchVal))
+                    {
+                        score = matchVal.Score;
+                        exp = matchVal.Exp;
+                    }
+
+                    result.Add(new JobRecommendationDto
+                    {
+                        JobId = job.Id,
+                        JobTitle = job.Title,
+                        Company = job.PostedBy,
+                        Location = job.Location,
+                        EmploymentType = job.EmploymentType.ToString(),
+                        Description = job.Description ?? string.Empty,
+                        SalaryMin = job.SalaryMin,
+                        SalaryMax = job.SalaryMax,
+                        SalaryCurrency = job.SalaryCurrency,
+                        RequiredSkills = string.IsNullOrEmpty(job.RequiredSkills)
+                            ? new List<string>()
+                            : job.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
+                        MatchScore = score,
+                        MatchExplanation = exp
+                    });
+                }
+            }
+            catch
+            {
+                return RunKeywordMatchingFallback(profile, activeJobs);
+            }
+
+            return result.OrderByDescending(r => r.MatchScore).ToList();
+        }
+
+        private string ResolveOpenAiApiKey()
+        {
+            if (!string.IsNullOrWhiteSpace(_openAiSettings.ApiKey))
+                return _openAiSettings.ApiKey.Trim();
+
+            return Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+                ?? Environment.GetEnvironmentVariable("TalentPortal_OpenAI__ApiKey")
+                ?? string.Empty;
+        }
+
+        private List<JobRecommendationDto> RunKeywordMatchingFallback(CandidateProfile profile, List<JobPosting> jobs)
+        {
+            var result = new List<JobRecommendationDto>();
+            var candidateSkills = profile.Skills.Select(s => s.Name.ToLowerInvariant()).ToHashSet();
+
+            foreach (var j in jobs)
+            {
+                var jobSkills = string.IsNullOrEmpty(j.RequiredSkills)
+                    ? new List<string>()
+                    : j.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList();
+
+                int matchCount = 0;
+                foreach (var js in jobSkills)
+                {
+                    if (candidateSkills.Contains(js.ToLowerInvariant()))
+                    {
+                        matchCount++;
+                    }
+                }
+
+                int score = jobSkills.Count > 0 ? (matchCount * 100) / jobSkills.Count : 50;
+                string explanation = jobSkills.Count > 0
+                    ? $"Matched {matchCount} of {jobSkills.Count} required skills ({string.Join(", ", jobSkills.Intersect(profile.Skills.Select(s => s.Name), StringComparer.OrdinalIgnoreCase))})."
+                    : "This job does not specify required skills, but matches your general profile.";
+
+                result.Add(new JobRecommendationDto
+                {
+                    JobId = j.Id,
+                    JobTitle = j.Title,
+                    Company = j.PostedBy,
+                    Location = j.Location,
+                    EmploymentType = j.EmploymentType.ToString(),
+                    Description = j.Description ?? string.Empty,
+                    SalaryMin = j.SalaryMin,
+                    SalaryMax = j.SalaryMax,
+                    SalaryCurrency = j.SalaryCurrency,
+                    RequiredSkills = jobSkills,
+                    MatchScore = score,
+                    MatchExplanation = explanation
+                });
+            }
+
+            return result.OrderByDescending(r => r.MatchScore).ToList();
         }
     }
 }

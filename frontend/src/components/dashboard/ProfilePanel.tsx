@@ -11,13 +11,15 @@ import {
   GraduationCapIcon,
   Link2Icon,
   DownloadIcon,
-  ShieldAlertIcon
+  ShieldAlertIcon,
+  SparklesIcon
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../context/AuthContext';
 import { getPhoneValidationError, sanitizePhoneInput } from '../../utils/phone';
+import { candidateApi } from '../../services/api';
 
 export function ProfilePanel() {
   const { 
@@ -92,17 +94,37 @@ export function ProfilePanel() {
     }
   };
 
-  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isParsing, setIsParsing] = useState(false);
+  const [parsedData, setParsedData] = useState<any>(null);
+  const [showParseModal, setShowParseModal] = useState(false);
+  const [parseProgress, setParseProgress] = useState('');
+
+  const handleResumeUploadAndParse = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
+    setIsParsing(true);
+    setParseProgress('Uploading resume to storage...');
     setErrorMsg('');
     try {
-      await uploadResume(file);
+      const res = await candidateApi.parseResume(file);
+      
+      // Update local auth context values
+      updateProfile({
+        resumeUrl: res.resumeUrl,
+        resumeName: file.name
+      });
+      
+      setParseProgress('TalentPortal AI is structuring experiences and skills...');
+      setParsedData(res.data);
+      setShowParseModal(true);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Upload failed');
+      setErrorMsg(err instanceof Error ? err.message : 'AI parsing failed');
     } finally {
-      setUploading(false);
+      setIsParsing(false);
+      setParseProgress('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -658,9 +680,9 @@ export function ProfilePanel() {
             type="file"
             ref={fileInputRef}
             className="hidden"
-            onChange={handleResumeUpload}
+            onChange={handleResumeUploadAndParse}
             accept=".pdf,.doc,.docx"
-            disabled={uploading}
+            disabled={uploading || isParsing}
           />
           {errorMsg && (
             <p className="mt-2 text-xs font-semibold text-red-600">{errorMsg}</p>
@@ -687,26 +709,37 @@ export function ProfilePanel() {
                 </div>
                 <button
                   onClick={handleResumeDelete}
-                  disabled={uploading}
+                  disabled={uploading || isParsing}
                   className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
                   aria-label="Remove resume"
                 >
                   <Trash2Icon className="h-4 w-4" />
                 </button>
               </div>
+              <Button
+                variant="outline"
+                fullWidth
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || isParsing}
+                className="mt-1 border-brand-200 text-brand-700 hover:bg-brand-50/50"
+              >
+                <SparklesIcon className="h-4 w-4 mr-1.5 text-brand-500" />
+                Re-parse with AI
+              </Button>
             </div>
           ) : (
             <button
               onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
+              disabled={uploading || isParsing}
               className="mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 py-8 text-center transition-colors hover:border-brand-400 hover:bg-brand-50/40"
             >
               <UploadCloudIcon className="h-8 w-8 text-slate-400" />
               <span className="text-sm font-semibold text-slate-700">
-                {uploading ? 'Uploading…' : 'Upload your resume'}
+                {uploading || isParsing ? 'Processing...' : 'Upload & Parse with AI'}
               </span>
               <span className="text-xs text-slate-400">
-                PDF or DOCX, up to 5MB
+                Auto-fill profile in seconds (PDF, DOCX)
               </span>
             </button>
           )}
@@ -744,6 +777,213 @@ export function ProfilePanel() {
           </div>
         </div>
       </aside>
+
+      {/* AI Parsing Overlay */}
+      {isParsing && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/80 text-white p-6 backdrop-blur-md">
+          <div className="relative flex h-20 w-20 items-center justify-center">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75"></span>
+            <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg shadow-brand-500/50">
+              <SparklesIcon className="h-7 w-7 animate-spin" />
+            </span>
+          </div>
+          <h3 className="mt-8 font-display text-2xl font-bold tracking-tight">AI Resume Reader</h3>
+          <p className="mt-2 text-sm text-brand-200 animate-pulse">{parseProgress}</p>
+          <div className="mt-6 flex max-w-xs flex-col gap-2 rounded-xl bg-slate-900 border border-slate-800 p-4 text-center">
+            <p className="text-xs text-slate-400">
+              TalentPortal AI is scanning your pages, extracting key skills, and aligning your work experience. This might take up to 10 seconds.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* AI Resume Parser Review Modal */}
+      <AnimatePresence>
+        {showParseModal && parsedData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl max-h-[90vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
+                    <SparklesIcon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-slate-900">
+                      AI Resume Extraction Preview
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Review and adjust the profile details extracted by TalentPortal AI.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowParseModal(false)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto py-6 space-y-6 pr-2">
+                {/* Personal Info Grid */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Headline</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 focus:outline-none"
+                      value={parsedData.headline || ''}
+                      onChange={(e) => setParsedData({ ...parsedData, headline: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Location</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 focus:outline-none"
+                      value={parsedData.location || ''}
+                      onChange={(e) => setParsedData({ ...parsedData, location: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Phone</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:ring-brand-500 focus:outline-none"
+                      value={parsedData.phone || ''}
+                      onChange={(e) => setParsedData({ ...parsedData, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Skills */}
+                <div className="border-t border-slate-100 pt-6">
+                  <h4 className="font-display text-sm font-bold text-slate-900 mb-2">Skills Extracted</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {parsedData.skills?.map((s: string) => (
+                      <span
+                        key={s}
+                        className="inline-flex items-center gap-1 rounded-full bg-brand-50 py-1 pl-3 pr-2 text-sm font-semibold text-brand-700"
+                      >
+                        {s}
+                        <button
+                          onClick={() => setParsedData({ ...parsedData, skills: parsedData.skills.filter((sk: string) => sk !== s) })}
+                          className="rounded-full p-0.5 hover:bg-brand-100"
+                        >
+                          <XIcon className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                    {(!parsedData.skills || parsedData.skills.length === 0) && (
+                      <p className="text-sm text-slate-400">No skills parsed.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Experience */}
+                <div className="border-t border-slate-100 pt-6">
+                  <h4 className="font-display text-sm font-bold text-slate-900 mb-3">Work History</h4>
+                  <div className="space-y-4">
+                    {parsedData.experiences?.map((exp: any, idx: number) => (
+                      <div key={idx} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                          <span className="font-bold text-slate-900 text-sm">{exp.title}</span>
+                          <span className="text-xs font-medium text-slate-500">
+                            {exp.startDate ? exp.startDate.slice(0, 7) : ''} to {exp.isCurrent ? 'Present' : exp.endDate ? exp.endDate.slice(0, 7) : 'Present'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-brand-600 font-semibold mt-0.5">{exp.company}</p>
+                        <p className="text-xs text-slate-600 mt-2 whitespace-pre-line leading-relaxed">{exp.description}</p>
+                      </div>
+                    ))}
+                    {(!parsedData.experiences || parsedData.experiences.length === 0) && (
+                      <p className="text-sm text-slate-400">No experience parsed.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Education */}
+                <div className="border-t border-slate-100 pt-6">
+                  <h4 className="font-display text-sm font-bold text-slate-900 mb-3">Education</h4>
+                  <div className="space-y-4">
+                    {parsedData.educations?.map((ed: any, idx: number) => (
+                      <div key={idx} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                          <span className="font-bold text-slate-900 text-sm">{ed.degree} in {ed.fieldOfStudy}</span>
+                          <span className="text-xs font-medium text-slate-500">
+                            {ed.startDate ? ed.startDate.slice(0, 4) : ''} - {ed.endDate ? ed.endDate.slice(0, 4) : 'Ongoing'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-brand-600 font-semibold mt-0.5">{ed.institution}</p>
+                      </div>
+                    ))}
+                    {(!parsedData.educations || parsedData.educations.length === 0) && (
+                      <p className="text-sm text-slate-400">No education parsed.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+                <Button variant="outline" onClick={() => setShowParseModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={async () => {
+                  // Merge parsed data into candidate profile
+                  updateProfile({
+                    title: parsedData.headline || user.title,
+                    headline: parsedData.headline || user.headline,
+                    location: parsedData.location || user.location,
+                    phone: parsedData.phone || user.phone,
+                    skills: parsedData.skills || user.skills,
+                    experiences: parsedData.experiences?.map((e: any) => ({
+                      id: crypto.randomUUID(),
+                      company: e.company,
+                      title: e.title,
+                      startDate: e.startDate,
+                      endDate: e.endDate,
+                      isCurrent: e.isCurrent,
+                      description: e.description
+                    })) || user.experiences,
+                    educations: parsedData.educations?.map((e: any) => ({
+                      id: crypto.randomUUID(),
+                      institution: e.institution,
+                      degree: e.degree,
+                      fieldOfStudy: e.fieldOfStudy,
+                      startDate: e.startDate,
+                      endDate: e.endDate
+                    })) || user.educations
+                  });
+
+                  setShowParseModal(false);
+                  
+                  // Auto-save changes
+                  setSaving(true);
+                  try {
+                    await saveProfile();
+                    setSaved(true);
+                    setTimeout(() => setSaved(false), 2000);
+                  } catch (err) {
+                    alert(err instanceof Error ? err.message : 'Failed to save changes');
+                  } finally {
+                    setSaving(false);
+                  }
+                }}>
+                  Confirm & Import to Profile
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

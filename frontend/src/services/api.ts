@@ -845,6 +845,43 @@ export interface CandidateProfileExportDto {
   exportedAt: string;
 }
 
+export interface ParsedResumeDto {
+  phone?: string | null;
+  location?: string | null;
+  headline?: string | null;
+  skills: string[];
+  experiences: {
+    company: string;
+    title: string;
+    startDate: string;
+    endDate?: string | null;
+    isCurrent: boolean;
+    description?: string | null;
+  }[];
+  educations: {
+    institution: string;
+    degree: string;
+    fieldOfStudy: string;
+    startDate: string;
+    endDate?: string | null;
+  }[];
+}
+
+export interface JobRecommendationDto {
+  jobId: string;
+  jobTitle: string;
+  company: string;
+  location: string;
+  employmentType: string;
+  description: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  salaryCurrency: string;
+  requiredSkills: string[];
+  matchScore: number;
+  matchExplanation: string;
+}
+
 export const candidateApi = {
   getProfile: () =>
     request<CandidateProfileResponseDto>('/candidate/profile'),
@@ -869,6 +906,18 @@ export const candidateApi = {
       body: formData,
     });
   },
+
+  parseResume: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ message: string; resumeUrl: string; data: ParsedResumeDto }>('/candidate/profile/resume/parse', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  getRecommendations: () =>
+    request<JobRecommendationDto[]>('/candidate/profile/recommendations'),
 
   deleteResume: () =>
     request<void>('/candidate/profile/resume', {

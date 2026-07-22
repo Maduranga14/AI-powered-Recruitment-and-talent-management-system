@@ -95,8 +95,9 @@ builder.Services.AddScoped<IRecruiterService, RecruiterService>();
 builder.Services.AddScoped<IJobPostingService, JobPostingService>();
 builder.Services.AddScoped<ICandidateProfileService, CandidateProfileService>();
 builder.Services.AddScoped<ICloudStorageService, AzureBlobStorageService>();
-builder.Services.AddScoped<IAiChatService, AiChatService>();
-builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            builder.Services.AddScoped<IAiChatService, AiChatService>();
+            builder.Services.AddScoped<IAiResumeParserService, AiResumeParserService>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
 builder.Services.AddHttpContextAccessor();
 

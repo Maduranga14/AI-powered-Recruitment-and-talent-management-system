@@ -12,7 +12,7 @@ import { JobCard } from '../components/JobCard';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../context/AuthContext';
-import { publicApi, type PublicJob } from '../services/api';
+import { publicApi, candidateApi, type PublicJob, type JobRecommendationDto } from '../services/api';
 
 const WORK_MODES: WorkMode[] = ['Remote', 'Hybrid', 'On-site'];
 const JOB_TYPES: JobType[] = ['Full-time', 'Part-time', 'Contract', 'Internship'];
@@ -114,16 +114,49 @@ export function Jobs() {
 
   useEffect(() => {
     setApiError('');
-    publicApi
-      .getPublishedJobs()
-      .then((jobs) => setApiJobs(jobs.map(toJob)))
+    setApiLoading(true);
+
+    const loadJobsPromise = isAuthenticated
+      ? candidateApi.getRecommendations().then((recs) =>
+          recs.map((r) => {
+            const companyName = r.company || 'Company';
+            const bg = stringToColor(companyName);
+            return {
+              id: r.jobId,
+              title: r.jobTitle,
+              company: companyName,
+              companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bg}&color=fff&bold=true&size=128&format=png`,
+              location: r.location,
+              workMode: r.employmentType === 'Remote' ? 'Remote' : 'On-site',
+              type: EMPLOYMENT_TYPE_LABEL[r.employmentType] ?? 'Full-time',
+              level: 'Mid',
+              salaryMin: r.salaryMin ?? -1,
+              salaryMax: r.salaryMax ?? -1,
+              salaryCurrency: r.salaryCurrency || 'USD',
+              postedDaysAgo: 1, // Default or mock
+              category: 'General',
+              skills: r.requiredSkills,
+              shortDescription: r.description ? r.description.slice(0, 300) : '',
+              responsibilities: [],
+              requirements: r.requiredSkills,
+              benefits: [],
+              applicants: 0,
+              matchScore: r.matchScore,
+              featured: false,
+            } as Job;
+          })
+        )
+      : publicApi.getPublishedJobs().then((jobs) => jobs.map(toJob));
+
+    loadJobsPromise
+      .then(setApiJobs)
       .catch((err) => {
         console.error('[Jobs] failed to load live jobs:', err);
         setApiError(err?.message ?? 'Could not load live jobs.');
         setApiJobs([]);
       })
       .finally(() => setApiLoading(false));
-  }, []);
+  }, [isAuthenticated]);
 
   const toggle = <T,>(arr: T[], set: (v: T[]) => void, value: T) =>
     set(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);

@@ -97,7 +97,17 @@ export function ApplyModal({
   const [pendingResumeFile, setPendingResumeFile] = useState<File | null>(null);
   const [uploadingResume, setUploadingResume] = useState(false);
 
-  const matchScore = job.matchScore ?? 75;
+  // Compute real match score fallback based on skill overlap if not provided
+  const matchScore = useMemo(() => {
+    if (job.matchScore !== undefined) return job.matchScore;
+    if (!user || !user.skills || !job.skills || job.skills.length === 0) return 0;
+    
+    const userSkills = user.skills.map((s) => s.toLowerCase().trim());
+    const jobSkills = job.skills.map((s) => s.toLowerCase().trim());
+    const overlap = jobSkills.filter((s) => userSkills.includes(s));
+    return Math.round((overlap.length * 100) / jobSkills.length);
+  }, [job.matchScore, user, job.skills]);
+
   const profileResumeName = fileBaseName(user?.resumeName) || null;
   const displayResumeName = selectedResumeName || profileResumeName;
 
