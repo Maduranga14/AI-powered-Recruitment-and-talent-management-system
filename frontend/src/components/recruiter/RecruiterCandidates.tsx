@@ -1,12 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
+  CalendarIcon,
+  CheckCircle2Icon,
   FilterIcon,
   SearchIcon,
   SparklesIcon,
   UserRoundCheckIcon,
-  UserRoundXIcon } from
-'lucide-react';
+  UserRoundXIcon,
+  XCircleIcon,
+} from 'lucide-react';
 import type { RecruiterCandidate, RecruiterStage } from '../../data/recruiter';
 import { STAGE_TONES } from '../../data/recruiter';
 import { Badge } from '../ui/Badge';
@@ -304,10 +307,26 @@ export function RecruiterCandidates({
                 </div>
                 {showAiScore && (
                   <div className="flex items-center gap-2">
-                    <MatchScore score={candidate.matchScore} size={38} />
-                    <span className="text-xs font-semibold text-slate-500 lg:hidden">
-                      AI match
-                    </span>
+                    {candidate.stage === 'Interview' ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                        <CalendarIcon className="h-3.5 w-3.5" /> Scheduled
+                      </span>
+                    ) : candidate.stage === 'Offer' ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                        <CheckCircle2Icon className="h-3.5 w-3.5" /> Offered
+                      </span>
+                    ) : candidate.stage === 'Rejected' ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
+                        <XCircleIcon className="h-3.5 w-3.5" /> Passed
+                      </span>
+                    ) : (
+                      <>
+                        <MatchScore score={candidate.matchScore} size={38} />
+                        <span className="text-xs font-semibold text-slate-500 lg:hidden">
+                          AI match
+                        </span>
+                      </>
+                    )}
                   </div>
                 )}
                 <div>

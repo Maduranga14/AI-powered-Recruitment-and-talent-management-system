@@ -853,5 +853,35 @@ Example structure:
 
             return result.OrderByDescending(r => r.MatchScore).ToList();
         }
+
+        public async Task<ApplicationResponseDto> RespondToOfferAsync(Guid userId, Guid applicationId, bool accept)
+        {
+            var application = await _db.JobApplications
+                .Include(a => a.JobPosting)
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .FirstOrDefaultAsync(a => a.Id == applicationId && a.CandidateProfile.UserId == userId)
+                ?? throw new KeyNotFoundException("Application not found.");
+
+            if (application.Status != ApplicationStatus.Offer && application.Status != ApplicationStatus.Hired)
+            {
+                throw new InvalidOperationException("You can only respond to applications that currently have an extended offer.");
+            }
+
+            application.Status = accept ? ApplicationStatus.Hired : ApplicationStatus.Rejected;
+            application.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            return new ApplicationResponseDto
+            {
+                ApplicationId = application.Id,
+                JobPostingId = application.JobPostingId,
+                JobTitle = application.JobPosting.Title,
+                DepartmentName = application.JobPosting.Department?.Name,
+                Status = application.Status.ToString(),
+                AppliedAt = DateTime.SpecifyKind(application.AppliedAt, DateTimeKind.Utc),
+                CoverLetter = application.CoverLetter
+            };
+        }
     }
 }

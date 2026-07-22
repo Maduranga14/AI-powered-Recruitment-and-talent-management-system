@@ -5,6 +5,7 @@ import {
   BrainCircuitIcon,
   BuildingIcon,
   CalendarClockIcon,
+  CalendarIcon,
   CheckCircle2Icon,
   ClipboardCheckIcon,
   FileTextIcon,
@@ -13,6 +14,7 @@ import {
   StarIcon,
   UserCheckIcon,
   UserXIcon,
+  XCircleIcon,
   XIcon
 } from 'lucide-react';
 import type { ManagerCandidate } from '../../data/hiringManager';
@@ -152,7 +154,21 @@ export function ManagerCandidateDrawer({
                     </div>
                   </div>
                   <div className="shrink-0 flex items-center gap-3">
-                    <MatchScore score={candidate.matchScore || (candidate.skills?.length ? Math.min(95, 72 + candidate.skills.length * 4) : 80)} size={60} />
+                    {candidate.decisionStatus === 'Interview' ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-50 border border-blue-100 px-3.5 py-2 text-xs font-bold text-blue-700 shadow-xs">
+                        <CalendarIcon className="h-4 w-4" /> Interview Scheduled
+                      </span>
+                    ) : candidate.decisionStatus === 'Offer' ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-50 border border-emerald-100 px-3.5 py-2 text-xs font-bold text-emerald-700 shadow-xs">
+                        <CheckCircle2Icon className="h-4 w-4" /> Offer Extended
+                      </span>
+                    ) : candidate.decisionStatus === 'Rejected' ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-600 shadow-xs">
+                        <XCircleIcon className="h-4 w-4" /> Application Closed
+                      </span>
+                    ) : (
+                      <MatchScore score={candidate.matchScore || (candidate.skills?.length ? Math.min(95, 72 + candidate.skills.length * 4) : 80)} size={60} />
+                    )}
                   </div>
                 </div>
 

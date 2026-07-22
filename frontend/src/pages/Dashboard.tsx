@@ -282,10 +282,6 @@ export function Dashboard() {
               />
             </div>
 
-            {interviewCount > 0 && (
-              <CandidateInterviews interviews={interviews} />
-            )}
-
             <div>
               <h2 className="mb-4 font-display text-xl font-extrabold text-slate-900">
                 Your applications
@@ -295,6 +291,10 @@ export function Dashboard() {
                 interviews={interviews}
               />
             </div>
+
+            {interviewCount > 0 && (
+              <CandidateInterviews interviews={interviews} />
+            )}
 
             <div>
               <div className="mb-4 flex items-center justify-between">

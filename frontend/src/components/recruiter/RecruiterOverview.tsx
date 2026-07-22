@@ -293,7 +293,7 @@ export function RecruiterOverview({
               onClick={() => onViewChange('schedule')}
               className="text-sm font-bold text-brand-600 hover:underline"
             >
-              Calendar
+              Interviews
             </button>
           </div>
           <div className="mt-5 space-y-4">

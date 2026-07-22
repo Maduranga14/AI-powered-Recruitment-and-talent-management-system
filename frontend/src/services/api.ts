@@ -93,7 +93,7 @@ async function publicRequest<T>(endpoint: string): Promise<T> {
 }
 
 export const authApi = {
-  
+
   login: (payload: { email: string; password: string }) =>
     request<ApiResponse<AuthResponse>>('/auth/login', {
       method: 'POST',
@@ -112,7 +112,7 @@ export const authApi = {
       body: JSON.stringify(payload),
     }),
 
-  
+
   registerRecruiter: (payload: {
     firstName: string;
     lastName: string;
@@ -126,7 +126,7 @@ export const authApi = {
       body: JSON.stringify(payload),
     }),
 
-  
+
   inviteHiringManager: (payload: { email: string; departmentId?: string }) =>
     request<InviteResponse>('/auth/invite-hiring-manager', {
       method: 'POST',

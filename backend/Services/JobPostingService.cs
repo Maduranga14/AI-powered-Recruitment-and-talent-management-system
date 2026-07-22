@@ -521,23 +521,14 @@ namespace backend.Services
             }
             else if (a.Status == ApplicationStatus.Applied || a.Status == ApplicationStatus.UnderReview)
             {
-                matchScore = overrideMatchScore ?? 0;
-                if (overrideMatchScore == null && profile != null && a.JobPosting != null)
+                if (overrideMatchScore.HasValue && overrideMatchScore.Value > 0)
                 {
-                    var jobSkills = string.IsNullOrEmpty(a.JobPosting.RequiredSkills)
-                        ? new List<string>()
-                        : a.JobPosting.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToLowerInvariant()).ToList();
-
-                    if (jobSkills.Count > 0)
-                    {
-                        var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
-                        int overlapCount = jobSkills.Count(js => candidateSkills.Contains(js));
-                        matchScore = (overlapCount * 100) / jobSkills.Count;
-                    }
-                    else
-                    {
-                        matchScore = 50;
-                    }
+                    matchScore = overrideMatchScore.Value;
+                }
+                else
+                {
+                    var mapScores = CalcKeywordScores(new List<JobApplication> { a });
+                    mapScores.TryGetValue(a.Id, out matchScore);
                 }
             }
 
@@ -1607,7 +1598,7 @@ Return ONLY a valid JSON object: {""scores"":[{""applicationId"":""<guid>"",""ma
                 }
 
                 var profile = a.CandidateProfile;
-                int score = 50;
+                int score = 75;
                 if (profile != null && a.JobPosting != null)
                 {
                     var rawSkills = string.IsNullOrEmpty(a.JobPosting.RequiredSkills)
@@ -1615,23 +1606,37 @@ Return ONLY a valid JSON object: {""scores"":[{""applicationId"":""<guid>"",""ma
                         : a.JobPosting.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries)
                             .Select(s => s.Trim().ToLowerInvariant()).ToList();
 
-                    if (rawSkills.Count > 0)
+                    var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToList();
+
+                    if (rawSkills.Count > 0 && candidateSkills.Count > 0)
                     {
-                        var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
-                        int overlap = rawSkills.Count(js => candidateSkills.Contains(js));
-                        score = (overlap * 100) / rawSkills.Count;
-                    }
-                    else if (!string.IsNullOrWhiteSpace(a.JobPosting.Description) && profile.Skills.Count > 0)
-                    {
-                        var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToList();
-                        int matches = candidateSkills.Count(cs => a.JobPosting.Description.Contains(cs, StringComparison.OrdinalIgnoreCase));
-                        if (matches > 0)
+                        int matches = 0;
+                        foreach (var req in rawSkills)
                         {
-                            score = Math.Min(100, 60 + (matches * 10));
+                            if (candidateSkills.Any(cs => cs.Equals(req, StringComparison.OrdinalIgnoreCase) || cs.Contains(req) || req.Contains(cs)))
+                            {
+                                matches++;
+                            }
+                        }
+
+                        double matchRatio = (double)matches / rawSkills.Count;
+                        score = Math.Max(70, (int)Math.Round(matchRatio * 100));
+
+                        if (candidateSkills.Count > rawSkills.Count && score >= 50)
+                        {
+                            score = Math.Min(95, score + 5);
+                        }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(a.JobPosting.Title) && !string.IsNullOrWhiteSpace(profile.Headline))
+                    {
+                        if (profile.Headline.Contains(a.JobPosting.Title, StringComparison.OrdinalIgnoreCase) ||
+                            a.JobPosting.Title.Contains(profile.Headline, StringComparison.OrdinalIgnoreCase))
+                        {
+                            score = 85;
                         }
                     }
                 }
-                scores[a.Id] = score;
+                scores[a.Id] = Math.Clamp(score, 65, 95);
             }
             return scores;
         }
