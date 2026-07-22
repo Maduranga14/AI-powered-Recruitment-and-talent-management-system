@@ -386,6 +386,7 @@ export interface JobApplicant {
   status: string;
   coverLetter: string | null;
   appliedAt: string;
+  matchScore: number;
   skills: string[];
   experiences: WorkExperienceItem[];
   educations: EducationItem[];

@@ -61,7 +61,7 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     avatar: applicant.photoUrl || avatarUrl(applicant.fullName, '0d9488'),
     role: applicant.jobTitle,
     decisionStatus,
-    matchScore: 0,
+    matchScore: applicant.matchScore || 0,
     skills,
     experiences: (applicant.experiences || []).map(e => ({
       title: e.title,

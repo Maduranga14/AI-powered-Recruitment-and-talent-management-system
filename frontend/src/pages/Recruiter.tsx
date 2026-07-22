@@ -107,7 +107,7 @@ function toRecruiterCandidate(applicant: JobApplicant, jobId?: string): Recruite
     role: applicant.jobTitle,
     department: applicant.departmentName || undefined,
     stage: statusToStage(applicant.status),
-    matchScore: 0,
+    matchScore: applicant.matchScore || 0,
     skills: applicant.skills ?? [],
     experience: applicant.experienceSummary || 'No experience listed',
     applied: formatAppliedAt(applicant.appliedAt),

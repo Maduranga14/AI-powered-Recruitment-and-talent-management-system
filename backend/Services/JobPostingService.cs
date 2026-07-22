@@ -388,6 +388,7 @@ namespace backend.Services
                 ?? throw new KeyNotFoundException("Job posting not found or you do not have access.");
 
             var application = await _db.JobApplications
+                .Include(a => a.JobPosting)
                 .Include(a => a.CandidateProfile)
                     .ThenInclude(cp => cp.User)
                 .Include(a => a.CandidateProfile)
@@ -475,6 +476,25 @@ namespace backend.Services
             var fullName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Candidate";
             var email = user?.Email ?? string.Empty;
 
+            int matchScore = 0;
+            if (profile != null && a.JobPosting != null)
+            {
+                var jobSkills = string.IsNullOrEmpty(a.JobPosting.RequiredSkills)
+                    ? new List<string>()
+                    : a.JobPosting.RequiredSkills.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim().ToLowerInvariant()).ToList();
+
+                if (jobSkills.Count > 0)
+                {
+                    var candidateSkills = profile.Skills.Select(s => s.Name.Trim().ToLowerInvariant()).ToHashSet();
+                    int overlapCount = jobSkills.Count(js => candidateSkills.Contains(js));
+                    matchScore = (overlapCount * 100) / jobSkills.Count;
+                }
+                else
+                {
+                    matchScore = 50;
+                }
+            }
+
             var latestExp = profile?.Experiences != null
                 ? profile.Experiences
                     .OrderByDescending(e => e.IsCurrent)
@@ -512,6 +532,7 @@ namespace backend.Services
                 Status = a.Status.ToString(),
                 CoverLetter = a.CoverLetter,
                 AppliedAt = a.AppliedAt,
+                MatchScore = matchScore,
                 Skills = profile?.Skills != null ? profile.Skills.Select(s => s.Name).OrderBy(n => n).ToList() : [],
                 Experiences = profile?.Experiences != null
                     ? profile.Experiences

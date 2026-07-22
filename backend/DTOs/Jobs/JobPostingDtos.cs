@@ -141,6 +141,7 @@ namespace backend.DTOs.Jobs
         public string Status { get; set; } = string.Empty;
         public string? CoverLetter { get; set; }
         public DateTime AppliedAt { get; set; }
+        public int MatchScore { get; set; }
         public List<string> Skills { get; set; } = [];
         public List<WorkExperienceDto> Experiences { get; set; } = [];
         public List<EducationDto> Educations { get; set; } = [];
