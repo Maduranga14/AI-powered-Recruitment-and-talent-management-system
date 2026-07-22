@@ -603,6 +603,18 @@ export const recruiterApi = {
     request<void>(`/departments/${id}`, {
       method: 'DELETE',
     }),
+
+  sendMessage: (payload: {
+    toEmail: string;
+    toName: string;
+    subject: string;
+    message: string;
+    jobTitle?: string;
+  }) =>
+    request<{ message: string }>('/recruiter/messages/send', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
 export const managerApi = {

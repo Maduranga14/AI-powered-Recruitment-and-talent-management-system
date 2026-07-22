@@ -17,7 +17,6 @@ import {
 import { Button } from '../components/ui/Button';
 import { Input, Select, Textarea } from '../components/ui/Input';
 import {
-  RECRUITER_MESSAGES,
   type RecruiterCandidate,
   type RecruiterInterview,
   type RecruiterJob,
@@ -529,7 +528,7 @@ export function Recruiter() {
           onReschedule={openReschedule}
         />
       )}
-      {view === 'inbox' && <RecruiterInbox messages={RECRUITER_MESSAGES} />}
+      {view === 'inbox' && <RecruiterInbox candidates={candidates} interviews={interviews} />}
 
       <CandidateDrawer
         candidate={selectedCandidate}
