@@ -26,6 +26,8 @@ namespace backend.Data
         public DbSet<Interview> Interviews { get; set; }
         public DbSet<ChatConversation> ChatConversations { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<GoogleCalendarIntegration> GoogleCalendarIntegrations { get; set; }
+
 
         // ── Admin governance tables ───────────────────────────────────────────
         public DbSet<AuditLog> AuditLogs { get; set; }
@@ -304,7 +306,20 @@ namespace backend.Data
                 entity.Property(s => s.UpdatedBy).HasMaxLength(200);
                 entity.HasIndex(s => s.Key).IsUnique();
             });
+
+            // ── GoogleCalendarIntegration ───────────────────────────────────────
+            modelBuilder.Entity<GoogleCalendarIntegration>(entity =>
+            {
+                entity.HasKey(g => g.Id);
+                entity.HasIndex(g => g.UserId).IsUnique();
+                entity.Property(g => g.GoogleEmail).IsRequired().HasMaxLength(150);
+                entity.HasOne(g => g.User)
+                      .WithMany()
+                      .HasForeignKey(g => g.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
         }
+
     }
 }
 

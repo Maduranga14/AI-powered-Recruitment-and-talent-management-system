@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CalendarClockIcon,
+  CalendarDaysIcon,
   CheckCircle2Icon,
   Clock3Icon,
   ClipboardCheckIcon,
@@ -12,12 +13,14 @@ import {
   XIcon,
 } from 'lucide-react';
 import type { ManagerInterview } from '../../data/hiringManager';
-import type { InterviewDto } from '../../services/api';
-import { managerApi } from '../../services/api';
+import type { InterviewDto, GoogleCalendarStatus } from '../../services/api';
+import { managerApi, googleCalendarApi } from '../../services/api';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Input';
 import { InterviewFeedbackModal } from './InterviewFeedbackModal';
+import { GoogleCalendarCard } from './GoogleCalendarCard';
+
 
 interface HiringManagerCalendarProps {
   interviews: ManagerInterview[];
@@ -47,10 +50,67 @@ export function HiringManagerCalendar({
   // Interview feedback modal state
   const [feedbackInterview, setFeedbackInterview] = useState<InterviewDto | null>(null);
 
+  // Google Calendar integration state
+  const [calendarStatus, setCalendarStatus] = useState<GoogleCalendarStatus | null>(null);
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [syncingInterviewId, setSyncingInterviewId] = useState<string | null>(null);
+
+  const loadCalendarStatus = async () => {
+    try {
+      const status = await googleCalendarApi.getStatus();
+      setCalendarStatus(status);
+    } catch {
+      // Fallback default state if API call fails
+      setCalendarStatus({
+        isConnected: false,
+        autoSyncInterviews: true,
+        calendarId: 'primary',
+        clientIdConfigured: false,
+      });
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const authCode = params.get('code');
+
+    if (authCode) {
+      window.history.replaceState({}, document.title, window.location.pathname + '?tab=calendar');
+      googleCalendarApi
+        .connect({ authorizationCode: authCode })
+        .then((res) => {
+          setCalendarStatus(res.data);
+          showMessage('Connected Google Calendar with OAuth 2.0! 🎉');
+        })
+        .catch(() => loadCalendarStatus());
+    } else {
+      loadCalendarStatus();
+    }
+  }, []);
+
+
   const showMessage = (next: string) => {
     setMessage(next);
     window.setTimeout(() => setMessage(''), 2800);
   };
+
+  const handleSyncSingleInterview = async (interview: ManagerInterview) => {
+    setSyncingInterviewId(interview.id);
+    try {
+      const res = await googleCalendarApi.syncInterview(interview.id);
+      showMessage(res.message || `Synced interview with ${interview.candidate} to Google Calendar.`);
+      if (res.data.directWebCalendarUrl) {
+        window.open(res.data.directWebCalendarUrl, '_blank', 'noopener,noreferrer');
+      }
+      onFeedbackSubmitted?.(); // Trigger parent refresh to reload interview list
+    } catch (err: unknown) {
+      showMessage(err instanceof Error ? err.message : 'Failed to sync interview.');
+    } finally {
+      setSyncingInterviewId(null);
+    }
+
+  };
+
 
   const submitRescheduleRequest = async () => {
     if (!rescheduleTarget) return;
@@ -124,8 +184,8 @@ export function HiringManagerCalendar({
       payload.decision === 'Offer' || payload.decision === 'Hired'
         ? 'Feedback submitted & Offer extended 🎉'
         : payload.decision === 'Rejected'
-        ? 'Feedback submitted & Application rejected.'
-        : 'Interview feedback submitted. Application moved to Under Final Review.'
+          ? 'Feedback submitted & Application rejected.'
+          : 'Interview feedback submitted. Application moved to Under Final Review.'
     );
     onFeedbackSubmitted?.();
   };
@@ -189,7 +249,19 @@ export function HiringManagerCalendar({
         </div>
       )}
 
+      {/* Google Calendar Integration Card */}
+      <div className="mt-6">
+        <GoogleCalendarCard
+          status={calendarStatus}
+          onStatusChange={setCalendarStatus}
+          onMessage={showMessage}
+          onSyncComplete={onFeedbackSubmitted}
+        />
+
+      </div>
+
       <div className="mt-7 grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+
         <section
           className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
           aria-labelledby="upcoming-interviews-title"
@@ -234,6 +306,12 @@ export function HiringManagerCalendar({
                           Completed
                         </Badge>
                       )}
+                      {interview.isSyncedToGoogleCalendar ? (
+                        <Badge tone="accent">
+                          <CalendarDaysIcon className="h-3 w-3 text-brand-600" />
+                          In Google Calendar ✓
+                        </Badge>
+                      ) : null}
                     </div>
                     <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
                       <Clock3Icon className="h-4 w-4 text-slate-400" />
@@ -257,7 +335,36 @@ export function HiringManagerCalendar({
                       </p>
                     </div>
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    {/* Google Calendar Sync Button */}
+                    {interview.isSyncedToGoogleCalendar && interview.googleCalendarHtmlLink ? (
+                      <a
+                        href={interview.googleCalendarHtmlLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                        title="Open event in Google Calendar"
+                      >
+                        <CalendarDaysIcon className="h-3.5 w-3.5 text-brand-600" />
+                        Open in Google Calendar ↗
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => handleSyncSingleInterview(interview)}
+                        disabled={syncingInterviewId === interview.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                        title="Sync to Google Calendar"
+                      >
+                        {syncingInterviewId === interview.id ? (
+                          <Loader2Icon className="h-3.5 w-3.5 animate-spin text-brand-600" />
+                        ) : (
+                          <CalendarDaysIcon className="h-3.5 w-3.5 text-brand-600" />
+                        )}
+                        Add to Google Calendar
+                      </button>
+                    )}
+
+
                     {interview.meetingLink && (
                       <Button
                         size="sm"
@@ -286,6 +393,7 @@ export function HiringManagerCalendar({
                         : 'Reschedule'}
                     </button>
                   </div>
+
                 </div>
                 {/* Add Feedback / Feedback Submitted actions */}
                 {interview.feedbackSubmitted ? (
@@ -414,3 +522,5 @@ export function HiringManagerCalendar({
     </motion.div>
   );
 }
+
+

@@ -332,6 +332,18 @@ namespace backend.Migrations
                     b.Property<int>("DurationMinutes")
                         .HasColumnType("int");
 
+                    b.Property<string>("GoogleCalendarEventId")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("GoogleCalendarHtmlLink")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<bool>("IsSyncedToGoogleCalendar")
+                        .HasColumnType("bit");
+
+
                     b.Property<string>("FeedbackComments")
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");

@@ -25,6 +25,32 @@ namespace backend.Data
             await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[Interviews]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Interviews]') AND name = 'FeedbackSkillRatings') BEGIN ALTER TABLE [dbo].[Interviews] ADD [FeedbackSkillRatings] NVARCHAR(MAX) NULL; END");
             await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[Interviews]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Interviews]') AND name = 'FeedbackSubmittedAt') BEGIN ALTER TABLE [dbo].[Interviews] ADD [FeedbackSubmittedAt] DATETIME2 NULL; END");
             await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[Interviews]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Interviews]') AND name = 'FeedbackTechnicalScore') BEGIN ALTER TABLE [dbo].[Interviews] ADD [FeedbackTechnicalScore] INT NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[Interviews]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Interviews]') AND name = 'GoogleCalendarEventId') BEGIN ALTER TABLE [dbo].[Interviews] ADD [GoogleCalendarEventId] NVARCHAR(250) NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[Interviews]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Interviews]') AND name = 'GoogleCalendarHtmlLink') BEGIN ALTER TABLE [dbo].[Interviews] ADD [GoogleCalendarHtmlLink] NVARCHAR(1000) NULL; END");
+            await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[Interviews]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Interviews]') AND name = 'IsSyncedToGoogleCalendar') BEGIN ALTER TABLE [dbo].[Interviews] ADD [IsSyncedToGoogleCalendar] BIT NOT NULL CONSTRAINT DF_Interviews_IsSyncedToGoogleCalendar DEFAULT(0); END");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+                IF OBJECT_ID(N'[dbo].[GoogleCalendarIntegrations]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[GoogleCalendarIntegrations] (
+                        [Id] UNIQUEIDENTIFIER NOT NULL,
+                        [UserId] UNIQUEIDENTIFIER NOT NULL,
+                        [IsConnected] BIT NOT NULL,
+                        [GoogleEmail] NVARCHAR(150) NOT NULL,
+                        [AccessToken] NVARCHAR(2000) NULL,
+                        [RefreshToken] NVARCHAR(2000) NULL,
+                        [TokenExpiresAt] DATETIME2 NULL,
+                        [CalendarId] NVARCHAR(250) NOT NULL,
+                        [AutoSyncInterviews] BIT NOT NULL,
+                        [ConnectedAt] DATETIME2 NOT NULL,
+                        [UpdatedAt] DATETIME2 NOT NULL,
+                        CONSTRAINT [PK_GoogleCalendarIntegrations] PRIMARY KEY ([Id]),
+                        CONSTRAINT [FK_GoogleCalendarIntegrations_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+                    );
+                    CREATE UNIQUE INDEX [IX_GoogleCalendarIntegrations_UserId] ON [dbo].[GoogleCalendarIntegrations] ([UserId]);
+                END
+            ");
+
 
             await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[Organizations]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Organizations]') AND name = 'TaxNumber') BEGIN ALTER TABLE [dbo].[Organizations] ADD [TaxNumber] NVARCHAR(100) NOT NULL CONSTRAINT DF_Organizations_TaxNumber DEFAULT('TAX-0000-0000'); END");
             await db.Database.ExecuteSqlRawAsync("IF OBJECT_ID(N'[dbo].[Organizations]', N'U') IS NOT NULL AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Organizations]') AND name = 'Website') BEGIN ALTER TABLE [dbo].[Organizations] ADD [Website] NVARCHAR(500) NULL; END");

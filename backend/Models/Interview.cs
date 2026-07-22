@@ -55,6 +55,16 @@ namespace backend.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // ── Google Calendar Sync ────────────────────────────────────────────────
+        [MaxLength(250)]
+        public string? GoogleCalendarEventId { get; set; }
+
+        [MaxLength(1000)]
+        public string? GoogleCalendarHtmlLink { get; set; }
+
+        public bool IsSyncedToGoogleCalendar { get; set; }
+
+
         // ── Post-interview feedback (submitted by the hiring manager) ────────────
 
         /// <summary>Overall rating 1–5 submitted after the interview.</summary>

@@ -444,7 +444,11 @@ export interface InterviewDto {
   feedbackTechnicalScore?: number | null;
   feedbackSubmittedAt?: string | null;
   hasFeedback?: boolean;
+  googleCalendarEventId?: string | null;
+  googleCalendarHtmlLink?: string | null;
+  isSyncedToGoogleCalendar?: boolean;
 }
+
 
 export interface JobApplicantsResult {
   jobId: string;
@@ -675,6 +679,59 @@ export const managerApi = {
       body: JSON.stringify(payload),
     }),
 };
+
+export interface GoogleCalendarStatus {
+  isConnected: boolean;
+  googleEmail?: string | null;
+  connectedAt?: string | null;
+  autoSyncInterviews: boolean;
+  calendarId: string;
+  clientIdConfigured: boolean;
+  authUrl?: string | null;
+}
+
+export interface SyncInterviewResult {
+  interviewId: string;
+  success: boolean;
+  eventId?: string | null;
+  htmlLink?: string | null;
+  directWebCalendarUrl: string;
+  message: string;
+}
+
+export const googleCalendarApi = {
+  getStatus: () =>
+    request<GoogleCalendarStatus>('/google-calendar/status'),
+
+  connect: (payload?: { authorizationCode?: string; email?: string; autoSyncInterviews?: boolean }) =>
+    request<ApiResponse<GoogleCalendarStatus>>('/google-calendar/connect', {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    }),
+
+
+  disconnect: () =>
+    request<{ message: string }>('/google-calendar/disconnect', {
+      method: 'POST',
+    }),
+
+  updateSettings: (payload: { autoSyncInterviews: boolean; calendarId?: string }) =>
+    request<ApiResponse<GoogleCalendarStatus>>('/google-calendar/settings', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  syncInterview: (interviewId: string) =>
+    request<ApiResponse<SyncInterviewResult>>(`/google-calendar/sync/${interviewId}`, {
+      method: 'POST',
+    }),
+
+  syncAllInterviews: () =>
+    request<ApiResponse<SyncInterviewResult[]>>('/google-calendar/sync-all', {
+      method: 'POST',
+    }),
+};
+
 
 export interface HiringManager {
   id: string;
