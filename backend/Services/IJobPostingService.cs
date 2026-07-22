@@ -30,17 +30,17 @@ namespace backend.Services
         Task<PublicJobPageDto> GetPublicJobPageAsync(Guid id);
 
         /// <summary>List candidates who applied to a job owned by this recruiter.</summary>
-        Task<JobApplicantsResultDto> GetApplicantsAsync(Guid jobId, Guid recruiterId);
+        Task<JobApplicantsResultDto> GetApplicantsAsync(Guid jobId, Guid recruiterId, bool includeAiScores = false);
 
         /// <summary>List applicants across all jobs owned by this recruiter.</summary>
-        Task<List<JobApplicantDto>> GetAllApplicantsAsync(Guid recruiterId);
+        Task<List<JobApplicantDto>> GetAllApplicantsAsync(Guid recruiterId, bool includeAiScores = false);
 
         /// <summary>Update an application's pipeline status (must belong to recruiter's job).</summary>
         Task<JobApplicantDto> UpdateApplicationStatusAsync(
             Guid jobId, Guid applicationId, ApplicationStatus status, Guid recruiterId);
 
         /// <summary>List candidates who applied to jobs headed by this hiring manager's departments.</summary>
-        Task<List<JobApplicantDto>> GetManagerApplicantsAsync(Guid managerUserId);
+        Task<List<JobApplicantDto>> GetManagerApplicantsAsync(Guid managerUserId, bool includeAiScores = false);
 
         /// <summary>Submit manager feedback and advance/reject the application.</summary>
         Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId);

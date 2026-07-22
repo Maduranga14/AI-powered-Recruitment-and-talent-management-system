@@ -39,5 +39,11 @@ namespace backend.Services
 
         /// <summary>Get candidate profile by its unique profile ID.</summary>
         Task<CandidateProfileResponseDto> GetProfileByIdAsync(Guid profileId);
+
+        /// <summary>Get AI-powered job recommendations sorted by match score.</summary>
+        Task<List<JobRecommendationDto>> GetJobRecommendationsAsync(Guid userId);
+
+        /// <summary>Respond to an extended job offer (accept -> Hired, decline -> Rejected).</summary>
+        Task<ApplicationResponseDto> RespondToOfferAsync(Guid userId, Guid applicationId, bool accept);
     }
 }

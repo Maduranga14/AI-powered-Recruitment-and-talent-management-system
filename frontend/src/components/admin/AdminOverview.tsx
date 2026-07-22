@@ -1,47 +1,82 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ActivityIcon,
   ArrowRightIcon,
-  Building2Icon,
+  BarChart3Icon,
   BriefcaseIcon,
-  FileCheck2Icon,
+  Building2Icon,
+  CheckCircle2Icon,
+  Loader2Icon,
+  TrendingUpIcon,
+  UserCheckIcon,
   UsersRoundIcon,
-  UserPlusIcon
+  UserPlusIcon,
 } from 'lucide-react';
-import type {
-  AdminOrganization,
-  AdminPerson,
-  ModerationItem,
-} from '../../data/admin';
+import type { AdminOrganization, AdminPerson } from '../../data/admin';
+import { adminApi, type DashboardAnalyticsDto } from '../../services/api';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 
 interface AdminOverviewProps {
   people: AdminPerson[];
   organizations: AdminOrganization[];
-  moderation: ModerationItem[];
   publishedJobs?: number;
   onViewChange: (
-    view: 'people' | 'organizations' | 'departments' | 'moderation' | 'audit-settings'
+    view: 'people' | 'organizations' | 'departments' | 'analytics' | 'audit-settings'
   ) => void;
+}
+
+// Simple inline bar for funnel steps
+function FunnelBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-semibold text-slate-600">{label}</span>
+        <span className="text-xs font-bold text-slate-800">{value.toLocaleString()}</span>
+      </div>
+      <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+        <motion.div
+          className={`h-full rounded-full ${color}`}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        />
+      </div>
+    </div>
+  );
 }
 
 export function AdminOverview({
   people,
   organizations,
-  moderation,
   publishedJobs = 0,
   onViewChange,
 }: AdminOverviewProps) {
-  const pendingModeration = moderation.filter((item) => item.status === 'Pending');
+  const [analytics, setAnalytics] = useState<DashboardAnalyticsDto | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
+  useEffect(() => {
+    adminApi.getAnalytics()
+      .then(setAnalytics)
+      .catch(() => setAnalytics(null))
+      .finally(() => setAnalyticsLoading(false));
+  }, []);
+
   const activePeople = people.filter((p) => p.status === 'Active').length;
   const recruiters = people.filter((p) => p.role === 'Recruiter').length;
+  const candidates = people.filter((p) => p.role === 'Candidate').length;
+
+  const totalApplicants = analytics?.totalApplicants ?? 0;
+  const totalHired     = analytics?.totalHired ?? 0;
+  const conversionRate = totalApplicants > 0 ? ((totalHired / totalApplicants) * 100).toFixed(1) : '0.0';
 
   const metrics = [
     {
       label: 'People on platform',
       value: people.length.toLocaleString(),
-      detail: `${activePeople} active accounts`,
+      detail: `${activePeople} active · ${candidates} candidates`,
       icon: UsersRoundIcon,
       tone: 'brand' as const,
     },
@@ -53,14 +88,11 @@ export function AdminOverview({
       tone: 'accent' as const,
     },
     {
-      label: 'Moderation Queue',
-      value: pendingModeration.length,
-      detail:
-        pendingModeration.length === 0
-          ? 'Queue is clear'
-          : `${pendingModeration.length} items awaiting review`,
-      icon: FileCheck2Icon,
-      tone: 'amber' as const,
+      label: 'Total applicants',
+      value: totalApplicants.toLocaleString(),
+      detail: `${conversionRate}% conversion to hire`,
+      icon: UserCheckIcon,
+      tone: 'green' as const,
     },
     {
       label: 'Published jobs',
@@ -73,20 +105,10 @@ export function AdminOverview({
 
   const recentPeople = [...people]
     .sort((a, b) => Date.parse(b.joined) - Date.parse(a.joined) || 0)
-    .slice(0, 3);
+    .slice(0, 4);
 
-  const activityEvents =
-    recentPeople.length > 0
-      ? recentPeople.map((p) => ({
-          text: `${p.role} account created: ${p.name}`,
-          meta: p.organization,
-        }))
-      : [
-          {
-            text: 'No recent account activity yet',
-            meta: 'New users will appear here',
-          },
-        ];
+  const pipeline = analytics?.pipeline;
+  const funnelMax = pipeline?.received ?? 1;
 
   return (
     <motion.div
@@ -94,13 +116,12 @@ export function AdminOverview({
       animate={{ opacity: 1, y: 0 }}
       className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8"
     >
+      {/* Header */}
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">
             {new Date().toLocaleDateString(undefined, {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
+              weekday: 'long', month: 'long', day: 'numeric',
             })}{' '}
             · Operations snapshot
           </p>
@@ -108,7 +129,7 @@ export function AdminOverview({
             Platform overview
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Live counts from users, organizations, departments, and published jobs.
+            Live counts from users, organizations, and recruitment activity.
           </p>
         </div>
         <Button onClick={() => onViewChange('people')}>
@@ -116,10 +137,8 @@ export function AdminOverview({
         </Button>
       </div>
 
-      <section
-        aria-label="Platform metrics"
-        className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-      >
+      {/* Metric cards */}
+      <section aria-label="Platform metrics" className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map(({ label, value, detail, icon: Icon, tone }, index) => (
           <motion.article
             key={label}
@@ -128,88 +147,86 @@ export function AdminOverview({
             transition={{ delay: index * 0.04 }}
             className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft"
           >
-            <span
-              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                tone === 'brand'
-                  ? 'bg-brand-50 text-brand-600'
-                  : tone === 'accent'
-                    ? 'bg-accent-50 text-accent-600'
-                    : tone === 'amber'
-                      ? 'bg-amber-50 text-amber-600'
-                      : 'bg-blue-50 text-blue-600'
-              }`}
-            >
+            <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+              tone === 'brand'  ? 'bg-brand-50 text-brand-600' :
+              tone === 'accent' ? 'bg-accent-50 text-accent-600' :
+              tone === 'green'  ? 'bg-emerald-50 text-emerald-600' :
+                                  'bg-blue-50 text-blue-600'
+            }`}>
               <Icon className="h-5 w-5" />
             </span>
-            <p className="mt-4 font-display text-3xl font-extrabold text-slate-900">
-              {value}
-            </p>
+            <p className="mt-4 font-display text-3xl font-extrabold text-slate-900">{value}</p>
             <p className="mt-1 text-sm font-medium text-slate-600">{label}</p>
             <p className="mt-1 text-xs text-slate-400">{detail}</p>
           </motion.article>
         ))}
       </section>
 
+      {/* Main content row */}
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
+
+        {/* Recruitment Pipeline Funnel — replaces moderation queue */}
         <section
           className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
-          aria-labelledby="review-queue-title"
+          aria-labelledby="pipeline-title"
         >
           <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
-            <div>
-              <h2
-                id="review-queue-title"
-                className="font-display text-lg font-bold"
-              >
-                Moderation Queue
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Job posting reviews and content moderation items awaiting platform decision.
-              </p>
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <TrendingUpIcon className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 id="pipeline-title" className="font-display text-lg font-bold">
+                  Recruitment Pipeline
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  Candidate funnel across all active job postings.
+                </p>
+              </div>
             </div>
             <button
-              onClick={() => onViewChange('moderation')}
+              onClick={() => onViewChange('analytics')}
               className="inline-flex items-center gap-1 text-sm font-bold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
-              View queue <ArrowRightIcon className="h-4 w-4" />
+              Full report <ArrowRightIcon className="h-4 w-4" />
             </button>
           </div>
-          <div className="divide-y divide-slate-100">
-            {pendingModeration.length === 0 ? (
-              <p className="px-6 py-10 text-center text-sm text-slate-500">
-                No moderation items awaiting review.
-              </p>
-            ) : (
-              pendingModeration.slice(0, 3).map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => onViewChange('moderation')}
-                  className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-slate-50 sm:px-6"
-                >
-                  <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                      item.type === 'Report'
-                        ? 'bg-amber-50 text-amber-600'
-                        : 'bg-brand-50 text-brand-600'
-                    }`}
-                  >
-                    <FileCheck2Icon className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold text-slate-800">
-                      {item.title}
-                    </span>
-                    <span className="mt-0.5 block truncate text-xs text-slate-500">
-                      {item.organization} · {item.submittedAt}
-                    </span>
-                  </span>
-                  <Badge tone="amber">Pending</Badge>
-                </button>
-              ))
-            )}
-          </div>
+
+          {analyticsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2Icon className="h-6 w-6 animate-spin text-brand-600" />
+            </div>
+          ) : pipeline ? (
+            <div className="px-5 pb-6 sm:px-6 space-y-4">
+              <FunnelBar label="Applications received" value={pipeline.received}         max={funnelMax} color="bg-brand-500" />
+              <FunnelBar label="Under review"           value={pipeline.underReview}     max={funnelMax} color="bg-accent-500" />
+              <FunnelBar label="Interview scheduled"    value={pipeline.interviewScheduled} max={funnelMax} color="bg-amber-400" />
+              <FunnelBar label="Hired"                  value={pipeline.hired}           max={funnelMax} color="bg-emerald-500" />
+
+              {/* Summary row */}
+              <div className="mt-2 grid grid-cols-3 gap-3 pt-4 border-t border-slate-100">
+                <div className="rounded-xl bg-slate-50 p-3 text-center">
+                  <p className="font-display text-xl font-extrabold text-slate-900">{pipeline.received}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-500">Total applied</p>
+                </div>
+                <div className="rounded-xl bg-emerald-50 p-3 text-center">
+                  <p className="font-display text-xl font-extrabold text-emerald-700">{pipeline.hired}</p>
+                  <p className="mt-0.5 text-[11px] text-emerald-600">Hired</p>
+                </div>
+                <div className="rounded-xl bg-brand-50 p-3 text-center">
+                  <p className="font-display text-xl font-extrabold text-brand-700">{conversionRate}%</p>
+                  <p className="mt-0.5 text-[11px] text-brand-600">Conversion</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="px-6 pb-10 pt-2 text-sm text-slate-500">
+              Analytics data unavailable. Check back when jobs and applications exist.
+            </p>
+          )}
         </section>
 
+        {/* Organization pulse */}
         <aside
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
           aria-labelledby="org-title"
@@ -222,22 +239,15 @@ export function AdminOverview({
           </h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {organizations.length > 0
-              ? `${organizations.length} organization${organizations.length === 1 ? '' : 's'} with ${publishedJobs} published role${publishedJobs === 1 ? '' : 's'} across the platform.`
+              ? `${organizations.length} organization${organizations.length === 1 ? '' : 's'} · ${publishedJobs} published role${publishedJobs === 1 ? '' : 's'}.`
               : 'Create organizations from the Organizations tab to get started.'}
           </p>
           <div className="mt-5 space-y-3">
-            {organizations.slice(0, 3).map((org) => (
-              <div
-                key={org.id}
-                className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5"
-              >
+            {organizations.slice(0, 4).map((org) => (
+              <div key={org.id} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5">
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {org.name}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {org.members} members · {org.activeJobs} jobs
-                  </p>
+                  <p className="text-sm font-semibold text-slate-800">{org.name}</p>
+                  <p className="text-xs text-slate-500">{org.members} members · {org.activeJobs} jobs</p>
                 </div>
                 <Badge tone="green">{org.status}</Badge>
               </div>
@@ -255,69 +265,126 @@ export function AdminOverview({
         </aside>
       </div>
 
+      {/* Second row */}
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
+
+        {/* Top hiring organizations */}
         <section
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
-          aria-labelledby="activity-title"
+          aria-labelledby="top-orgs-title"
         >
-          <div className="flex items-start justify-between">
-            <div>
-              <h2
-                id="activity-title"
-                className="font-display text-lg font-bold"
-              >
-                Recent platform activity
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Latest accounts registered on Talenta.
-              </p>
-            </div>
-            <ActivityIcon className="h-5 w-5 text-slate-400" />
-          </div>
-          <div className="mt-5 space-y-4">
-            {activityEvents.map((event) => (
-              <div key={event.text} className="flex gap-3">
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent-500" />
-                <div>
-                  <p className="text-sm font-semibold text-slate-700">
-                    {event.text}
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-400">{event.meta}</p>
-                </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
+                <BarChart3Icon className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 id="top-orgs-title" className="font-display text-lg font-bold">
+                  Top hiring organizations
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  Ranked by total hires this period.
+                </p>
               </div>
-            ))}
+            </div>
+            <button
+              onClick={() => onViewChange('analytics')}
+              className="text-sm font-bold text-brand-600 hover:underline"
+            >
+              See all
+            </button>
           </div>
+
+          {analyticsLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2Icon className="h-5 w-5 animate-spin text-brand-600" />
+            </div>
+          ) : analytics?.topOrganizations && analytics.topOrganizations.length > 0 ? (
+            <div className="mt-5 space-y-3">
+              {analytics.topOrganizations.slice(0, 4).map((org, i) => (
+                <div key={org.organizationName} className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-extrabold text-slate-600">
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{org.organizationName}</p>
+                      <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 shrink-0">
+                        <CheckCircle2Icon className="h-3.5 w-3.5" />{org.hired} hired
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
+                      <span>{org.totalJobs} jobs</span>
+                      <span>{org.totalApplications} applicants</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {recentPeople.slice(0, 4).map((p) => (
+                <div key={p.id} className="flex gap-3">
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent-500" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {p.role} account: {p.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-400">{p.organization}</p>
+                  </div>
+                </div>
+              ))}
+              {recentPeople.length === 0 && (
+                <p className="text-sm text-slate-500">No hiring data yet.</p>
+              )}
+            </div>
+          )}
         </section>
 
+        {/* Quick stats */}
         <section
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
-          aria-labelledby="usage-title"
+          aria-labelledby="stats-title"
         >
-          <h2 id="usage-title" className="font-display text-lg font-bold">
-            Platform pulse
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Live totals across workspaces.
-          </p>
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              <ActivityIcon className="h-5 w-5" />
+            </span>
+            <h2 id="stats-title" className="font-display text-lg font-bold">Platform stats</h2>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-brand-50 p-4">
+              <p className="font-display text-2xl font-extrabold text-brand-700">
+                {analytics?.totalJobsPosted ?? publishedJobs}
+              </p>
+              <p className="mt-1 text-xs text-brand-600 font-medium">Jobs posted</p>
+            </div>
             <div className="rounded-xl bg-slate-50 p-4">
-              <p className="font-display text-xl font-extrabold">
+              <p className="font-display text-2xl font-extrabold text-slate-900">
                 {people.length}
               </p>
-              <p className="mt-1 text-xs text-slate-500">Registered users</p>
+              <p className="mt-1 text-xs text-slate-500 font-medium">Registered users</p>
             </div>
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="font-display text-xl font-extrabold">
-                {publishedJobs}
+            <div className="rounded-xl bg-emerald-50 p-4">
+              <p className="font-display text-2xl font-extrabold text-emerald-700">
+                {analytics?.totalHired ?? 0}
               </p>
-              <p className="mt-1 text-xs text-slate-500">Published jobs</p>
+              <p className="mt-1 text-xs text-emerald-600 font-medium">Total hires</p>
+            </div>
+            <div className="rounded-xl bg-amber-50 p-4">
+              <p className="font-display text-2xl font-extrabold text-amber-700">
+                {analytics?.pipeline?.interviewScheduled ?? 0}
+              </p>
+              <p className="mt-1 text-xs text-amber-600 font-medium">Interviews scheduled</p>
             </div>
           </div>
+
           <button
-            onClick={() => onViewChange('organizations')}
-            className="mt-5 text-sm font-bold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+            onClick={() => onViewChange('analytics')}
+            className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-brand-600 hover:underline"
           >
-            View organizations
+            <BarChart3Icon className="h-4 w-4" /> Full analytics
           </button>
         </section>
       </div>

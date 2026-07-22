@@ -93,7 +93,7 @@ async function publicRequest<T>(endpoint: string): Promise<T> {
 }
 
 export const authApi = {
-  
+
   login: (payload: { email: string; password: string }) =>
     request<ApiResponse<AuthResponse>>('/auth/login', {
       method: 'POST',
@@ -112,7 +112,7 @@ export const authApi = {
       body: JSON.stringify(payload),
     }),
 
-  
+
   registerRecruiter: (payload: {
     firstName: string;
     lastName: string;
@@ -126,7 +126,7 @@ export const authApi = {
       body: JSON.stringify(payload),
     }),
 
-  
+
   inviteHiringManager: (payload: { email: string; departmentId?: string }) =>
     request<InviteResponse>('/auth/invite-hiring-manager', {
       method: 'POST',
@@ -221,10 +221,34 @@ export const adminApi = {
       method: 'PUT',
     }),
 
+  toggleUserStatus: (id: string) =>
+    request<{ message: string; isActive: boolean }>(`/admin/users/${id}/toggle-status`, {
+      method: 'PUT',
+    }),
+
   getUsers: (role?: string, page = 1, pageSize = 100) => {
     const roleParam = role ? `&role=${encodeURIComponent(role)}` : '';
     return request<PagedResult<BackendUser>>(`/admin/users?page=${page}&pageSize=${pageSize}${roleParam}`);
   },
+
+  updateUser: (id: string, payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role?: string;
+    status?: string;
+    organizationId?: string;
+    departmentId?: string;
+  }) =>
+    request<{ message: string; data: BackendUser }>(`/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteUser: (id: string) =>
+    request<{ message: string }>(`/admin/users/${id}`, {
+      method: 'DELETE',
+    }),
 
   createUser: (payload: {
     firstName: string;
@@ -258,6 +282,30 @@ export const adminApi = {
   deleteOrganization: (id: string) =>
     request<{ message: string }>(`/admin/organizations/${id}`, {
       method: 'DELETE',
+    }),
+
+  getAnalytics: () =>
+    request<DashboardAnalyticsDto>('/admin/analytics/dashboard'),
+
+  // ─── Audit Logs ──────────────────────────────────────────────────────────
+  getAuditLogs: (page = 1, pageSize = 20, search?: string, module?: string) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (search) params.set('search', search);
+    if (module) params.set('module', module);
+    return request<PagedResult<AuditLogEntry>>(`/admin/audit-logs?${params}`);
+  },
+
+  getAuditModules: () =>
+    request<string[]>('/admin/audit-logs/modules'),
+
+  // ─── System Settings ─────────────────────────────────────────────────────
+  getSettings: () =>
+    request<SystemSettingEntry[]>('/admin/settings'),
+
+  updateSettings: (settings: { key: string; value: string }[]) =>
+    request<{ message: string; data: SystemSettingEntry[] }>('/admin/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ settings }),
     }),
 };
 
@@ -338,6 +386,7 @@ export interface JobApplicant {
   status: string;
   coverLetter: string | null;
   appliedAt: string;
+  matchScore: number;
   skills: string[];
   experiences: WorkExperienceItem[];
   educations: EducationItem[];
@@ -468,11 +517,11 @@ export const recruiterApi = {
     return request<PagedJobsResult>(`/recruiter/jobs?page=${page}&pageSize=${pageSize}${statusParam}`);
   },
 
-  getJobApplicants: (jobId: string) =>
-    request<JobApplicantsResult>(`/recruiter/jobs/${jobId}/applicants`),
+  getJobApplicants: (jobId: string, includeAiScores = false) =>
+    request<JobApplicantsResult>(`/recruiter/jobs/${jobId}/applicants?includeAiScores=${includeAiScores}`),
 
-  getAllApplicants: () =>
-    request<JobApplicant[]>('/recruiter/applicants'),
+  getAllApplicants: (includeAiScores = false) =>
+    request<JobApplicant[]>(`/recruiter/applicants?includeAiScores=${includeAiScores}`),
 
   getCandidateProfile: (profileId: string) =>
     request<CandidateProfileResponseDto>(`/recruiter/candidates/${profileId}/profile`),
@@ -555,11 +604,23 @@ export const recruiterApi = {
     request<void>(`/departments/${id}`, {
       method: 'DELETE',
     }),
+
+  sendMessage: (payload: {
+    toEmail: string;
+    toName: string;
+    subject: string;
+    message: string;
+    jobTitle?: string;
+  }) =>
+    request<{ message: string }>('/recruiter/messages/send', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
 
 export const managerApi = {
-  getApplicants: () =>
-    request<JobApplicant[]>('/manager/applicants'),
+  getApplicants: (includeAiScores = false) =>
+    request<JobApplicant[]>(`/manager/applicants?includeAiScores=${includeAiScores}`),
 
   getInterviews: () =>
     request<InterviewDto[]>('/manager/interviews'),
@@ -785,6 +846,43 @@ export interface CandidateProfileExportDto {
   exportedAt: string;
 }
 
+export interface ParsedResumeDto {
+  phone?: string | null;
+  location?: string | null;
+  headline?: string | null;
+  skills: string[];
+  experiences: {
+    company: string;
+    title: string;
+    startDate: string;
+    endDate?: string | null;
+    isCurrent: boolean;
+    description?: string | null;
+  }[];
+  educations: {
+    institution: string;
+    degree: string;
+    fieldOfStudy: string;
+    startDate: string;
+    endDate?: string | null;
+  }[];
+}
+
+export interface JobRecommendationDto {
+  jobId: string;
+  jobTitle: string;
+  company: string;
+  location: string;
+  employmentType: string;
+  description: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  salaryCurrency: string;
+  requiredSkills: string[];
+  matchScore: number;
+  matchExplanation: string;
+}
+
 export const candidateApi = {
   getProfile: () =>
     request<CandidateProfileResponseDto>('/candidate/profile'),
@@ -809,6 +907,18 @@ export const candidateApi = {
       body: formData,
     });
   },
+
+  parseResume: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ message: string; resumeUrl: string; data: ParsedResumeDto }>('/candidate/profile/resume/parse', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  getRecommendations: () =>
+    request<JobRecommendationDto[]>('/candidate/profile/recommendations'),
 
   deleteResume: () =>
     request<void>('/candidate/profile/resume', {
@@ -928,4 +1038,67 @@ export interface DepartmentDashboardDto {
     desc: string;
     enabled: boolean;
   }[];
+}
+
+// ── Recruitment Analytics ─────────────────────────────────────────────────────
+
+export interface PipelineFunnelDto {
+  received: number;
+  underReview: number;
+  interviewScheduled: number;
+  hired: number;
+}
+
+export interface OrgHiringDto {
+  organizationName: string;
+  totalJobs: number;
+  totalApplications: number;
+  hired: number;
+}
+
+export interface DepartmentJobsDto {
+  departmentName: string;
+  jobCount: number;
+}
+
+export interface ActivityLogItemDto {
+  type: 'job_posted' | 'hired' | 'application' | 'interview' | string;
+  message: string;
+  meta: string;
+  occurredAt: string;
+}
+
+export interface DashboardAnalyticsDto {
+  totalJobsPosted: number;
+  totalApplicants: number;
+  totalHired: number;
+  totalActiveOrganizations: number;
+  pipeline: PipelineFunnelDto;
+  topOrganizations: OrgHiringDto[];
+  departmentBreakdown: DepartmentJobsDto[];
+  averageMatchScore: number;
+  averageTimeToHireDays: number;
+  recentActivity: ActivityLogItemDto[];
+}
+
+// ── Audit & Settings ──────────────────────────────────────────────────────────
+
+export interface AuditLogEntry {
+  id: number;
+  userId?: string | null;
+  userName: string;
+  action: string;
+  module: string;
+  ipAddress: string;
+  timestamp: string;
+  details?: string | null;
+}
+
+export interface SystemSettingEntry {
+  id: number;
+  key: string;
+  value: string;
+  description: string;
+  updatedAt: string;
+  updatedBy: string;
 }

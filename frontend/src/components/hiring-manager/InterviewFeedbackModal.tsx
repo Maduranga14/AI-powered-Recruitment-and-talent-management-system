@@ -7,6 +7,8 @@ import {
   MessageSquareTextIcon,
   StarIcon,
   ThumbsUpIcon,
+  UserCheckIcon,
+  UserXIcon,
   XIcon,
 } from 'lucide-react';
 import type { InterviewDto } from '../../services/api';
@@ -31,6 +33,7 @@ interface InterviewFeedbackModalProps {
       overallRating: number;
       skillRatings?: string;
       technicalAssessmentScore?: number | null;
+      decision?: 'Hired' | 'Offer' | 'Rejected' | 'UnderFinalReview';
     }
   ) => Promise<void>;
 }
@@ -173,7 +176,7 @@ export function InterviewFeedbackModal({
     recommendation !== null &&
     generalImpression.trim().length >= 10;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (decision?: 'Hired' | 'Offer' | 'Rejected' | 'UnderFinalReview') => {
     if (!interview || !canSubmit || !recommendation) return;
     setSubmitting(true);
     setError('');
@@ -192,6 +195,7 @@ export function InterviewFeedbackModal({
         overallRating,
         skillRatings: JSON.stringify(skillScores),
         technicalAssessmentScore: showTechScore && technicalScore > 0 ? technicalScore : null,
+        decision,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit feedback.');
@@ -202,7 +206,7 @@ export function InterviewFeedbackModal({
   return (
     <AnimatePresence>
       {interview && (
-        <>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           {/* Backdrop */}
           <motion.div
             key="backdrop"
@@ -210,17 +214,17 @@ export function InterviewFeedbackModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
           />
 
           {/* Modal */}
           <motion.div
             key="modal"
-            initial={{ opacity: 0, y: 40, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
             transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-            className="fixed inset-x-4 bottom-0 top-4 z-50 mx-auto flex max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:top-6 sm:bottom-6 sm:w-full"
+            className="relative z-10 flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-100"
           >
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 bg-gradient-to-r from-brand-50 to-slate-50 px-6 py-5">
@@ -417,41 +421,50 @@ export function InterviewFeedbackModal({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-slate-100 bg-white px-6 py-4 flex items-center justify-between gap-3">
-              <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                <StarIcon className="h-3.5 w-3.5 text-amber-400" />
-                Overall rating, recommendation &amp; general impression required.
+            <div className="border-t border-slate-100 bg-slate-50/70 px-7 py-4.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+                <StarIcon className="h-4 w-4 text-amber-400 shrink-0" />
+                Rating, recommendation &amp; impression required.
               </p>
-              <div className="flex items-center gap-2.5 shrink-0">
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   disabled={!canSubmit || submitting}
-                  onClick={handleSubmit}
-                  className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2 text-sm font-bold text-white shadow-md shadow-brand-200 transition hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  onClick={() => handleSubmit('Offer')}
+                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {submitting ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      Submitting&hellip;
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2Icon className="h-4 w-4" />
-                      Submit Feedback
-                    </>
-                  )}
+                  <UserCheckIcon className="h-4 w-4" />
+                  Extend Offer
+                </button>
+                <button
+                  type="button"
+                  disabled={!canSubmit || submitting}
+                  onClick={() => handleSubmit('Rejected')}
+                  className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <UserXIcon className="h-4 w-4" />
+                  Reject Candidate
+                </button>
+                <button
+                  type="button"
+                  disabled={!canSubmit || submitting}
+                  onClick={() => handleSubmit('UnderFinalReview')}
+                  className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-brand-100 transition hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle2Icon className="h-4 w-4" />
+                  Submit Feedback Only
                 </button>
               </div>
             </div>
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );

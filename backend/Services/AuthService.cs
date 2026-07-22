@@ -6,11 +6,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services
 {
-    public class AuthService(AppDbContext dbContext, IJwtService jwtService, IEmailService emailService) : IAuthService
+    public class AuthService(
+        AppDbContext dbContext,
+        IJwtService jwtService,
+        IEmailService emailService,
+        IAuditLogService auditLogService) : IAuthService
     {
         private readonly AppDbContext _db = dbContext;
         private readonly IJwtService _jwtService = jwtService;
         private readonly IEmailService _emailService = emailService;
+        private readonly IAuditLogService _auditLogService = auditLogService;
 
         // ─────────────────────────────────────────────
         // Candidate Registration

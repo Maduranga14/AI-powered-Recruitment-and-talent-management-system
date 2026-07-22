@@ -106,18 +106,49 @@ export function HiringManagerCalendar({
       overallRating: number;
       skillRatings?: string;
       technicalAssessmentScore?: number | null;
+      decision?: 'Hired' | 'Offer' | 'Rejected' | 'UnderFinalReview';
     }
   ) => {
     await managerApi.submitInterviewFeedback(interviewId, payload);
+    if (payload.decision && payload.decision !== 'UnderFinalReview') {
+      const targetInterview = feedbackInterview;
+      if (targetInterview?.applicationId) {
+        await managerApi.makeHiringDecision(targetInterview.applicationId, {
+          decision: payload.decision === 'Offer' ? 'Hired' : payload.decision,
+          notes: payload.comments,
+        });
+      }
+    }
     setFeedbackInterview(null);
-    showMessage('Interview feedback submitted. Application moved to Under Final Review.');
+    showMessage(
+      payload.decision === 'Offer' || payload.decision === 'Hired'
+        ? 'Feedback submitted & Offer extended 🎉'
+        : payload.decision === 'Rejected'
+        ? 'Feedback submitted & Application rejected.'
+        : 'Interview feedback submitted. Application moved to Under Final Review.'
+    );
     onFeedbackSubmitted?.();
   };
 
   const upcoming = [...interviews].sort((a, b) => {
+    const nowMs = Date.now();
     const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
     const tb = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
-    return ta - tb;
+
+    if (!ta && !tb) return 0;
+    if (!ta) return 1;
+    if (!tb) return -1;
+
+    const diffA = ta - nowMs;
+    const diffB = tb - nowMs;
+
+    // Both in future: nearest future interview first (smallest positive diff)
+    if (diffA >= 0 && diffB >= 0) return diffA - diffB;
+    // Future comes before past
+    if (diffA >= 0 && diffB < 0) return -1;
+    if (diffA < 0 && diffB >= 0) return 1;
+    // Both in past: most recent past interview first
+    return Math.abs(diffA) - Math.abs(diffB);
   });
 
   return (

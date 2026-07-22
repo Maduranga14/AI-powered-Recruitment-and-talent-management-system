@@ -51,7 +51,7 @@ const navigation: NavigationItem[] = [
 },
 {
   id: 'calendar',
-  label: 'Calendar',
+  label: 'Interviews',
   icon: CalendarDaysIcon
 }];
 

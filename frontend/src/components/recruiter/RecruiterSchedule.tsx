@@ -56,10 +56,25 @@ export function RecruiterSchedule({
     })
   );
 
-  const upcoming = interviews.filter((i) => {
-    if (!i.scheduledAt) return true;
-    return new Date(i.scheduledAt).getTime() >= now.getTime() - 60 * 60 * 1000;
-  });
+  const upcoming = interviews
+    .filter((i) => {
+      if (!i.scheduledAt) return true;
+      return new Date(i.scheduledAt).getTime() >= now.getTime() - 60 * 60 * 1000;
+    })
+    .sort((a, b) => {
+      const nowMs = now.getTime();
+      const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+      const tb = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+      if (!ta && !tb) return 0;
+      if (!ta) return 1;
+      if (!tb) return -1;
+      const diffA = ta - nowMs;
+      const diffB = tb - nowMs;
+      if (diffA >= 0 && diffB >= 0) return diffA - diffB;
+      if (diffA >= 0 && diffB < 0) return -1;
+      if (diffA < 0 && diffB >= 0) return 1;
+      return Math.abs(diffA) - Math.abs(diffB);
+    });
 
   const weekLabel = `${days[0].toLocaleDateString(undefined, {
     month: 'short',

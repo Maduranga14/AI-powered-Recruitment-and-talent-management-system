@@ -187,7 +187,7 @@ namespace backend.Controllers
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(JobApplicantsResultDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetApplicants(Guid id)
+        public async Task<IActionResult> GetApplicants(Guid id, [FromQuery] bool includeAiScores = false)
         {
             var recruiterId = GetRecruiterId();
             if (recruiterId == null)
@@ -195,7 +195,7 @@ namespace backend.Controllers
 
             try
             {
-                var result = await _jobService.GetApplicantsAsync(id, recruiterId.Value);
+                var result = await _jobService.GetApplicantsAsync(id, recruiterId.Value, includeAiScores);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)
@@ -208,13 +208,13 @@ namespace backend.Controllers
         [HttpGet("api/recruiter/applicants")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(List<JobApplicantDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAllApplicants()
+        public async Task<IActionResult> GetAllApplicants([FromQuery] bool includeAiScores = false)
         {
             var recruiterId = GetRecruiterId();
             if (recruiterId == null)
                 return Unauthorized(new { message = "Invalid session. Please log in again." });
 
-            var result = await _jobService.GetAllApplicantsAsync(recruiterId.Value);
+            var result = await _jobService.GetAllApplicantsAsync(recruiterId.Value, includeAiScores);
             return Ok(result);
         }
 

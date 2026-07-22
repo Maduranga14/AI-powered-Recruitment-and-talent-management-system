@@ -48,7 +48,7 @@ export function HiringManagerOverview({
     : 'None scheduled';
 
   const hiredCount = candidates.filter(
-    (candidate) => candidate.decisionStatus === 'Hired'
+    (candidate) => candidate.decisionStatus === 'Hired' || candidate.decisionStatus === 'Offer'
   ).length;
 
   const metrics = [
@@ -233,7 +233,7 @@ export function HiringManagerOverview({
               onClick={() => onViewChange('calendar')}
               className="text-sm font-bold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
               
-              Calendar
+              Interviews
             </button>
           </div>
           <div className="mt-5 space-y-4">
@@ -276,7 +276,7 @@ export function HiringManagerOverview({
             onClick={() => onViewChange('calendar')}
             className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
             
-            View calendar
+            View interviews
           </button>
         </section>
       </div>

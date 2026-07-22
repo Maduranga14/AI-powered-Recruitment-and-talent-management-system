@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
+  CalendarIcon,
+  CheckCircle2Icon,
   FilterIcon,
   SearchIcon,
   SlidersHorizontalIcon,
-  SparklesIcon } from
-'lucide-react';
+  SparklesIcon,
+  XCircleIcon,
+} from 'lucide-react';
 import type {
   ManagerCandidate,
   ManagerDecisionStatus } from
@@ -16,16 +19,28 @@ import { MatchScore } from '../ui/MatchScore';
 interface HiringManagerCandidatesProps {
   candidates: ManagerCandidate[];
   onCandidateSelect: (candidate: ManagerCandidate) => void;
+  onToggleAiScores?: (enable: boolean) => void;
 }
 export function HiringManagerCandidates({
   candidates,
-  onCandidateSelect
+  onCandidateSelect,
+  onToggleAiScores,
 }: HiringManagerCandidatesProps) {
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('All assigned roles');
   const [statusFilter, setStatusFilter] = useState<
     'All decisions' | ManagerDecisionStatus>(
     'All decisions');
+
+  const [showAiScore, setShowAiScore] = useState(false);
+
+  const handleToggleAi = () => {
+    const next = !showAiScore;
+    setShowAiScore(next);
+    if (next && onToggleAiScores) {
+      onToggleAiScores(true);
+    }
+  };
   const roles = Array.from(
     new Set(candidates.map((candidate) => candidate.role))
   );
@@ -83,9 +98,21 @@ export function HiringManagerCandidates({
             forward.
           </p>
         </div>
-        <Badge tone="accent">
-          <SparklesIcon className="h-3.5 w-3.5" /> Structured signals
-        </Badge>
+        <button
+          type="button"
+          onClick={handleToggleAi}
+          className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all shadow-xs ${
+            showAiScore
+              ? 'border-brand-300 bg-gradient-to-r from-brand-50 to-indigo-50 text-brand-700 shadow-brand-100 ring-2 ring-brand-200'
+              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <SparklesIcon className={`h-4 w-4 ${showAiScore ? 'text-brand-600 fill-brand-200' : 'text-slate-400'}`} />
+          <span>AI Score</span>
+          <span className={`ml-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider font-extrabold ${showAiScore ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+            {showAiScore ? 'ON' : 'OFF'}
+          </span>
+        </button>
       </div>
       <section
         className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5"
@@ -156,10 +183,14 @@ export function HiringManagerCandidates({
         className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
         aria-label="Assigned candidates">
         
-          <div className="hidden grid-cols-[minmax(280px,1.5fr)_minmax(175px,1fr)_110px_150px] gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid">
+          <div className={`hidden gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid ${
+            showAiScore
+              ? 'grid-cols-[minmax(280px,1.5fr)_minmax(175px,1fr)_110px_150px]'
+              : 'grid-cols-[minmax(280px,1.5fr)_minmax(175px,1fr)_150px]'
+          }`}>
             <span>Candidate</span>
             <span>Assigned role</span>
-            <span>Fit</span>
+            {showAiScore && <span>Fit</span>}
             <span>Decision status</span>
           </div>
           <div className="divide-y divide-slate-100">
@@ -167,7 +198,11 @@ export function HiringManagerCandidates({
           <button
             key={candidate.id}
             onClick={() => onCandidateSelect(candidate)}
-            className="grid w-full gap-4 p-4 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 lg:grid-cols-[minmax(280px,1.5fr)_minmax(175px,1fr)_110px_150px] lg:items-center lg:px-5">
+            className={`grid w-full gap-4 p-4 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 lg:items-center lg:px-5 ${
+              showAiScore
+                ? 'lg:grid-cols-[minmax(280px,1.5fr)_minmax(175px,1fr)_110px_150px]'
+                : 'lg:grid-cols-[minmax(280px,1.5fr)_minmax(175px,1fr)_150px]'
+            }`}>
             
                 <span className="flex min-w-0 items-center gap-3">
                   <img
@@ -199,12 +234,30 @@ export function HiringManagerCandidates({
                     {candidate.interviewTime ?? candidate.applied}
                   </span>
                 </span>
-                <span className="flex items-center gap-2">
-                  <MatchScore score={candidate.matchScore} size={38} />
-                  <span className="text-xs font-semibold text-slate-500 lg:hidden">
-                    Match
+                {showAiScore && (
+                  <span className="flex items-center gap-2">
+                    {candidate.decisionStatus === 'Interview' ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                        <CalendarIcon className="h-3.5 w-3.5" /> Scheduled
+                      </span>
+                    ) : candidate.decisionStatus === 'Offer' || candidate.decisionStatus === 'Hired' ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                        <CheckCircle2Icon className="h-3.5 w-3.5" /> Offered
+                      </span>
+                    ) : candidate.decisionStatus === 'Rejected' ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
+                        <XCircleIcon className="h-3.5 w-3.5" /> Passed
+                      </span>
+                    ) : (
+                      <>
+                        <MatchScore score={candidate.matchScore} size={38} />
+                        <span className="text-xs font-semibold text-slate-500 lg:hidden">
+                          Match
+                        </span>
+                      </>
+                    )}
                   </span>
-                </span>
+                )}
                 <span>
                   <Badge tone={DECISION_TONES[candidate.decisionStatus]}>
                     {candidate.decisionStatus}

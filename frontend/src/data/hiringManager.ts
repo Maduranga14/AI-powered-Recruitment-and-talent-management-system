@@ -4,6 +4,7 @@ export type ManagerDecisionStatus =
   | 'Feedback submitted'
   | 'Decision shared'
   | 'Hired'
+  | 'Offer'
   | 'Rejected'
   | 'Under Final Review';
 
@@ -271,6 +272,7 @@ export const DECISION_TONES: Record<
   'Feedback submitted': 'brand',
   'Decision shared': 'green',
   'Hired': 'green',
+  'Offer': 'green',
   'Rejected': 'red',
   'Under Final Review': 'slate'
 };

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2Icon } from 'lucide-react';
+import { AdminAnalytics } from '../components/admin/AdminAnalytics';
 import { AdminAuditSettings } from '../components/admin/AdminAuditSettings';
-import { AdminModeration } from '../components/admin/AdminModeration';
-import { AdminModerationDrawer } from '../components/admin/AdminModerationDrawer';
 import { AdminOrganizationDrawer } from '../components/admin/AdminOrganizationDrawer';
 import { AdminOrganizations } from '../components/admin/AdminOrganizations';
 import { AdminOverview } from '../components/admin/AdminOverview';
@@ -12,13 +11,10 @@ import { AdminPersonDrawer } from '../components/admin/AdminPersonDrawer';
 import { AdminShell, type AdminView } from '../components/admin/AdminShell';
 import { RecruiterDepartments } from '../components/recruiter/RecruiterDepartments';
 import {
-  ADMIN_AUDIT_EVENTS,
-  ADMIN_MODERATION,
   type AdminPerson,
   type AdminOrganization,
-  type ModerationItem,
   type AdminRole,
-  type AccountStatus
+  type AccountStatus,
 } from '../data/admin';
 import { adminApi, publicApi } from '../services/api';
 
@@ -26,15 +22,9 @@ export function Admin() {
   const [view, setView] = useState<AdminView>('overview');
   const [people, setPeople] = useState<AdminPerson[]>([]);
   const [organizations, setOrganizations] = useState<AdminOrganization[]>([]);
-  const [moderation, setModeration] = useState(ADMIN_MODERATION);
   const [publishedJobs, setPublishedJobs] = useState(0);
   const [selectedPerson, setSelectedPerson] = useState<AdminPerson | null>(null);
   const [selectedOrganizationId, setSelectedOrganizationId] = useState<string | null>(null);
-  const [selectedModeration, setSelectedModeration] = useState<ModerationItem | null>(null);
-  const [settings, setSettings] = useState({
-    reviewAlerts: true,
-    strictSafeguards: true
-  });
   const [feedback, setFeedback] = useState('');
 
   const refreshData = async () => {
@@ -52,9 +42,7 @@ export function Admin() {
         if (u.role === 'Admin') mappedRole = 'Administrator';
         else if (u.role === 'Recruiter') mappedRole = 'Recruiter';
         else if (u.role === 'HiringManager') mappedRole = 'Hiring manager';
-
-        let mappedStatus: AccountStatus = u.isActive ? 'Active' : 'Suspended';
-
+        const mappedStatus: AccountStatus = u.isActive ? 'Active' : 'Suspended';
         return {
           id: u.id,
           name: u.fullName,
@@ -64,26 +52,21 @@ export function Admin() {
           organization: u.organizationName || 'Independent',
           department: u.departmentName || '—',
           joined: new Date(u.createdAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
+            month: 'short', day: 'numeric', year: 'numeric',
           }),
           lastActive: 'Recently',
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=4f46e5&color=fff&bold=true&size=96&format=png`
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullName)}&background=4f46e5&color=fff&bold=true&size=96&format=png`,
         };
       });
 
       setPeople(backendPeople);
       setOrganizations(liveOrgs as AdminOrganization[]);
-
     } catch (err) {
-      console.error('Failed to load live admin data:', err);
+      console.error('Failed to load admin data:', err);
     }
   };
 
-  useEffect(() => {
-    refreshData();
-  }, [view]);
+  useEffect(() => { refreshData(); }, [view]);
 
   const showFeedback = (message: string) => {
     setFeedback(message);
@@ -94,45 +77,29 @@ export function Admin() {
     try {
       await adminApi.toggleUserStatus(person.id);
       const nextStatus = person.status === 'Suspended' ? 'Active' : 'Suspended';
-      setPeople((prev) =>
-        prev.map((item) =>
-          item.id === person.id ? { ...item, status: nextStatus } : item
-        )
-      );
+      setPeople((prev) => prev.map((p) => p.id === person.id ? { ...p, status: nextStatus } : p));
       showFeedback(`${person.name} is now ${nextStatus.toLowerCase()}`);
     } catch (err: any) {
       showFeedback(err.message || 'Failed to update user status.');
     }
   };
 
-  const toggleSetting = (key: 'reviewAlerts' | 'strictSafeguards') => {
-    setSettings((s) => ({ ...s, [key]: !s[key] }));
-    showFeedback('Safeguard setting updated');
+  const handlePersonUpdated = (updated: AdminPerson) => {
+    setPeople((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    setSelectedPerson(updated);
+    showFeedback(`${updated.name}'s account updated.`);
   };
 
-  const decideModeration = (
-    id: string,
-    decision: 'Approved' | 'Restricted'
-  ) => {
-    setModeration((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: decision } : item
-      )
-    );
-    showFeedback(
-      `Item ${decision.toLowerCase()} and logged in platform audit`
-    );
+  const handlePersonDeleted = (personId: string) => {
+    setPeople((prev) => prev.filter((p) => p.id !== personId));
+    setSelectedPerson(null);
+    showFeedback('Account deleted successfully.');
   };
 
-  const selectedOrganization =
-    organizations.find((o) => o.id === selectedOrganizationId) || null;
+  const selectedOrganization = organizations.find((o) => o.id === selectedOrganizationId) || null;
 
   return (
-    <AdminShell
-      activeView={view}
-      moderationCount={moderation.filter((i) => i.status === 'Pending').length}
-      onViewChange={setView}
-    >
+    <AdminShell activeView={view} moderationCount={0} onViewChange={setView}>
       <AnimatePresence mode="wait">
         <motion.div
           key={view}
@@ -145,41 +112,24 @@ export function Admin() {
             <AdminOverview
               people={people}
               organizations={organizations}
-              moderation={moderation}
               publishedJobs={publishedJobs}
               onViewChange={setView}
             />
           )}
-
           {view === 'people' && (
             <AdminPeople people={people} onPersonSelect={setSelectedPerson} onRefresh={refreshData} />
           )}
-
           {view === 'organizations' && (
             <AdminOrganizations
               organizations={organizations}
-              onOrganizationSelect={(organization) =>
-                setSelectedOrganizationId(organization.id)
-              }
+              onOrganizationSelect={(org) => setSelectedOrganizationId(org.id)}
               onRefresh={refreshData}
             />
           )}
-
           {view === 'departments' && <RecruiterDepartments />}
-
-          {view === 'moderation' && (
-            <AdminModeration
-              moderation={moderation}
-              onItemSelect={setSelectedModeration}
-            />
-          )}
-
+          {view === 'analytics' && <AdminAnalytics />}
           {view === 'audit-settings' && (
-            <AdminAuditSettings
-              auditEvents={ADMIN_AUDIT_EVENTS}
-              settings={settings}
-              onToggle={toggleSetting}
-            />
+            <AdminAuditSettings />
           )}
         </motion.div>
       </AnimatePresence>
@@ -188,17 +138,12 @@ export function Admin() {
         person={selectedPerson}
         onClose={() => setSelectedPerson(null)}
         onToggleStatus={togglePersonStatus}
+        onUpdated={handlePersonUpdated}
+        onDeleted={handlePersonDeleted}
       />
-
       <AdminOrganizationDrawer
         organization={selectedOrganization}
         onClose={() => setSelectedOrganizationId(null)}
-      />
-
-      <AdminModerationDrawer
-        item={selectedModeration}
-        onClose={() => setSelectedModeration(null)}
-        onDecision={decideModeration}
       />
 
       <AnimatePresence>

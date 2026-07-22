@@ -32,16 +32,18 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
   }
 
   let decisionStatus: ManagerCandidate['decisionStatus'] = 'Interview';
-  if (applicant.status === 'Hired') {
-    decisionStatus = 'Hired';
+  if (applicant.status === 'Hired' || applicant.status === 'Offer') {
+    decisionStatus = 'Offer';
   } else if (applicant.status === 'Rejected') {
     decisionStatus = 'Rejected';
   } else if (applicant.status === 'UnderFinalReview') {
     decisionStatus = 'Under Final Review';
-  } else if (applicant.interviewComments || applicant.interviewRecommendation) {
+  } else if (applicant.status === 'Interview') {
+    decisionStatus = 'Interview';
+  } else if (applicant.status === 'Reviewed' || applicant.interviewComments || applicant.interviewRecommendation) {
     decisionStatus = 'Feedback submitted';
   } else {
-    decisionStatus = 'Interview';
+    decisionStatus = 'Awaiting feedback';
   }
 
   const skills = applicant.skills || [];
@@ -53,7 +55,8 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
   ];
 
   return {
-    id: applicant.candidateProfileId,
+    id: applicant.applicationId,
+    candidateProfileId: applicant.candidateProfileId,
     applicationId: applicant.applicationId,
     name: applicant.fullName,
     title: applicant.headline || 'Applicant',
@@ -61,7 +64,7 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
     avatar: applicant.photoUrl || avatarUrl(applicant.fullName, '0d9488'),
     role: applicant.jobTitle,
     decisionStatus,
-    matchScore: 0,
+    matchScore: applicant.matchScore || 0,
     skills,
     experiences: (applicant.experiences || []).map(e => ({
       title: e.title,
@@ -207,6 +210,19 @@ export function HiringManager() {
     window.setTimeout(() => setFeedback(''), 2800);
   };
 
+  const handleFetchAiScores = async () => {
+    setLoading(true);
+    try {
+      const list = await managerApi.getApplicants(true);
+      setCandidates(list.map(toManagerCandidate));
+      showFeedback('AI match scores generated for candidates!');
+    } catch {
+      showFeedback('Failed to generate AI match scores.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openFeedback = (candidateId: string) => {
     setSelectedCandidate(null);
     setFeedbackCandidateId(candidateId);
@@ -303,6 +319,7 @@ export function HiringManager() {
               <HiringManagerCandidates
                 candidates={candidates}
                 onCandidateSelect={selectCandidate}
+                onToggleAiScores={handleFetchAiScores}
               />
             )}
             {view === 'feedback' && (

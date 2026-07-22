@@ -67,7 +67,7 @@ const navigation: {
 },
 {
   id: 'schedule',
-  label: 'Schedule',
+  label: 'Interviews',
   icon: CalendarDaysIcon
 },
 {

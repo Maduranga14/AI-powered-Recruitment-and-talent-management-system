@@ -9,7 +9,11 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -83,6 +87,7 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
@@ -90,7 +95,10 @@ builder.Services.AddScoped<IRecruiterService, RecruiterService>();
 builder.Services.AddScoped<IJobPostingService, JobPostingService>();
 builder.Services.AddScoped<ICandidateProfileService, CandidateProfileService>();
 builder.Services.AddScoped<ICloudStorageService, AzureBlobStorageService>();
-builder.Services.AddScoped<IAiChatService, AiChatService>();
+            builder.Services.AddScoped<IAiChatService, AiChatService>();
+            builder.Services.AddScoped<IAiResumeParserService, AiResumeParserService>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddHttpClient("OpenAI", (sp, client) =>

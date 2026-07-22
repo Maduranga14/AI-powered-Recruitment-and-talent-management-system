@@ -25,6 +25,7 @@ import {
   publicApi,
   type InterviewDto,
   type PublicJob,
+  type JobRecommendationDto,
 } from '../services/api';
 
 type Tab = 'overview' | 'recommendations' | 'saved' | 'profile';
@@ -120,12 +121,43 @@ function savedToJob(s: {
   };
 }
 
+function recToJob(r: JobRecommendationDto): Job {
+  const companyName = r.company || 'Company';
+  const bg = stringToColor(companyName);
+
+  return {
+    id: r.jobId,
+    title: r.jobTitle,
+    company: companyName,
+    companyLogo: `https://ui-avatars.com/api/?name=${encodeURIComponent(companyName)}&background=${bg}&color=fff&bold=true&size=128&format=png`,
+    location: r.location,
+    workMode: r.employmentType === 'Remote' ? 'Remote' : 'On-site',
+    type: EMPLOYMENT_TYPE_LABEL[r.employmentType] ?? 'Full-time',
+    level: 'Mid',
+    salaryMin: r.salaryMin ?? -1,
+    salaryMax: r.salaryMax ?? -1,
+    salaryCurrency: r.salaryCurrency || 'USD',
+    postedDaysAgo: 1,
+    category: 'General',
+    skills: r.requiredSkills,
+    shortDescription: r.description ? r.description.slice(0, 300) : '',
+    responsibilities: [],
+    requirements: r.requiredSkills,
+    benefits: [],
+    applicants: 0,
+    matchScore: r.matchScore,
+    featured: false,
+  };
+}
+
 export function Dashboard() {
   const { user, isAuthenticated, applications, savedJobs } = useAuth();
   const [tab, setTab] = useState<Tab>('overview');
   const [liveJobs, setLiveJobs] = useState<Job[]>([]);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [interviews, setInterviews] = useState<InterviewDto[]>([]);
+  const [recommendations, setRecommendations] = useState<JobRecommendationDto[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true);
 
   useEffect(() => {
     publicApi
@@ -142,6 +174,16 @@ export function Dashboard() {
       .then(setInterviews)
       .catch(() => setInterviews([]));
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    setRecommendationsLoading(true);
+    candidateApi
+      .getRecommendations()
+      .then(setRecommendations)
+      .catch(() => setRecommendations([]))
+      .finally(() => setRecommendationsLoading(false));
+  }, [isAuthenticated, user?.skills, user?.resumeUrl]);
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login?redirect=/dashboard" replace />;
@@ -240,10 +282,6 @@ export function Dashboard() {
               />
             </div>
 
-            {interviewCount > 0 && (
-              <CandidateInterviews interviews={interviews} />
-            )}
-
             <div>
               <h2 className="mb-4 font-display text-xl font-extrabold text-slate-900">
                 Your applications
@@ -253,6 +291,10 @@ export function Dashboard() {
                 interviews={interviews}
               />
             </div>
+
+            {interviewCount > 0 && (
+              <CandidateInterviews interviews={interviews} />
+            )}
 
             <div>
               <div className="mb-4 flex items-center justify-between">
@@ -294,7 +336,7 @@ export function Dashboard() {
         {tab === 'recommendations' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mb-6 flex items-start gap-4 rounded-2xl border border-brand-100 bg-brand-50/60 p-5">
-              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
+              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white animate-pulse">
                 <SparklesIcon className="h-5 w-5" />
               </span>
               <div>
@@ -302,29 +344,61 @@ export function Dashboard() {
                   AI-powered recommendations
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Live openings from recruiters on Talenta. Add more skills to your
-                  profile to sharpen match quality as scoring improves.
+                  TalentPortal AI matches you with the best available job roles based on the skills, location, and experiences in your profile. Update your resume to refine the matches.
                 </p>
               </div>
             </div>
-            {jobsLoading ? (
-              <p className="text-sm text-slate-500">Loading roles…</p>
-            ) : recommended.length > 0 ? (
+            {recommendationsLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600"></div>
+                <p className="mt-4 text-sm text-slate-500 font-semibold animate-pulse">AI is running matching criteria...</p>
+              </div>
+            ) : recommendations.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2">
-                {recommended.map((job) => (
-                  <JobCard key={job.id} job={job} showMatch />
-                ))}
+                {recommendations.map((rec) => {
+                  const job = recToJob(rec);
+                  return (
+                    <div
+                      key={rec.jobId}
+                      className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-soft hover:shadow-md transition-all duration-300"
+                    >
+                      <div className="flex-1">
+                        <JobCard job={job} showMatch={false} />
+                      </div>
+                      
+                      {/* Premium AI Match Badge & Explanation */}
+                      <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/40 p-3.5">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-bold text-white shadow-sm ${
+                            rec.matchScore >= 80 ? 'bg-emerald-600' : rec.matchScore >= 50 ? 'bg-amber-600' : 'bg-slate-500'
+                          }`}>
+                            {rec.matchScore}% Match
+                          </span>
+                          <span className="text-xs font-semibold text-brand-700 flex items-center gap-0.5">
+                            <SparklesIcon className="h-3 w-3" /> AI Fit Analysis
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                          {rec.matchExplanation}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
                 <SparklesIcon className="mx-auto h-10 w-10 text-slate-300" />
                 <p className="mt-3 font-semibold text-slate-900">No matches yet</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Published jobs will appear here as soon as they are available.
+                  No matches were found. Try updating your profile or uploading a resume to enrich your matching profile.
                 </p>
-                <Link to="/jobs">
-                  <Button className="mt-5">Browse jobs</Button>
-                </Link>
+                <button
+                  onClick={() => setTab('profile')}
+                  className="mt-5 inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-750 transition-colors"
+                >
+                  Go to Profile
+                </button>
               </div>
             )}
           </motion.div>

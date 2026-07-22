@@ -17,7 +17,6 @@ import {
 import { Button } from '../components/ui/Button';
 import { Input, Select, Textarea } from '../components/ui/Input';
 import {
-  RECRUITER_MESSAGES,
   type RecruiterCandidate,
   type RecruiterInterview,
   type RecruiterJob,
@@ -47,6 +46,7 @@ function statusToStage(status: string): RecruiterStage {
     case 'UnderFinalReview':
       return 'Under Final Review';
     case 'Hired':
+    case 'Offer':
       return 'Offer';
     case 'Rejected':
       return 'Rejected';
@@ -71,7 +71,7 @@ function stageToStatus(stage: RecruiterStage): number {
     case 'Rejected':
       return 3;
     case 'Offer':
-      return 4; // Hired
+      return 7; // Offer status index 7 in backend
     case 'New':
     default:
       return 0; // Applied
@@ -108,7 +108,7 @@ function toRecruiterCandidate(applicant: JobApplicant, jobId?: string): Recruite
     role: applicant.jobTitle,
     department: applicant.departmentName || undefined,
     stage: statusToStage(applicant.status),
-    matchScore: 0,
+    matchScore: applicant.matchScore || 0,
     skills: applicant.skills ?? [],
     experience: applicant.experienceSummary || 'No experience listed',
     applied: formatAppliedAt(applicant.appliedAt),
@@ -360,6 +360,24 @@ export function Recruiter() {
     showFeedback(`${candidate?.name ?? 'Candidate'} moved to ${stage}.`);
   };
 
+  const handleFetchAiScores = async () => {
+    setApplicantsLoading(true);
+    try {
+      if (selectedJobFilter) {
+        const res = await recruiterApi.getJobApplicants(selectedJobFilter.id, true);
+        setCandidates(res.applicants.map((a) => toRecruiterCandidate(a, selectedJobFilter.id)));
+      } else {
+        const applicants = await recruiterApi.getAllApplicants(true);
+        setCandidates(applicants.map((a) => toRecruiterCandidate(a)));
+      }
+      showFeedback('AI match scores generated for candidates!');
+    } catch {
+      showFeedback('Failed to generate AI match scores.');
+    } finally {
+      setApplicantsLoading(false);
+    }
+  };
+
   const openSchedule = async (candidate?: RecruiterCandidate) => {
     setRescheduleInterview(null);
     setScheduleCandidate(candidate ?? null);
@@ -513,6 +531,7 @@ export function Recruiter() {
           onCandidateSelect={(c) => setSelectedCandidate(c)}
           onStageChange={updateStage}
           onClearJobFilter={selectedJobFilter ? clearJobFilter : undefined}
+          onToggleAiScores={handleFetchAiScores}
         />
       )}
       {view === 'hiring-managers' && (
@@ -529,7 +548,7 @@ export function Recruiter() {
           onReschedule={openReschedule}
         />
       )}
-      {view === 'inbox' && <RecruiterInbox messages={RECRUITER_MESSAGES} />}
+      {view === 'inbox' && <RecruiterInbox candidates={candidates} interviews={interviews} />}
 
       <CandidateDrawer
         candidate={selectedCandidate}

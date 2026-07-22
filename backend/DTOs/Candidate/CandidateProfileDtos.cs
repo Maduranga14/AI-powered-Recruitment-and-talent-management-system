@@ -7,7 +7,8 @@ namespace backend.DTOs.Candidate
     public class CreateCandidateProfileDto
     {
         [Required(ErrorMessage = "Phone is required.")]
-        [MaxLength(20)]
+        [RegularExpression(@"^\d{10}$", ErrorMessage = "Phone must be exactly 10 digits (numbers only).")]
+        [MaxLength(10)]
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Location is required.")]
@@ -28,7 +29,8 @@ namespace backend.DTOs.Candidate
 
     public class UpdateCandidateProfileDto
     {
-        [MaxLength(20)]
+        [RegularExpression(@"^(\d{10})?$", ErrorMessage = "Phone must be exactly 10 digits (numbers only).")]
+        [MaxLength(10)]
         public string? Phone { get; set; }
 
         [MaxLength(150)]
