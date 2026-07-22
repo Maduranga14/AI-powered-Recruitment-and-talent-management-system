@@ -116,8 +116,8 @@ function load(): PersistedState {
   };
 }
 function mapStatus(status: string): ApplicationStatus {
-  if (status === 'UnderReview') return 'In Review';
-  if (status === 'Hired') return 'Offer';
+  if (status === 'UnderReview' || status === 'Reviewed') return 'In Review';
+  if (status === 'Hired' || status === 'Offer') return 'Offer';
   return status as ApplicationStatus;
 }
 

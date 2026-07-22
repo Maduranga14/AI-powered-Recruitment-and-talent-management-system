@@ -106,11 +106,27 @@ export function HiringManagerCalendar({
       overallRating: number;
       skillRatings?: string;
       technicalAssessmentScore?: number | null;
+      decision?: 'Hired' | 'Offer' | 'Rejected' | 'UnderFinalReview';
     }
   ) => {
     await managerApi.submitInterviewFeedback(interviewId, payload);
+    if (payload.decision && payload.decision !== 'UnderFinalReview') {
+      const targetInterview = feedbackInterview;
+      if (targetInterview?.applicationId) {
+        await managerApi.makeHiringDecision(targetInterview.applicationId, {
+          decision: payload.decision === 'Offer' ? 'Hired' : payload.decision,
+          notes: payload.comments,
+        });
+      }
+    }
     setFeedbackInterview(null);
-    showMessage('Interview feedback submitted. Application moved to Under Final Review.');
+    showMessage(
+      payload.decision === 'Offer' || payload.decision === 'Hired'
+        ? 'Feedback submitted & Offer extended 🎉'
+        : payload.decision === 'Rejected'
+        ? 'Feedback submitted & Application rejected.'
+        : 'Interview feedback submitted. Application moved to Under Final Review.'
+    );
     onFeedbackSubmitted?.();
   };
 

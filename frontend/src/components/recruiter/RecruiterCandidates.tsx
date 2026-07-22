@@ -20,6 +20,7 @@ interface RecruiterCandidatesProps {
   onCandidateSelect: (candidate: RecruiterCandidate) => void;
   onStageChange: (candidateId: string, stage: RecruiterStage) => void;
   onClearJobFilter?: () => void;
+  onToggleAiScores?: (enable: boolean) => void;
 }
 export function RecruiterCandidates({
   candidates,
@@ -28,7 +29,8 @@ export function RecruiterCandidates({
   departments: orgDepartments = [],
   onCandidateSelect,
   onStageChange,
-  onClearJobFilter
+  onClearJobFilter,
+  onToggleAiScores,
 }: RecruiterCandidatesProps) {
   const [query, setQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('All departments');
@@ -36,6 +38,16 @@ export function RecruiterCandidates({
   const [stageFilter, setStageFilter] = useState<'All stages' | RecruiterStage>(
     'All stages'
   );
+
+  const [showAiScore, setShowAiScore] = useState(false);
+
+  const handleToggleAi = () => {
+    const next = !showAiScore;
+    setShowAiScore(next);
+    if (next && onToggleAiScores) {
+      onToggleAiScores(true);
+    }
+  };
 
   const departmentOptions = useMemo(() => {
     const set = new Set<string>();
@@ -114,9 +126,21 @@ export function RecruiterCandidates({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Badge tone="accent">
-            <SparklesIcon className="h-3.5 w-3.5" /> AI scoring active
-          </Badge>
+          <button
+            type="button"
+            onClick={handleToggleAi}
+            className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all shadow-xs ${
+              showAiScore
+                ? 'border-brand-300 bg-gradient-to-r from-brand-50 to-indigo-50 text-brand-700 shadow-brand-100 ring-2 ring-brand-200'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <SparklesIcon className={`h-4 w-4 ${showAiScore ? 'text-brand-600 fill-brand-200' : 'text-slate-400'}`} />
+            <span>AI Score</span>
+            <span className={`ml-1 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider font-extrabold ${showAiScore ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+              {showAiScore ? 'ON' : 'OFF'}
+            </span>
+          </button>
         </div>
       </div>
       {loading ? (
@@ -224,10 +248,14 @@ export function RecruiterCandidates({
         className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
         aria-label="Candidate list">
         
-          <div className="hidden grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_120px_130px_170px] gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid">
+          <div className={`hidden gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid ${
+            showAiScore
+              ? 'grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_120px_130px_170px]'
+              : 'grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_130px_170px]'
+          }`}>
             <span>Candidate</span>
             <span>Applied role</span>
-            <span>AI match</span>
+            {showAiScore && <span>AI match</span>}
             <span>Stage</span>
             <span>Actions</span>
           </div>
@@ -235,7 +263,11 @@ export function RecruiterCandidates({
             {visibleCandidates.map((candidate) =>
           <article
             key={candidate.id}
-            className="grid gap-4 p-4 transition-colors hover:bg-slate-50 lg:grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_120px_130px_170px] lg:items-center lg:px-5">
+            className={`grid gap-4 p-4 transition-colors hover:bg-slate-50 lg:items-center lg:px-5 ${
+              showAiScore
+                ? 'lg:grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_120px_130px_170px]'
+                : 'lg:grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_130px_170px]'
+            }`}>
             
                 <button
               onClick={() => onCandidateSelect(candidate)}
@@ -270,12 +302,14 @@ export function RecruiterCandidates({
                     Applied {candidate.applied}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <MatchScore score={candidate.matchScore} size={38} />
-                  <span className="text-xs font-semibold text-slate-500 lg:hidden">
-                    AI match
-                  </span>
-                </div>
+                {showAiScore && (
+                  <div className="flex items-center gap-2">
+                    <MatchScore score={candidate.matchScore} size={38} />
+                    <span className="text-xs font-semibold text-slate-500 lg:hidden">
+                      AI match
+                    </span>
+                  </div>
+                )}
                 <div>
                   <Badge tone={STAGE_TONES[candidate.stage]}>
                     {candidate.stage}

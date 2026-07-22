@@ -9,6 +9,7 @@ namespace backend.Models.Enums
         Hired,
         Reviewed,
         /// <summary>Set after the hiring manager submits post-interview feedback.</summary>
-        UnderFinalReview
+        UnderFinalReview,
+        Offer
     }
 }

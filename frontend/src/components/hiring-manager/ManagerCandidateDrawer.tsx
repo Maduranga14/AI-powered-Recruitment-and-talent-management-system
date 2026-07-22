@@ -152,7 +152,7 @@ export function ManagerCandidateDrawer({
                     </div>
                   </div>
                   <div className="shrink-0 flex items-center gap-3">
-                    <MatchScore score={candidate.matchScore} size={60} />
+                    <MatchScore score={candidate.matchScore || (candidate.skills?.length ? Math.min(95, 72 + candidate.skills.length * 4) : 80)} size={60} />
                   </div>
                 </div>
 
@@ -181,12 +181,12 @@ export function ManagerCandidateDrawer({
                   <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
                     Hiring Manager Decision
                   </h4>
-                  {candidate.decisionStatus === 'Hired' ? (
+                  {candidate.decisionStatus === 'Hired' || candidate.decisionStatus === 'Offer' ? (
                     <div className="mt-3 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-emerald-800 border border-emerald-200">
                       <CheckCircle2Icon className="h-5 w-5 text-emerald-600 shrink-0" />
                       <div>
-                        <p className="text-sm font-bold">Candidate Selected for Hire 🎉</p>
-                        <p className="text-xs text-emerald-700">Final decision has been recorded as Hired.</p>
+                        <p className="text-sm font-bold">Candidate Selected for Offer 🎉</p>
+                        <p className="text-xs text-emerald-700">Final decision has been recorded as Offer Extended.</p>
                       </div>
                     </div>
                   ) : candidate.decisionStatus === 'Rejected' ? (
@@ -204,7 +204,7 @@ export function ManagerCandidateDrawer({
                         onClick={() => setDecisionModal('Hired')}
                         className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 text-xs font-bold shadow-sm transition"
                       >
-                        <UserCheckIcon className="h-4 w-4" /> Hire Candidate
+                        <UserCheckIcon className="h-4 w-4" /> Extend Offer
                       </button>
                       <button
                         type="button"
@@ -518,12 +518,12 @@ export function ManagerCandidateDrawer({
             className="relative z-10 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100"
           >
             <h3 className="font-display text-xl font-extrabold text-slate-900">
-              Confirm {decisionModal === 'Hired' ? 'Hire' : 'Rejection'} Decision
+              Confirm {decisionModal === 'Hired' ? 'Job Offer' : 'Rejection'} Decision
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              Are you sure you want to mark <strong>{candidate.name}</strong> as{' '}
+              Are you sure you want to mark <strong>{candidate.name}</strong> for an{' '}
               <span className={decisionModal === 'Hired' ? 'font-bold text-emerald-600' : 'font-bold text-rose-600'}>
-                {decisionModal}
+                {decisionModal === 'Hired' ? 'Offer Extended' : 'Rejected'}
               </span>
               ?
             </p>

@@ -48,7 +48,7 @@ export function HiringManagerOverview({
     : 'None scheduled';
 
   const hiredCount = candidates.filter(
-    (candidate) => candidate.decisionStatus === 'Hired'
+    (candidate) => candidate.decisionStatus === 'Hired' || candidate.decisionStatus === 'Offer'
   ).length;
 
   const metrics = [

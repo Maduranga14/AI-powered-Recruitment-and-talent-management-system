@@ -338,7 +338,7 @@ namespace backend.Services
             };
         }
 
-        public async Task<JobApplicantsResultDto> GetApplicantsAsync(Guid jobId, Guid recruiterId)
+        public async Task<JobApplicantsResultDto> GetApplicantsAsync(Guid jobId, Guid recruiterId, bool includeAiScores = false)
         {
             var job = await _db.JobPostings
                 .AsNoTracking()
@@ -360,7 +360,9 @@ namespace backend.Services
                 .OrderByDescending(a => a.AppliedAt)
                 .ToListAsync();
 
-            var aiScores = await CalculateAiMatchScoresAsync(jobId, applications);
+            var aiScores = includeAiScores
+                ? await CalculateAiMatchScoresAsync(jobId, applications)
+                : new Dictionary<Guid, int>();
 
             return new JobApplicantsResultDto
             {
@@ -375,7 +377,7 @@ namespace backend.Services
             };
         }
 
-        public async Task<List<JobApplicantDto>> GetAllApplicantsAsync(Guid recruiterId)
+        public async Task<List<JobApplicantDto>> GetAllApplicantsAsync(Guid recruiterId, bool includeAiScores = false)
         {
             var applications = await _db.JobApplications
                 .AsNoTracking()
@@ -393,10 +395,13 @@ namespace backend.Services
                 .ToListAsync();
 
             var aiScores = new Dictionary<Guid, int>();
-            foreach (var group in applications.GroupBy(a => a.JobPostingId))
+            if (includeAiScores)
             {
-                var jobScores = await CalculateAiMatchScoresAsync(group.Key, group.ToList());
-                foreach (var kvp in jobScores) aiScores[kvp.Key] = kvp.Value;
+                foreach (var group in applications.GroupBy(a => a.JobPostingId))
+                {
+                    var jobScores = await CalculateAiMatchScoresAsync(group.Key, group.ToList());
+                    foreach (var kvp in jobScores) aiScores[kvp.Key] = kvp.Value;
+                }
             }
 
             return applications.Select(a =>
@@ -741,7 +746,7 @@ namespace backend.Services
             return deptIds.Distinct().ToList();
         }
 
-        public async Task<List<JobApplicantDto>> GetManagerApplicantsAsync(Guid managerUserId)
+        public async Task<List<JobApplicantDto>> GetManagerApplicantsAsync(Guid managerUserId, bool includeAiScores = false)
         {
             var manager = await _db.Users
                 .Include(u => u.Organization)
@@ -776,13 +781,16 @@ namespace backend.Services
                 .ToListAsync();
 
             var aiScores = new Dictionary<Guid, int>();
-            var groupedByJob = applications.GroupBy(a => a.JobPostingId);
-            foreach (var group in groupedByJob)
+            if (includeAiScores)
             {
-                var jobScores = await CalculateAiMatchScoresAsync(group.Key, group.ToList());
-                foreach (var kvp in jobScores)
+                var groupedByJob = applications.GroupBy(a => a.JobPostingId);
+                foreach (var group in groupedByJob)
                 {
-                    aiScores[kvp.Key] = kvp.Value;
+                    var jobScores = await CalculateAiMatchScoresAsync(group.Key, group.ToList());
+                    foreach (var kvp in jobScores)
+                    {
+                        aiScores[kvp.Key] = kvp.Value;
+                    }
                 }
             }
 
@@ -868,9 +876,9 @@ namespace backend.Services
 
             ApplicationStatus targetStatus;
             var cleanDecision = decision.Trim().ToLower();
-            if (cleanDecision is "hire" or "hired")
+            if (cleanDecision is "hire" or "hired" or "offer")
             {
-                targetStatus = ApplicationStatus.Hired;
+                targetStatus = ApplicationStatus.Offer;
                 if (string.IsNullOrWhiteSpace(application.Recommendation)) application.Recommendation = "Strong Yes";
             }
             else if (cleanDecision is "reject" or "rejected")

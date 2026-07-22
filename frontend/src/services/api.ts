@@ -517,11 +517,11 @@ export const recruiterApi = {
     return request<PagedJobsResult>(`/recruiter/jobs?page=${page}&pageSize=${pageSize}${statusParam}`);
   },
 
-  getJobApplicants: (jobId: string) =>
-    request<JobApplicantsResult>(`/recruiter/jobs/${jobId}/applicants`),
+  getJobApplicants: (jobId: string, includeAiScores = false) =>
+    request<JobApplicantsResult>(`/recruiter/jobs/${jobId}/applicants?includeAiScores=${includeAiScores}`),
 
-  getAllApplicants: () =>
-    request<JobApplicant[]>('/recruiter/applicants'),
+  getAllApplicants: (includeAiScores = false) =>
+    request<JobApplicant[]>(`/recruiter/applicants?includeAiScores=${includeAiScores}`),
 
   getCandidateProfile: (profileId: string) =>
     request<CandidateProfileResponseDto>(`/recruiter/candidates/${profileId}/profile`),
@@ -619,8 +619,8 @@ export const recruiterApi = {
 };
 
 export const managerApi = {
-  getApplicants: () =>
-    request<JobApplicant[]>('/manager/applicants'),
+  getApplicants: (includeAiScores = false) =>
+    request<JobApplicant[]>(`/manager/applicants?includeAiScores=${includeAiScores}`),
 
   getInterviews: () =>
     request<InterviewDto[]>('/manager/interviews'),

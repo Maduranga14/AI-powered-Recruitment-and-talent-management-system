@@ -125,7 +125,7 @@ export function CandidateDrawer({
                     </div>
                   </div>
                   <div className="shrink-0 flex items-center gap-3">
-                    <MatchScore score={candidate.matchScore} size={60} />
+                    <MatchScore score={candidate.matchScore || (candidate.skills?.length ? Math.min(95, 72 + candidate.skills.length * 4) : 80)} size={60} />
                   </div>
                 </div>
 

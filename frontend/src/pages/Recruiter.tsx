@@ -46,6 +46,7 @@ function statusToStage(status: string): RecruiterStage {
     case 'UnderFinalReview':
       return 'Under Final Review';
     case 'Hired':
+    case 'Offer':
       return 'Offer';
     case 'Rejected':
       return 'Rejected';
@@ -70,7 +71,7 @@ function stageToStatus(stage: RecruiterStage): number {
     case 'Rejected':
       return 3;
     case 'Offer':
-      return 4; // Hired
+      return 7; // Offer status index 7 in backend
     case 'New':
     default:
       return 0; // Applied
@@ -359,6 +360,24 @@ export function Recruiter() {
     showFeedback(`${candidate?.name ?? 'Candidate'} moved to ${stage}.`);
   };
 
+  const handleFetchAiScores = async () => {
+    setApplicantsLoading(true);
+    try {
+      if (selectedJobFilter) {
+        const res = await recruiterApi.getJobApplicants(selectedJobFilter.id, true);
+        setCandidates(res.applicants.map((a) => toRecruiterCandidate(a, selectedJobFilter.id)));
+      } else {
+        const applicants = await recruiterApi.getAllApplicants(true);
+        setCandidates(applicants.map((a) => toRecruiterCandidate(a)));
+      }
+      showFeedback('AI match scores generated for candidates!');
+    } catch {
+      showFeedback('Failed to generate AI match scores.');
+    } finally {
+      setApplicantsLoading(false);
+    }
+  };
+
   const openSchedule = async (candidate?: RecruiterCandidate) => {
     setRescheduleInterview(null);
     setScheduleCandidate(candidate ?? null);
@@ -512,6 +531,7 @@ export function Recruiter() {
           onCandidateSelect={(c) => setSelectedCandidate(c)}
           onStageChange={updateStage}
           onClearJobFilter={selectedJobFilter ? clearJobFilter : undefined}
+          onToggleAiScores={handleFetchAiScores}
         />
       )}
       {view === 'hiring-managers' && (

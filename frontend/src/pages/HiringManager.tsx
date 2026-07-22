@@ -32,12 +32,14 @@ function toManagerCandidate(applicant: JobApplicant): ManagerCandidate {
   }
 
   let decisionStatus: ManagerCandidate['decisionStatus'] = 'Interview';
-  if (applicant.status === 'Hired') {
-    decisionStatus = 'Hired';
+  if (applicant.status === 'Hired' || applicant.status === 'Offer') {
+    decisionStatus = 'Offer';
   } else if (applicant.status === 'Rejected') {
     decisionStatus = 'Rejected';
   } else if (applicant.status === 'UnderFinalReview') {
     decisionStatus = 'Under Final Review';
+  } else if (applicant.status === 'Interview') {
+    decisionStatus = 'Interview';
   } else if (applicant.status === 'Reviewed' || applicant.interviewComments || applicant.interviewRecommendation) {
     decisionStatus = 'Feedback submitted';
   } else {
@@ -208,6 +210,19 @@ export function HiringManager() {
     window.setTimeout(() => setFeedback(''), 2800);
   };
 
+  const handleFetchAiScores = async () => {
+    setLoading(true);
+    try {
+      const list = await managerApi.getApplicants(true);
+      setCandidates(list.map(toManagerCandidate));
+      showFeedback('AI match scores generated for candidates!');
+    } catch {
+      showFeedback('Failed to generate AI match scores.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openFeedback = (candidateId: string) => {
     setSelectedCandidate(null);
     setFeedbackCandidateId(candidateId);
@@ -304,6 +319,7 @@ export function HiringManager() {
               <HiringManagerCandidates
                 candidates={candidates}
                 onCandidateSelect={selectCandidate}
+                onToggleAiScores={handleFetchAiScores}
               />
             )}
             {view === 'feedback' && (

@@ -12,6 +12,8 @@ import {
   MapPinIcon,
   MessageSquareTextIcon,
   StarIcon,
+  UserCheckIcon,
+  UserXIcon,
 } from 'lucide-react';
 import type {
   ManagerCandidate,
