@@ -150,6 +150,14 @@ function recToJob(r: JobRecommendationDto): Job {
   };
 }
 
+function getCandidatePhoto(user: any): string {
+  if (user?.photoUrl) {
+    if (user.photoUrl.startsWith('http')) return user.photoUrl;
+    return `http://localhost:5073${user.photoUrl.startsWith('/') ? '' : '/'}${user.photoUrl}`;
+  }
+  return user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Candidate')}&background=4f46e5&color=fff&bold=true&size=128&format=png`;
+}
+
 export function Dashboard() {
   const { user, isAuthenticated, applications, savedJobs } = useAuth();
   const [tab, setTab] = useState<Tab>('overview');
@@ -206,40 +214,86 @@ export function Dashboard() {
     profileCompleteness != null ? 'Profile strength' : 'Applications';
 
   return (
-    <div className="w-full bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Welcome back,</p>
-              <h1 className="font-display text-3xl font-extrabold text-slate-900">
-                {user.name.split(' ')[0]} 👋
-              </h1>
+    <div className="w-full bg-slate-50 min-h-screen">
+      {/* Platform Matched Hero Section */}
+      <div className="border-b border-slate-200/80 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          {/* Brand Gradient Hero Card */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-900 via-brand-800 to-slate-900 p-6 sm:p-8 text-white shadow-soft">
+            {/* Ambient Brand Mesh Orbs */}
+            <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-brand-500/25 blur-3xl pointer-events-none" />
+            <div className="absolute right-1/3 -bottom-10 h-64 w-64 rounded-full bg-accent-500/20 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              {/* Left Column: Avatar & Greeting */}
+              <div className="flex items-center gap-5">
+                <div className="relative group">
+                  <img
+                    src={getCandidatePhoto(user)}
+                    alt={user.name}
+                    className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white/15 shadow-xl transition duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-brand-900 bg-emerald-400 ring-4 ring-emerald-400/20" />
+                </div>
+
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-brand-200 backdrop-blur-md border border-white/10 shadow-xs">
+                      <SparklesIcon className="h-3.5 w-3.5 text-brand-300 animate-pulse" />
+                      Candidate Portal
+                    </span>
+                    {user.title && (
+                      <span className="hidden sm:inline-flex rounded-full bg-brand-700/50 px-3 py-1 text-xs font-bold text-indigo-100 border border-brand-500/30">
+                        {user.title}
+                      </span>
+                    )}
+                  </div>
+
+                  <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
+                    Welcome back, {user.name.split(' ')[0]} <span className="inline-block animate-bounce">👋</span>
+                  </h1>
+                  <p className="mt-1 text-sm text-brand-100/90 font-medium">
+                    Ready for your next career move? Explore top AI job matches tailored for you.
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column: CTA Buttons */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Link to="/jobs">
+                  <Button className="bg-brand-600 hover:bg-brand-500 text-white font-bold px-5 py-3 rounded-xl shadow-lg shadow-brand-600/30 transition-all hover:shadow-brand-600/50 border border-brand-400/30">
+                    <SparklesIcon className="h-4 w-4" /> Find Jobs
+                  </Button>
+                </Link>
+                <button
+                  onClick={() => setTab('profile')}
+                  className="inline-flex items-center gap-2.5 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-bold text-white hover:bg-white/20 transition backdrop-blur-md shadow-sm"
+                >
+                  <UserIcon className="h-4 w-4 text-brand-300" />
+                  Profile Strength: <span className="text-teal-300 font-extrabold">{user.completenessPercent ?? 0}%</span>
+                </button>
+              </div>
             </div>
-            <Link to="/jobs">
-              <Button>
-                Find jobs <ArrowRightIcon className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
 
-          <div className="mt-6 flex gap-1 overflow-x-auto">
+          {/* Integrated Platform Navigation Tabs */}
+          <div className="mt-6 flex gap-1 overflow-x-auto border-b border-slate-200/80 pb-1">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`relative flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+                className={`relative flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
                   tab === t.id
-                    ? 'text-brand-700'
-                    : 'text-slate-500 hover:text-slate-900'
+                    ? 'text-brand-700 bg-brand-50 font-bold'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <t.icon className="h-4 w-4" />
+                <t.icon className={`h-4 w-4 ${tab === t.id ? 'text-brand-600' : 'text-slate-400'}`} />
                 {t.label}
                 {tab === t.id && (
                   <motion.span
                     layoutId="dash-tab"
-                    className="absolute inset-x-2 -bottom-[9px] h-0.5 rounded-full bg-brand-600"
+                    className="absolute inset-x-2 -bottom-[5px] h-0.5 rounded-full bg-brand-600"
                   />
                 )}
               </button>
