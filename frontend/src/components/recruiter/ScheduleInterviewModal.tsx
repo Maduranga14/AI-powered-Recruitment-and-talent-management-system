@@ -404,7 +404,7 @@ export function ScheduleInterviewModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 w-full bg-slate-900/45 backdrop-blur-sm"
+            className="absolute inset-0 w-full bg-slate-950/70 backdrop-blur-md"
             aria-label="Close"
           />
           <motion.div
@@ -415,17 +415,17 @@ export function ScheduleInterviewModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="schedule-interview-title"
-            className="relative z-10 w-full max-w-lg rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+            className="relative z-10 w-full max-w-lg rounded-t-3xl border border-slate-700 bg-slate-900 text-white shadow-2xl backdrop-blur-2xl sm:rounded-3xl"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+            <div className="flex items-center justify-between border-b border-slate-800 px-6 py-5">
               <div>
                 <h2
                   id="schedule-interview-title"
-                  className="font-display text-xl font-extrabold text-slate-900"
+                  className="font-display text-xl font-extrabold text-white"
                 >
                   {isReschedule ? 'Reschedule interview' : 'Schedule interview'}
                 </h2>
-                <p className="mt-0.5 text-sm text-slate-500">
+                <p className="mt-0.5 text-sm text-slate-300">
                   {isReschedule
                     ? 'Pick a new time — the candidate will be notified.'
                     : 'Set a time and notify the candidate.'}
@@ -433,46 +433,46 @@ export function ScheduleInterviewModal({
               </div>
               <button
                 onClick={onClose}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
                 aria-label="Close"
               >
                 <XIcon className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-5">
+            <div className="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-5 text-white">
               {isReschedule && rescheduleInterview ? (
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-white">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-bold text-slate-900">
+                    <p className="text-sm font-bold text-white">
                       {rescheduleInterview.candidate}
                     </p>
                     {rescheduleInterview.rescheduleRequested && (
-                      <Badge tone="amber">Requested by HM</Badge>
+                      <Badge tone="amber" className="bg-amber-500/20 text-amber-300 border-amber-500/30">Requested by HM</Badge>
                     )}
                   </div>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-slate-400">
                     {rescheduleInterview.role} · currently{' '}
                     {rescheduleInterview.time}
                   </p>
                   {rescheduleInterview.rescheduleReason && (
-                    <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
+                    <p className="mt-2 rounded-lg bg-amber-950/60 px-2.5 py-2 text-xs text-amber-200 border border-amber-500/30">
                       HM note: {rescheduleInterview.rescheduleReason}
                     </p>
                   )}
                 </div>
               ) : candidate ? (
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-white">
                   <img
                     src={candidate.avatar}
                     alt=""
-                    className="h-11 w-11 rounded-xl"
+                    className="h-11 w-11 rounded-xl border border-slate-800 bg-slate-950"
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900">
+                    <p className="truncate text-sm font-bold text-white">
                       {candidate.name}
                     </p>
-                    <p className="truncate text-xs text-slate-500">
+                    <p className="truncate text-xs text-slate-400">
                       {candidate.role}
                       {candidate.recommendation
                         ? ` · HM: ${candidate.recommendation}`
@@ -486,9 +486,9 @@ export function ScheduleInterviewModal({
                   value={selectedId}
                   onChange={(e) => setSelectedId(e.target.value)}
                 >
-                  <option value="">Select a candidate…</option>
+                  <option value="" className="bg-slate-900 text-white">Select a candidate…</option>
                   {schedulable.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <option key={c.id} value={c.id} className="bg-slate-900 text-white">
                       {c.name} — {c.role} ({c.stage})
                     </option>
                   ))}
@@ -513,12 +513,12 @@ export function ScheduleInterviewModal({
                   {date && time && selectedManagerId && selectedManagerId !== 'custom' && (
                     <div className="mt-1">
                       {selectedTimeIsBusy ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
-                          <XIcon className="h-3 w-3" /> Busy slot (Conflict)
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-300 bg-red-950/60 px-2 py-0.5 rounded-md border border-red-500/30">
+                          <XIcon className="h-3 w-3 text-red-400" /> Busy slot (Conflict)
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                          <CheckIcon className="h-3 w-3" /> Slot available
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                          <CheckIcon className="h-3 w-3 text-emerald-400" /> Slot available
                         </span>
                       )}
                     </div>
@@ -532,10 +532,10 @@ export function ScheduleInterviewModal({
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
                 >
-                  <option value="30">30 minutes</option>
-                  <option value="45">45 minutes</option>
-                  <option value="60">60 minutes</option>
-                  <option value="90">90 minutes</option>
+                  <option value="30" className="bg-slate-900 text-white">30 minutes</option>
+                  <option value="45" className="bg-slate-900 text-white">45 minutes</option>
+                  <option value="60" className="bg-slate-900 text-white">60 minutes</option>
+                  <option value="90" className="bg-slate-900 text-white">90 minutes</option>
                 </Select>
                 <Select
                   label="Type"
@@ -544,9 +544,9 @@ export function ScheduleInterviewModal({
                     setInterviewType(e.target.value as InterviewType)
                   }
                 >
-                  <option value="Video">Video</option>
-                  <option value="Phone">Phone</option>
-                  <option value="Onsite">Onsite</option>
+                  <option value="Video" className="bg-slate-900 text-white">Video</option>
+                  <option value="Phone" className="bg-slate-900 text-white">Phone</option>
+                  <option value="Onsite" className="bg-slate-900 text-white">Onsite</option>
                 </Select>
               </div>
 
@@ -569,7 +569,7 @@ export function ScheduleInterviewModal({
               )}
 
               <div className="space-y-1.5">
-                <label htmlFor="interviewer-select" className="block text-sm font-medium text-slate-700">
+                <label htmlFor="interviewer-select" className="block text-sm font-bold text-white">
                   Interviewer
                 </label>
                 <Select
@@ -588,19 +588,19 @@ export function ScheduleInterviewModal({
                     }
                   }}
                 >
-                  <option value="">Select interviewer...</option>
+                  <option value="" className="bg-slate-900 text-white">Select interviewer...</option>
                   {filteredHiringManagers.map((hm) => (
-                    <option key={hm.id} value={hm.id}>
+                    <option key={hm.id} value={hm.id} className="bg-slate-900 text-white">
                       {hm.firstName} {hm.lastName} (Hiring Manager)
                     </option>
                   ))}
-                  <option value="custom">Custom / Other Interviewer</option>
+                  <option value="custom" className="bg-slate-900 text-white">Custom / Other Interviewer</option>
                 </Select>
 
                 {/* Department filter notification helper */}
                 {selectedJobDeptId && (
                   <div className={`mt-1.5 flex items-center gap-1.5 text-xs font-semibold ${
-                    hasDepartmentFilter ? 'text-brand-600' : 'text-amber-600'
+                    hasDepartmentFilter ? 'text-teal-300' : 'text-amber-300'
                   }`}>
                     <InfoIcon className="h-3.5 w-3.5" />
                     {hasDepartmentFilter ? (
@@ -623,10 +623,10 @@ export function ScheduleInterviewModal({
 
               {/* Availability helper widget */}
               {selectedManagerId && selectedManagerId !== 'custom' && (
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-white">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
-                      <ClockIcon className="h-3.5 w-3.5 text-slate-400" />
+                    <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-400">
+                      <ClockIcon className="h-3.5 w-3.5 text-teal-400" />
                       Interviewer Availability
                     </h4>
                     {loadingAvailability && (
@@ -637,7 +637,7 @@ export function ScheduleInterviewModal({
                   </div>
 
                   {!date ? (
-                    <div className="flex items-center gap-2 rounded-xl bg-slate-100/50 px-3 py-2 text-xs text-slate-500">
+                    <div className="flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs text-slate-400 border border-slate-800">
                       <InfoIcon className="h-4 w-4 text-slate-400" />
                       Pick a date to check availability.
                     </div>
@@ -656,21 +656,21 @@ export function ScheduleInterviewModal({
                             title={isBusy ? `Interviewer is busy at ${slot.label} (Conflict)` : `Select ${slot.label}`}
                             className={`group relative flex flex-col items-center justify-center rounded-xl p-2.5 text-center transition-all border ${
                               isBusy
-                                ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50 select-none'
+                                ? 'bg-slate-950/50 border-slate-800 text-slate-500 cursor-not-allowed opacity-50 select-none'
                                 : isSelected
-                                  ? 'bg-brand-600 border-brand-600 text-white shadow-md shadow-brand-100 scale-105'
-                                  : 'bg-white border-slate-200 text-slate-700 hover:border-brand-500 hover:bg-brand-50/50'
+                                  ? 'bg-brand-600 border-teal-400 text-white shadow-lg ring-2 ring-teal-400/30 scale-105'
+                                  : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-teal-400 hover:bg-slate-800'
                             }`}
                           >
-                            <span className={`text-xs font-bold ${isBusy ? 'line-through text-slate-400' : ''}`}>
+                            <span className={`text-xs font-bold ${isBusy ? 'line-through text-slate-500' : ''}`}>
                               {slot.label}
                             </span>
                             <span className={`mt-1 text-[9px] font-bold tracking-wide uppercase ${
                               isBusy
-                                ? 'text-red-500'
+                                ? 'text-red-400'
                                 : isSelected
-                                  ? 'text-brand-100'
-                                  : 'text-emerald-600'
+                                  ? 'text-teal-200'
+                                  : 'text-emerald-400'
                             }`}>
                               {isBusy ? 'Busy' : 'Free'}
                             </span>
@@ -691,20 +691,21 @@ export function ScheduleInterviewModal({
               />
             </div>
 
-            <div className="border-t border-slate-100 px-6 py-4">
+            <div className="border-t border-slate-800 px-6 py-4">
               {error && (
-                <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+                <p className="mb-3 rounded-lg bg-red-950/60 border border-red-500/30 px-3 py-2 text-sm font-semibold text-red-200">
                   {error}
                 </p>
               )}
               <div className="flex gap-3">
-                <Button fullWidth variant="outline" onClick={onClose}>
+                <Button fullWidth variant="outline" onClick={onClose} className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
                   Cancel
                 </Button>
                 <Button
                   fullWidth
                   disabled={!canSubmit || loading}
                   onClick={handleSubmit}
+                  className="bg-brand-600 hover:bg-brand-500 text-white font-bold"
                 >
                   {loading ? (
                     <>
@@ -728,3 +729,4 @@ export function ScheduleInterviewModal({
     </AnimatePresence>
   );
 }
+

@@ -59,20 +59,24 @@ export function Register() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-1 items-center justify-center bg-slate-50 px-4 py-12">
+    <div className="relative min-h-screen flex w-full flex-1 items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-brand-950 px-4 py-16 text-white overflow-hidden">
+      {/* Ambient Mesh Orbs */}
+      <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-brand-600/25 blur-3xl pointer-events-none" />
+      <div className="absolute right-10 bottom-10 h-96 w-96 rounded-full bg-teal-500/20 blur-3xl pointer-events-none" />
+
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft grid md:grid-cols-2"
+        className="relative z-10 w-full max-w-4xl overflow-hidden rounded-3xl border border-white/15 bg-slate-900/90 shadow-2xl backdrop-blur-2xl grid md:grid-cols-2"
       >
         {/* Left Side: Candidate Perks & Branding */}
-        <div className="flex flex-col justify-between border-b border-slate-100 bg-gradient-to-br from-brand-50/60 via-slate-50/40 to-slate-50 p-8 sm:p-10 md:border-b-0 md:border-r">
+        <div className="flex flex-col justify-between border-b border-slate-800 bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 p-8 sm:p-10 md:border-b-0 md:border-r">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-soft">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
                 <SparklesIcon className="h-5 w-5" />
               </span>
-              <span className="font-display text-xl font-extrabold text-slate-900">
+              <span className="font-display text-xl font-black text-white">
                 Talenta
               </span>
             </Link>

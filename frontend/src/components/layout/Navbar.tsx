@@ -53,17 +53,17 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-xl text-white shadow-lg">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
           to="/"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2.5"
           aria-label="Talenta home">
           
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
             <SparklesIcon className="h-5 w-5" />
           </span>
-          <span className="font-display text-xl font-extrabold tracking-tight text-slate-900">
+          <span className="font-display text-xl font-black tracking-tight text-white">
             Talenta
           </span>
         </Link>
@@ -74,7 +74,7 @@ export function Navbar() {
             key={link.to}
             to={link.to}
             className={({ isActive }) =>
-            `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive && link.to.startsWith('/jobs') ? 'text-brand-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`
+            `rounded-xl px-3.5 py-2 text-sm font-semibold transition-all ${isActive && link.to.startsWith('/jobs') ? 'text-teal-300 bg-white/10 border border-white/10' : 'text-slate-300 hover:bg-white/10 hover:text-white'}`
             }>
             
               {link.label}
@@ -87,16 +87,16 @@ export function Navbar() {
           <div className="relative">
               <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-slate-100 ring-1 ring-slate-200/80"
+              className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-slate-800 border border-slate-700/80 bg-slate-800/60 shadow-sm"
               aria-haspopup="menu"
               aria-expanded={menuOpen}>
               
                 <img
                 src={getUserAvatar(user)}
                 alt={user.name}
-                className="h-8 w-8 rounded-full object-cover ring-2 ring-brand-500/20" />
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-brand-500/40" />
               
-                <span className="text-sm font-semibold text-slate-700">
+                <span className="text-sm font-bold text-slate-200">
                   {user.name.split(' ')[0]}
                 </span>
                 <ChevronDownIcon className="h-4 w-4 text-slate-400" />
@@ -121,36 +121,36 @@ export function Navbar() {
                     opacity: 0,
                     y: 6
                   }}
-                  className="absolute right-0 z-20 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lift"
+                  className="absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-700/90 bg-slate-900 p-2 shadow-2xl backdrop-blur-2xl"
                   role="menu">
                   
-                      <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-50/70 rounded-xl mb-1 border border-slate-100">
+                      <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-800/80 rounded-xl mb-1 border border-slate-700/60">
                         <img
                           src={getUserAvatar(user)}
                           alt=""
-                          className="h-9 w-9 rounded-full object-cover ring-1 ring-slate-200"
+                          className="h-9 w-9 rounded-full object-cover ring-2 ring-brand-500/30"
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-slate-900 truncate">
+                          <p className="text-sm font-bold text-white truncate">
                             {user.name}
                           </p>
-                          <p className="truncate text-xs text-slate-500 font-medium">
+                          <p className="truncate text-xs text-slate-400 font-medium">
                             {user.email}
                           </p>
                         </div>
                       </div>
-                      <div className="my-1 h-px bg-slate-100" />
+                      <div className="my-1 h-px bg-slate-800" />
                       <Link
                     to={getDashboardPath()}
                     onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800 hover:text-white transition"
                     role="menuitem">
                     
-                        <LayoutDashboardIcon className="h-4 w-4" /> Dashboard
+                        <LayoutDashboardIcon className="h-4 w-4 text-teal-400" /> Dashboard
                       </Link>
                       <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition"
                     role="menuitem">
                     
                         <LogOutIcon className="h-4 w-4" /> Log out
@@ -162,10 +162,10 @@ export function Navbar() {
             </div> :
 
           <>
-              <Button variant="ghost" onClick={() => navigate('/login')}>
+              <Button variant="ghost" onClick={() => navigate('/login')} className="text-slate-200 hover:text-white hover:bg-slate-800">
                 Log in
               </Button>
-              <Button onClick={() => navigate('/register')}>Sign up</Button>
+              <Button onClick={() => navigate('/register')} className="bg-brand-600 hover:bg-brand-500 text-white font-bold px-5">Sign up</Button>
             </>
           }
         </div>

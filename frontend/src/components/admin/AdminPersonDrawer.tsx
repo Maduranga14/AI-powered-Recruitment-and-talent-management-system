@@ -198,7 +198,7 @@ export function AdminPersonDrawer({
             exit={{ opacity: 0 }}
             onClick={onClose}
             aria-label="Close account details"
-            className="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px]"
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
           />
 
           <motion.aside
@@ -209,15 +209,15 @@ export function AdminPersonDrawer({
             role="dialog"
             aria-modal="true"
             aria-labelledby="person-drawer-title"
-            className="relative h-full w-full max-w-lg overflow-y-auto bg-white shadow-2xl"
+            className="relative h-full w-full max-w-lg overflow-y-auto border-l border-slate-800 bg-slate-900 text-white shadow-2xl backdrop-blur-2xl"
           >
-            <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur-sm">
-              <p className="text-sm font-bold text-slate-700">
+            <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-950/90 px-5 py-4 backdrop-blur-md text-white">
+              <p className="text-sm font-bold text-white">
                 {view === 'edit' ? 'Edit account' : view === 'delete-confirm' ? 'Delete account' : 'Account details'}
               </p>
               <button
                 onClick={onClose}
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition"
                 aria-label="Close"
               >
                 <XIcon className="h-5 w-5" />
@@ -228,23 +228,23 @@ export function AdminPersonDrawer({
             {view === 'detail' && (
               <div className="p-5 sm:p-7">
                 <div className="flex items-start gap-4">
-                  <img src={person.avatar} alt="" className="h-16 w-16 rounded-2xl" />
+                  <img src={person.avatar} alt="" className="h-16 w-16 rounded-2xl border border-slate-800 bg-slate-950 p-0.5 shadow-md" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2
                         id="person-drawer-title"
-                        className="font-display text-2xl font-extrabold text-slate-900"
+                        className="font-display text-2xl font-extrabold text-white"
                       >
                         {person.name}
                       </h2>
                       <Badge tone={ACCOUNT_TONES[person.status]}>{person.status}</Badge>
                     </div>
-                    <p className="mt-1 text-sm text-slate-600">{person.email}</p>
+                    <p className="mt-1 text-sm text-slate-300">{person.email}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Badge tone={ROLE_TONES[person.role]}>{person.role}</Badge>
-                      <Badge tone="slate">{person.organization}</Badge>
+                      <Badge tone="slate" className="bg-slate-800 text-slate-200 border-slate-700">{person.organization}</Badge>
                       {person.department && person.department !== '—' && (
-                        <Badge tone="blue">Dept: {person.department}</Badge>
+                        <Badge tone="blue" className="bg-brand-500/20 text-teal-300 border-brand-500/30">Dept: {person.department}</Badge>
                       )}
                     </div>
                   </div>
@@ -255,7 +255,7 @@ export function AdminPersonDrawer({
                   <Button
                     variant={person.status === 'Suspended' ? 'primary' : 'danger'}
                     onClick={() => onToggleStatus(person)}
-                    className="flex items-center justify-center gap-1.5"
+                    className="flex items-center justify-center gap-1.5 font-bold"
                   >
                     {person.status === 'Suspended' ? (
                       <ShieldCheckIcon className="h-4 w-4" />
@@ -267,7 +267,7 @@ export function AdminPersonDrawer({
                   <Button
                     variant="outline"
                     onClick={() => setView('edit')}
-                    className="flex items-center justify-center gap-1.5"
+                    className="flex items-center justify-center gap-1.5 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold"
                   >
                     <PencilIcon className="h-4 w-4" />
                     Edit
@@ -275,29 +275,29 @@ export function AdminPersonDrawer({
                   <Button
                     variant="danger"
                     onClick={() => setView('delete-confirm')}
-                    className="flex items-center justify-center gap-1.5"
+                    className="flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold"
                   >
                     <Trash2Icon className="h-4 w-4" />
                     Delete
                   </Button>
                 </div>
 
-                <section className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                    <CalendarClockIcon className="h-4 w-4 text-slate-400" /> Account timeline
+                <section className="mt-7 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-white">
+                  <div className="flex items-center gap-2 text-sm font-bold text-white">
+                    <CalendarClockIcon className="h-4 w-4 text-teal-400" /> Account timeline
                   </div>
                   <dl className="mt-4 space-y-3 text-sm">
                     <div className="flex justify-between gap-4">
-                      <dt className="text-slate-500">Joined</dt>
-                      <dd className="font-semibold text-slate-700">{person.joined}</dd>
+                      <dt className="text-slate-400">Joined</dt>
+                      <dd className="font-semibold text-slate-200">{person.joined}</dd>
                     </div>
                     <div className="flex justify-between gap-4">
-                      <dt className="text-slate-500">Last active</dt>
-                      <dd className="font-semibold text-slate-700">{person.lastActive}</dd>
+                      <dt className="text-slate-400">Last active</dt>
+                      <dd className="font-semibold text-slate-200">{person.lastActive}</dd>
                     </div>
                     <div className="flex justify-between gap-4">
-                      <dt className="text-slate-500">Workspace</dt>
-                      <dd className="font-semibold text-slate-700">{person.organization}</dd>
+                      <dt className="text-slate-400">Workspace</dt>
+                      <dd className="font-semibold text-slate-200">{person.organization}</dd>
                     </div>
                   </dl>
                 </section>
@@ -306,17 +306,17 @@ export function AdminPersonDrawer({
 
             {/* ── Edit View ─────────────────────────────────────────────────── */}
             {view === 'edit' && (
-              <div className="p-5 sm:p-7">
+              <div className="p-5 sm:p-7 text-white">
                 <div className="flex items-center gap-3 mb-6">
-                  <img src={person.avatar} alt="" className="h-12 w-12 rounded-xl" />
+                  <img src={person.avatar} alt="" className="h-12 w-12 rounded-xl border border-slate-800 bg-slate-950 p-0.5" />
                   <div>
-                    <p className="font-semibold text-slate-900">{person.name}</p>
-                    <p className="text-xs text-slate-500">{person.email}</p>
+                    <p className="font-bold text-white">{person.name}</p>
+                    <p className="text-xs text-slate-400">{person.email}</p>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="mb-4 rounded-xl border border-red-100 bg-red-50 p-3 text-xs text-red-600">
+                  <div className="mb-4 rounded-xl border border-red-500/30 bg-red-950/60 p-3 text-xs text-red-200 font-medium">
                     {error}
                   </div>
                 )}
@@ -324,23 +324,23 @@ export function AdminPersonDrawer({
                 <form onSubmit={handleUpdate} className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">First Name</label>
+                      <label className="block text-xs font-bold text-white mb-1">First Name</label>
                       <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Last Name</label>
+                      <label className="block text-xs font-bold text-white mb-1">Last Name</label>
                       <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                    <label className="block text-xs font-bold text-white mb-1">Email</label>
                     <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Role</label>
+                      <label className="block text-xs font-bold text-white mb-1">Role</label>
                       <select
                         value={role}
                         onChange={(e) => {
@@ -350,22 +350,22 @@ export function AdminPersonDrawer({
                             setDeptId('');
                           }
                         }}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                        className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
                       >
                         {ROLE_OPTIONS.map((o) => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
+                          <option key={o.value} value={o.value} className="bg-slate-900 text-white">{o.label}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                      <label className="block text-xs font-bold text-white mb-1">Status</label>
                       <select
                         value={status}
                         onChange={(e) => setStatus(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                        className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
                       >
                         {STATUS_OPTIONS.map((o) => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
+                          <option key={o.value} value={o.value} className="bg-slate-900 text-white">{o.label}</option>
                         ))}
                       </select>
                     </div>
@@ -374,33 +374,33 @@ export function AdminPersonDrawer({
                   {role === 'HiringManager' && (
                     <>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-bold text-white mb-1">
                           Organization <span className="text-slate-400 font-normal">(optional)</span>
                         </label>
                         <select
                           value={orgId}
                           onChange={(e) => setOrgId(e.target.value)}
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                          className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
                         >
-                          <option value="">-- Keep current --</option>
+                          <option value="" className="bg-slate-900 text-white">-- Keep current --</option>
                           {organizations.map((o) => (
-                            <option key={o.id} value={o.id}>{o.name}</option>
+                            <option key={o.id} value={o.id} className="bg-slate-900 text-white">{o.name}</option>
                           ))}
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        <label className="block text-xs font-bold text-white mb-1">
                           Department <span className="text-slate-400 font-normal">(optional)</span>
                         </label>
                         <select
                           value={deptId}
                           onChange={(e) => setDeptId(e.target.value)}
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                          className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
                         >
-                          <option value="">-- Keep current --</option>
+                          <option value="" className="bg-slate-900 text-white">-- Keep current --</option>
                           {departments.map((d) => (
-                            <option key={d.id} value={d.id}>
+                            <option key={d.id} value={d.id} className="bg-slate-900 text-white">
                               {d.name}{d.organizationName ? ` (${d.organizationName})` : ''}
                             </option>
                           ))}
@@ -410,10 +410,10 @@ export function AdminPersonDrawer({
                   )}
 
                   <div className="flex justify-end gap-2 pt-2">
-                    <Button type="button" variant="outline" onClick={() => setView('detail')} disabled={loading}>
+                    <Button type="button" variant="outline" onClick={() => setView('detail')} disabled={loading} className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={loading}>
+                    <Button type="submit" disabled={loading} className="bg-brand-600 hover:bg-brand-500 text-white font-bold">
                       {loading && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
                       Save changes
                     </Button>
@@ -424,20 +424,20 @@ export function AdminPersonDrawer({
 
             {/* ── Delete Confirm View ───────────────────────────────────────── */}
             {view === 'delete-confirm' && (
-              <div className="p-5 sm:p-7">
-                <div className="flex flex-col items-center gap-4 rounded-2xl border border-red-100 bg-red-50 p-6 text-center">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
-                    <AlertTriangleIcon className="h-7 w-7 text-red-500" />
+              <div className="p-5 sm:p-7 text-white">
+                <div className="flex flex-col items-center gap-4 rounded-2xl border border-red-500/30 bg-red-950/60 p-6 text-center">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-red-900/50 border border-red-500/40">
+                    <AlertTriangleIcon className="h-7 w-7 text-red-400" />
                   </span>
                   <div>
-                    <p className="font-display text-lg font-bold text-slate-900">Delete account?</p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      This will permanently delete <span className="font-semibold">{person.name}</span>'s
+                    <p className="font-display text-lg font-bold text-white">Delete account?</p>
+                    <p className="mt-1 text-sm text-slate-300">
+                      This will permanently delete <span className="font-bold text-white">{person.name}</span>'s
                       account and cannot be undone.
                     </p>
                   </div>
                   {error && (
-                    <p className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs text-red-600 w-full">
+                    <p className="rounded-xl border border-red-500/30 bg-red-950/80 px-3 py-2 text-xs text-red-200 w-full font-medium">
                       {error}
                     </p>
                   )}
@@ -446,7 +446,7 @@ export function AdminPersonDrawer({
                       variant="outline"
                       onClick={() => setView('detail')}
                       disabled={loading}
-                      className="flex-1"
+                      className="flex-1 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold"
                     >
                       Cancel
                     </Button>
@@ -454,7 +454,7 @@ export function AdminPersonDrawer({
                       variant="danger"
                       onClick={handleDelete}
                       disabled={loading}
-                      className="flex-1"
+                      className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold"
                     >
                       {loading && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
                       Yes, delete
@@ -469,3 +469,4 @@ export function AdminPersonDrawer({
     </AnimatePresence>
   );
 }
+

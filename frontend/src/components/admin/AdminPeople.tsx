@@ -138,17 +138,17 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
       </div>
 
       <section
-        className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5"
+        className="mt-7 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl text-white sm:p-5"
         aria-label="People filters"
       >
         <div className="grid gap-3 lg:grid-cols-[1fr_210px_190px]">
-          <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
+          <label className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-400/20">
             <SearchIcon className="h-5 w-5 text-slate-400" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search name, email, department, or organization"
-              className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-slate-400"
+              className="w-full bg-transparent py-2.5 text-sm text-white outline-none placeholder:text-slate-400"
               aria-label="Search people"
             />
           </label>
@@ -159,13 +159,13 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
               onChange={(event) =>
                 setRoleFilter(event.target.value as 'All roles' | AdminRole)
               }
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
             >
-              <option>All roles</option>
-              <option>Candidate</option>
-              <option>Recruiter</option>
-              <option>Hiring manager</option>
-              <option>Administrator</option>
+              <option className="bg-slate-900 text-white">All roles</option>
+              <option className="bg-slate-900 text-white">Candidate</option>
+              <option className="bg-slate-900 text-white">Recruiter</option>
+              <option className="bg-slate-900 text-white">Hiring manager</option>
+              <option className="bg-slate-900 text-white">Administrator</option>
             </select>
             <FilterIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
           </label>
@@ -178,25 +178,25 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
                   event.target.value as 'All statuses' | AccountStatus
                 )
               }
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
             >
-              <option>All statuses</option>
-              <option>Active</option>
-              <option>Suspended</option>
-              <option>Invited</option>
+              <option className="bg-slate-900 text-white">All statuses</option>
+              <option className="bg-slate-900 text-white">Active</option>
+              <option className="bg-slate-900 text-white">Suspended</option>
+              <option className="bg-slate-900 text-white">Invited</option>
             </select>
             <FilterIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
           </label>
         </div>
       </section>
 
-      <div className="mt-5 flex items-center justify-between">
-        <p className="text-sm text-slate-500">
-          <strong className="text-slate-900">{visible.length}</strong> people shown
+      <div className="mt-5 flex items-center justify-between text-white">
+        <p className="text-sm text-slate-400">
+          <strong className="text-white">{visible.length}</strong> people shown
         </p>
         <button
           onClick={clearFilters}
-          className="text-sm font-semibold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          className="text-sm font-bold text-teal-300 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           Clear filters
         </button>
@@ -204,10 +204,10 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
 
       {visible.length ? (
         <section
-          className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
+          className="mt-4 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white"
           aria-label="People list"
         >
-          <div className="hidden grid-cols-[minmax(220px,1.2fr)_150px_130px_130px_110px_100px] gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid">
+          <div className="hidden grid-cols-[minmax(220px,1.2fr)_150px_130px_130px_110px_100px] gap-4 border-b border-slate-800 bg-slate-950/60 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid">
             <span>Name</span>
             <span>Role</span>
             <span>Organization</span>
@@ -215,29 +215,29 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
             <span>Status</span>
             <span>Joined</span>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-800">
             {visible.map((person) => (
               <button
                 key={person.id}
                 onClick={() => onPersonSelect(person)}
-                className="grid w-full grid-cols-1 items-center gap-3 px-5 py-4 text-left hover:bg-slate-50/75 lg:grid-cols-[minmax(220px,1.2fr)_150px_130px_130px_110px_100px] lg:gap-4"
+                className="grid w-full grid-cols-1 items-center gap-3 px-5 py-4 text-left hover:bg-slate-800/60 transition-colors lg:grid-cols-[minmax(220px,1.2fr)_150px_130px_130px_110px_100px] lg:gap-4"
               >
                 <div className="flex items-center gap-3">
-                  <img src={person.avatar} alt="" className="h-10 w-10 flex-shrink-0 rounded-xl" />
+                  <img src={person.avatar} alt="" className="h-10 w-10 flex-shrink-0 rounded-xl object-cover ring-1 ring-slate-700" />
                   <div className="min-w-0">
-                    <p className="font-semibold text-slate-900">{person.name}</p>
-                    <p className="truncate text-xs text-slate-500">{person.email}</p>
+                    <p className="font-bold text-white">{person.name}</p>
+                    <p className="truncate text-xs text-slate-400">{person.email}</p>
                   </div>
                 </div>
                 <div>
                   <Badge tone={ROLE_TONES[person.role]}>{person.role}</Badge>
                 </div>
-                <div className="text-xs font-semibold text-slate-700">{person.organization}</div>
-                <div className="text-xs font-medium text-slate-600 truncate">{person.department || '—'}</div>
+                <div className="text-xs font-semibold text-slate-300">{person.organization}</div>
+                <div className="text-xs font-medium text-slate-400 truncate">{person.department || '—'}</div>
                 <div>
                   <Badge tone={ACCOUNT_TONES[person.status]}>{person.status}</Badge>
                 </div>
-                <div className="text-xs text-slate-500">{person.joined}</div>
+                <div className="text-xs text-slate-400">{person.joined}</div>
               </button>
             ))}
           </div>
@@ -264,33 +264,33 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl z-10"
+              className="relative w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl backdrop-blur-2xl text-white z-10"
             >
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/20 text-teal-300 border border-brand-500/30">
                     <UserPlusIcon className="h-5 w-5" />
                   </span>
-                  <h2 className="font-display text-lg font-bold text-slate-900">
+                  <h2 className="font-display text-lg font-bold text-white">
                     Create User Account
                   </h2>
                 </div>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
                 >
                   <XIcon className="h-5 w-5" />
                 </button>
               </div>
 
               {error && (
-                <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3 text-xs text-red-600">
+                <div className="mt-4 rounded-xl border border-red-500/30 bg-red-950/60 p-3 text-xs text-red-200 font-medium">
                   {error}
                 </div>
               )}
@@ -298,7 +298,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
               <form onSubmit={handleCreateUser} className="mt-4 space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-bold text-white mb-1">
                       First Name *
                     </label>
                     <Input
@@ -309,7 +309,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-bold text-white mb-1">
                       Last Name *
                     </label>
                     <Input
@@ -322,7 +322,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-white mb-1">
                     Email Address *
                   </label>
                   <Input
@@ -335,7 +335,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-white mb-1">
                     Password *
                   </label>
                   <PasswordInput
@@ -348,7 +348,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-bold text-white mb-1">
                       Role *
                     </label>
                     <select
@@ -358,25 +358,25 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
                         setRole(newRole);
                         if (newRole === 'Recruiter') setSelectedDeptId('');
                       }}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
                     >
-                      <option value="Recruiter">Recruiter</option>
-                      <option value="HiringManager">Hiring Manager</option>
+                      <option value="Recruiter" className="bg-slate-900 text-white">Recruiter</option>
+                      <option value="HiringManager" className="bg-slate-900 text-white">Hiring Manager</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-bold text-white mb-1">
                       Assign Organization <span className="text-slate-400 font-normal">(optional)</span>
                     </label>
                     <select
                       value={selectedOrgId}
                       onChange={(e) => setSelectedOrgId(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
                     >
-                      <option value="">-- Select Organization --</option>
+                      <option value="" className="bg-slate-900 text-white">-- Select Organization --</option>
                       {organizations.map((org) => (
-                        <option key={org.id} value={org.id}>
+                        <option key={org.id} value={org.id} className="bg-slate-900 text-white">
                           {org.name}
                         </option>
                       ))}
@@ -386,17 +386,17 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
 
                 {role === 'HiringManager' && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    <label className="block text-xs font-bold text-white mb-1">
                       Assign Department <span className="text-slate-400 font-normal">(optional)</span>
                     </label>
                     <select
                       value={selectedDeptId}
                       onChange={(e) => setSelectedDeptId(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
                     >
-                      <option value="">-- Select Department --</option>
+                      <option value="" className="bg-slate-900 text-white">-- Select Department --</option>
                       {departments.map((dept) => (
-                        <option key={dept.id} value={dept.id}>
+                        <option key={dept.id} value={dept.id} className="bg-slate-900 text-white">
                           {dept.name} {dept.organizationName ? `(${dept.organizationName})` : ''}
                         </option>
                       ))}
@@ -404,16 +404,17 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
                   </div>
                 )}
 
-                <div className="mt-6 flex justify-end gap-2 pt-2">
+                <div className="mt-6 flex justify-end gap-2 pt-2 border-t border-slate-800">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsModalOpen(false)}
                     disabled={loading}
+                    className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold"
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} className="bg-brand-600 hover:bg-brand-500 text-white font-bold">
                     {loading ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Create User Account
                   </Button>
@@ -423,6 +424,7 @@ export function AdminPeople({ people, onPersonSelect, onRefresh }: AdminPeoplePr
           </div>
         )}
       </AnimatePresence>
+
     </motion.div>
   );
 }

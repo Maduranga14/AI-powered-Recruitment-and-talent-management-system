@@ -26,8 +26,8 @@ function FunnelBar({
   const pct = max > 0 ? Math.max(4, Math.round((value / max) * 100)) : 4;
   return (
     <div className="flex items-center gap-3">
-      <span className="w-36 shrink-0 text-right text-xs font-semibold text-slate-600">{label}</span>
-      <div className="relative h-7 flex-1 overflow-hidden rounded-lg bg-slate-100">
+      <span className="w-36 shrink-0 text-right text-xs font-semibold text-slate-300">{label}</span>
+      <div className="relative h-7 flex-1 overflow-hidden rounded-lg bg-slate-800">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
@@ -36,7 +36,7 @@ function FunnelBar({
           style={{ backgroundColor: color }}
         />
       </div>
-      <span className="w-10 text-left text-sm font-bold text-slate-900">{value.toLocaleString()}</span>
+      <span className="w-10 text-left text-sm font-bold text-white">{value.toLocaleString()}</span>
     </div>
   );
 }
@@ -69,7 +69,7 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
       <svg width="140" height="140" viewBox="0 0 140 140" className="shrink-0">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth="22" />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1e293b" strokeWidth="22" />
         {slices.map((s) => (
           <motion.circle
             key={s.label}
@@ -86,12 +86,12 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
             transition={{ duration: 0.8, ease: 'easeOut' }}
           />
         ))}
-        <text x={cx} y={cy - 4} textAnchor="middle" className="fill-slate-900" fontSize="18" fontWeight="800">{total}</text>
+        <text x={cx} y={cy - 4} textAnchor="middle" className="fill-white" fontSize="18" fontWeight="800">{total}</text>
         <text x={cx} y={cy + 14} textAnchor="middle" className="fill-slate-400" fontSize="10">total</text>
       </svg>
       <ul className="flex flex-wrap gap-x-4 gap-y-2 sm:flex-col">
         {slices.map((s) => (
-          <li key={s.label} className="flex items-center gap-2 text-xs text-slate-600">
+          <li key={s.label} className="flex items-center gap-2 text-xs text-slate-300">
             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: s.color }} />
             <span className="font-semibold">{s.label}</span>
             <span className="text-slate-400">({s.value})</span>
@@ -118,13 +118,13 @@ function KpiCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft"
+      className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white"
     >
       <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${colorClass}`}>
         <Icon className="h-5 w-5" />
       </span>
-      <p className="mt-4 font-display text-3xl font-extrabold text-slate-900">{value}</p>
-      <p className="mt-1 text-sm font-medium text-slate-600">{label}</p>
+      <p className="mt-4 font-display text-3xl font-extrabold text-white">{value}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-300">{label}</p>
       <p className="mt-0.5 text-xs text-slate-400">{detail}</p>
     </motion.article>
   );
@@ -157,16 +157,16 @@ export function AdminAnalytics() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2Icon className="h-8 w-8 animate-spin text-brand-600" />
+        <Loader2Icon className="h-8 w-8 animate-spin text-teal-300" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p className="text-sm font-semibold text-slate-700">Could not load analytics</p>
-        <p className="text-xs text-slate-500">{error}</p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center text-white">
+        <p className="text-sm font-bold text-white">Could not load analytics</p>
+        <p className="text-xs text-slate-400">{error}</p>
       </div>
     );
   }
@@ -192,28 +192,28 @@ export function AdminAnalytics() {
       value: data.totalJobsPosted.toLocaleString(),
       detail: 'Across all organizations',
       icon: BriefcaseIcon,
-      colorClass: 'bg-brand-50 text-brand-600',
+      colorClass: 'bg-brand-500/20 text-teal-300 border border-brand-500/30',
     },
     {
       label: 'Total Applicants',
       value: data.totalApplicants.toLocaleString(),
       detail: 'Registered candidate profiles',
       icon: UsersRoundIcon,
-      colorClass: 'bg-accent-50 text-accent-600',
+      colorClass: 'bg-accent-500/20 text-accent-300 border border-accent-500/30',
     },
     {
       label: 'Total Hired',
       value: data.totalHired.toLocaleString(),
       detail: 'Offers accepted platform-wide',
       icon: CheckCircle2Icon,
-      colorClass: 'bg-green-50 text-green-600',
+      colorClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
     },
     {
       label: 'Active Organizations',
       value: data.totalActiveOrganizations.toLocaleString(),
       detail: 'Client orgs on platform',
       icon: Building2Icon,
-      colorClass: 'bg-blue-50 text-blue-600',
+      colorClass: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
     },
   ];
 
@@ -221,15 +221,15 @@ export function AdminAnalytics() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8"
+      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8 text-white"
     >
       {/* Header */}
       <div className="mb-7">
-        <p className="text-sm font-medium text-slate-500">Administrator Portal</p>
-        <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
+        <p className="text-sm font-medium text-slate-400">Administrator Portal</p>
+        <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-white">
           Recruitment Analytics
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-slate-300">
           Live aggregated data across all jobs, candidates, and organizations.
         </p>
       </div>
@@ -244,63 +244,63 @@ export function AdminAnalytics() {
       {/* Row 2: Pipeline + AI Metrics */}
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         {/* Recruitment Pipeline Funnel */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6">
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6">
           <div className="mb-5 flex items-center gap-2">
-            <TrendingUpIcon className="h-5 w-5 text-brand-600" />
-            <h2 className="font-display text-lg font-bold text-slate-900">Recruitment Pipeline</h2>
+            <TrendingUpIcon className="h-5 w-5 text-teal-400" />
+            <h2 className="font-display text-lg font-bold text-white">Recruitment Pipeline</h2>
           </div>
           <div className="space-y-3">
             {funnelStages.map((s) => (
               <FunnelBar key={s.label} label={s.label} value={s.value} max={funnelMax} color={s.color} />
             ))}
           </div>
-          <div className="mt-5 flex gap-4 border-t border-slate-100 pt-4">
+          <div className="mt-5 flex gap-4 border-t border-slate-800 pt-4">
             <div className="text-center">
-              <p className="font-display text-2xl font-extrabold text-slate-900">
+              <p className="font-display text-2xl font-extrabold text-white">
                 {pipeline.received > 0
                   ? `${Math.round((pipeline.hired / pipeline.received) * 100)}%`
                   : '—'}
               </p>
-              <p className="text-xs text-slate-500">Hire rate</p>
+              <p className="text-xs text-slate-400 font-medium">Hire rate</p>
             </div>
             <div className="text-center">
-              <p className="font-display text-2xl font-extrabold text-slate-900">
+              <p className="font-display text-2xl font-extrabold text-white">
                 {pipeline.received > 0
                   ? `${Math.round((pipeline.interviewScheduled / pipeline.received) * 100)}%`
                   : '—'}
               </p>
-              <p className="text-xs text-slate-500">Interview rate</p>
+              <p className="text-xs text-slate-400 font-medium">Interview rate</p>
             </div>
           </div>
         </section>
 
         {/* AI & Efficiency */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6">
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6">
           <div className="mb-5 flex items-center gap-2">
-            <ZapIcon className="h-5 w-5 text-accent-600" />
-            <h2 className="font-display text-lg font-bold text-slate-900">AI & Efficiency</h2>
+            <ZapIcon className="h-5 w-5 text-teal-400" />
+            <h2 className="font-display text-lg font-bold text-white">AI & Efficiency</h2>
           </div>
 
-          <div className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-700 p-5 text-white">
+          <div className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-700 p-5 text-white shadow-lg">
             <div className="flex items-center gap-2">
-              <SparklesIcon className="h-4 w-4 text-brand-200" />
-              <p className="text-xs font-semibold text-brand-100">Avg. AI Match Score</p>
+              <SparklesIcon className="h-4 w-4 text-teal-200" />
+              <p className="text-xs font-bold text-teal-100">Avg. AI Match Score</p>
             </div>
             <p className="mt-2 font-display text-5xl font-extrabold">
               {data.averageMatchScore > 0 ? `${data.averageMatchScore}%` : '—'}
             </p>
-            <p className="mt-1 text-xs text-brand-200">Based on hiring manager ratings</p>
+            <p className="mt-1 text-xs text-teal-200 font-medium">Based on hiring manager ratings</p>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-5">
+          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
             <div className="flex items-center gap-2">
-              <ClockIcon className="h-4 w-4 text-amber-500" />
-              <p className="text-xs font-semibold text-slate-500">Avg. Time to Hire</p>
+              <ClockIcon className="h-4 w-4 text-amber-400" />
+              <p className="text-xs font-semibold text-slate-400">Avg. Time to Hire</p>
             </div>
-            <p className="mt-2 font-display text-4xl font-extrabold text-slate-900">
+            <p className="mt-2 font-display text-4xl font-extrabold text-white">
               {data.averageTimeToHireDays > 0 ? `${data.averageTimeToHireDays}d` : '—'}
             </p>
-            <p className="mt-1 text-xs text-slate-400">From application to offer accepted</p>
+            <p className="mt-1 text-xs text-slate-400 font-medium">From application to offer accepted</p>
           </div>
         </section>
       </div>
@@ -308,16 +308,16 @@ export function AdminAnalytics() {
       {/* Row 3: Org Table + Dept Donut */}
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         {/* Top Organizations */}
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
-          <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
-            <h2 className="font-display text-lg font-bold text-slate-900">Top Hiring Organizations</h2>
-            <p className="text-xs text-slate-500">Ranked by total jobs posted</p>
+        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white">
+          <div className="border-b border-slate-800 px-5 py-4 sm:px-6">
+            <h2 className="font-display text-lg font-bold text-white">Top Hiring Organizations</h2>
+            <p className="text-xs text-slate-400">Ranked by total jobs posted</p>
           </div>
           {data.topOrganizations.length === 0 ? (
             <p className="px-6 py-10 text-center text-sm text-slate-400">No organization data yet.</p>
           ) : (
-            <div className="divide-y divide-slate-100">
-              <div className="hidden grid-cols-[1fr_80px_100px_80px] gap-3 px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 sm:grid sm:px-6">
+            <div className="divide-y divide-slate-800">
+              <div className="hidden grid-cols-[1fr_80px_100px_80px] gap-3 bg-slate-950/60 px-5 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 sm:grid sm:px-6 border-b border-slate-800">
                 <span>Organization</span>
                 <span className="text-center">Jobs</span>
                 <span className="text-center">Applications</span>
@@ -329,22 +329,22 @@ export function AdminAnalytics() {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className="grid grid-cols-2 items-center gap-3 px-5 py-3.5 sm:grid-cols-[1fr_80px_100px_80px] sm:px-6"
+                  className="grid grid-cols-2 items-center gap-3 px-5 py-3.5 sm:grid-cols-[1fr_80px_100px_80px] sm:px-6 hover:bg-slate-800/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm"
                       style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
                     >
                       {org.organizationName.slice(0, 2).toUpperCase()}
                     </span>
-                    <span className="truncate text-sm font-semibold text-slate-800">
+                    <span className="truncate text-sm font-bold text-white">
                       {org.organizationName}
                     </span>
                   </div>
-                  <span className="text-center text-sm font-semibold text-slate-700">{org.totalJobs}</span>
-                  <span className="text-center text-sm text-slate-600">{org.totalApplications}</span>
-                  <span className="text-center text-sm font-semibold text-green-600">{org.hired}</span>
+                  <span className="text-center text-sm font-semibold text-slate-300">{org.totalJobs}</span>
+                  <span className="text-center text-sm text-slate-400">{org.totalApplications}</span>
+                  <span className="text-center text-sm font-bold text-emerald-400">{org.hired}</span>
                 </motion.div>
               ))}
             </div>
@@ -352,17 +352,17 @@ export function AdminAnalytics() {
         </section>
 
         {/* Department Breakdown */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6">
-          <h2 className="font-display text-lg font-bold text-slate-900">Jobs by Department</h2>
-          <p className="mb-5 text-xs text-slate-500">Distribution of all posted roles</p>
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6">
+          <h2 className="font-display text-lg font-bold text-white">Jobs by Department</h2>
+          <p className="mb-5 text-xs text-slate-400">Distribution of all posted roles</p>
           <DonutChart data={deptDonutData} />
         </section>
       </div>
 
       {/* Row 4: Recent Activity */}
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6">
-        <h2 className="font-display text-lg font-bold text-slate-900">Recent Activity</h2>
-        <p className="mb-5 text-xs text-slate-500">Latest 5 platform events</p>
+      <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6">
+        <h2 className="font-display text-lg font-bold text-white">Recent Activity</h2>
+        <p className="mb-5 text-xs text-slate-400">Latest 5 platform events</p>
         {data.recentActivity.length === 0 ? (
           <p className="py-8 text-center text-sm text-slate-400">No recent activity found.</p>
         ) : (
@@ -380,12 +380,12 @@ export function AdminAnalytics() {
                 >
                   <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${cfg.color}`} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-slate-800">{item.message}</p>
+                    <p className="text-sm font-semibold text-white">{item.message}</p>
                     <p className="mt-0.5 text-xs text-slate-400">
                       {item.meta} · {timeAgo}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-500">
+                  <span className="shrink-0 rounded-full bg-slate-800 border border-slate-700 px-2.5 py-0.5 text-[10px] font-bold text-teal-300">
                     {cfg.label}
                   </span>
                 </motion.li>
@@ -397,6 +397,7 @@ export function AdminAnalytics() {
     </motion.div>
   );
 }
+
 
 function formatTimeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();

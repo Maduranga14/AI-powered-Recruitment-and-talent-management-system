@@ -276,14 +276,14 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8"
+      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8 text-white"
     >
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">Communication center</p>
-          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">Inbox</h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-teal-400">Communication center</p>
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-white">Inbox</h1>
+          <p className="mt-2 text-sm text-slate-300">
             Candidate pipeline updates, interview alerts, and AI notifications.
           </p>
         </div>
@@ -291,16 +291,16 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2 text-sm font-bold text-white hover:bg-slate-700 transition"
             >
-              <CheckCheckIcon className="h-4 w-4" /> Mark all read
+              <CheckCheckIcon className="h-4 w-4 text-teal-400" /> Mark all read
             </button>
           )}
         </div>
       </div>
 
       {/* Category tabs */}
-      <div className="mt-5 flex gap-1 rounded-2xl border border-slate-200 bg-slate-100/60 p-1 w-fit">
+      <div className="mt-5 flex gap-1 rounded-2xl border border-slate-800 bg-slate-950/70 p-1 w-fit">
         {(['all', 'candidates', 'interviews', 'system'] as MessageCategory[]).map(cat => {
           const count = cat === 'all'
             ? allMessages.filter(m => !archivedIds.has(m.id) && isUnread(m.id)).length
@@ -309,8 +309,8 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
             <button
               key={cat}
               onClick={() => setCategory(cat)}
-              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold capitalize transition-colors ${
-                category === cat ? 'bg-white shadow-soft text-brand-700' : 'text-slate-600 hover:text-slate-900'
+              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold capitalize transition-colors ${
+                category === cat ? 'bg-slate-800 shadow-md text-teal-300 border border-slate-700' : 'text-slate-400 hover:text-white'
               }`}
             >
               {cat}
@@ -326,33 +326,33 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
 
       {/* Main panel */}
       <section
-        className="mt-5 grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft lg:grid-cols-[340px_1fr]"
+        className="mt-5 grid overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white lg:grid-cols-[340px_1fr]"
         aria-label="Recruiter inbox"
       >
         {/* Message list */}
-        <div className="flex flex-col border-b border-slate-200 lg:border-b-0 lg:border-r">
-          <div className="border-b border-slate-100 p-3">
-            <label className="flex items-center gap-2 rounded-xl bg-slate-100 px-3">
+        <div className="flex flex-col border-b border-slate-800 lg:border-b-0 lg:border-r">
+          <div className="border-b border-slate-800 bg-slate-950/60 p-3">
+            <label className="flex items-center gap-2 rounded-xl bg-slate-800 border border-slate-700 px-3">
               <SearchIcon className="h-4 w-4 text-slate-400 shrink-0" />
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search inbox…"
-                className="w-full bg-transparent py-2.5 text-sm outline-none"
+                className="w-full bg-transparent py-2.5 text-sm text-white placeholder-slate-400 outline-none"
               />
               {query && (
                 <button onClick={() => setQuery('')}>
-                  <XCircleIcon className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+                  <XCircleIcon className="h-4 w-4 text-slate-400 hover:text-white" />
                 </button>
               )}
             </label>
           </div>
 
-          <div className="flex-1 overflow-y-auto max-h-[600px]">
+          <div className="flex-1 overflow-y-auto max-h-[600px] divide-y divide-slate-800">
             {visible.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <MailOpenIcon className="h-9 w-9 text-slate-300" />
-                <p className="mt-3 text-sm font-semibold text-slate-500">All caught up</p>
+              <div className="flex flex-col items-center justify-center py-16 text-center text-white">
+                <MailOpenIcon className="h-9 w-9 text-slate-400" />
+                <p className="mt-3 text-sm font-bold text-white">All caught up</p>
                 <p className="mt-1 text-xs text-slate-400">No messages match your filters.</p>
               </div>
             ) : (
@@ -363,8 +363,8 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
                   <button
                     key={msg.id}
                     onClick={() => { setSelectedId(msg.id); markRead(msg.id); setReplying(false); }}
-                    className={`flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors border-b border-slate-100 last:border-0 ${
-                      active ? 'bg-brand-50' : 'hover:bg-slate-50'
+                    className={`flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors border-b border-slate-800 last:border-0 ${
+                      active ? 'bg-slate-800 border-l-4 border-l-teal-400' : 'hover:bg-slate-800/60'
                     }`}
                   >
                     <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold ${msg.senderColor}`}>
@@ -372,18 +372,18 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`truncate text-sm ${unread ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'}`}>
+                        <span className={`truncate text-sm ${unread ? 'font-bold text-white' : 'font-semibold text-slate-300'}`}>
                           {msg.sender}
                         </span>
                         <span className="shrink-0 text-[11px] text-slate-400">{msg.time}</span>
                       </div>
-                      <p className={`mt-0.5 truncate text-xs ${unread ? 'font-semibold text-slate-700' : 'text-slate-500'}`}>
+                      <p className={`mt-0.5 truncate text-xs ${unread ? 'font-bold text-teal-300' : 'text-slate-300'}`}>
                         {msg.subject}
                       </p>
                       <p className="mt-0.5 truncate text-[11px] text-slate-400">{msg.body}</p>
                     </div>
                     {unread && (
-                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand-600" />
+                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-teal-400 shadow-sm" />
                     )}
                   </button>
                 );
@@ -394,23 +394,23 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
 
         {/* Message detail */}
         {selected ? (
-          <div className="flex flex-col">
+          <div className="flex flex-col text-white">
             {/* Detail header */}
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-5">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-800 bg-slate-950/60 p-5">
               <div className="flex items-start gap-3 min-w-0">
                 <span className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold ${selected.senderColor}`}>
                   {selected.senderInitials}
                 </span>
                 <div className="min-w-0">
-                  <h2 className="font-display text-lg font-extrabold text-slate-900 leading-tight">
+                  <h2 className="font-display text-lg font-extrabold text-white leading-tight">
                     {selected.subject}
                   </h2>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-slate-500">From <span className="font-semibold text-slate-700">{selected.sender}</span></span>
-                    <span className="text-slate-300">·</span>
+                    <span className="text-sm text-slate-400">From <span className="font-bold text-white">{selected.sender}</span></span>
+                    <span className="text-slate-600">·</span>
                     <span className="text-xs text-slate-400">{selected.time}</span>
                     {selected.tag && (
-                      <Badge tone={selected.tagTone ?? 'slate'}>{selected.tag}</Badge>
+                      <Badge tone={selected.tagTone ?? 'slate'} className="bg-brand-500/20 text-teal-300 border-brand-500/30">{selected.tag}</Badge>
                     )}
                   </div>
                 </div>
@@ -419,7 +419,7 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
                 <button
                   onClick={() => archive(selected.id)}
                   title="Archive"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition"
                 >
                   <ArchiveIcon className="h-4 w-4" />
                 </button>
@@ -432,13 +432,13 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
                 <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${selected.senderColor}`}>
                   <CategoryIcon className="h-4 w-4" />
                 </span>
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 capitalize">
+                <span className="text-xs font-bold uppercase tracking-wider text-teal-400 capitalize">
                   {selected.category}
                 </span>
               </div>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:p-5">
-                <p className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5 text-white">
+                <p className="text-sm leading-7 text-slate-200 whitespace-pre-wrap">
                   {selected.body}
                 </p>
               </div>
@@ -446,36 +446,36 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
               {/* Context cards based on category */}
               {selected.category === 'candidates' && (
                 <div className="mt-5 grid grid-cols-3 gap-3">
-                  <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
-                    <p className="font-display text-xl font-extrabold text-slate-900">{candidates.length}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">Total applicants</p>
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-center text-white">
+                    <p className="font-display text-xl font-extrabold text-white">{candidates.length}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">Total applicants</p>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
-                    <p className="font-display text-xl font-extrabold text-amber-600">
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-center text-white">
+                    <p className="font-display text-xl font-extrabold text-amber-300">
                       {candidates.filter(c => c.stage === 'Shortlisted' || c.stage === 'Reviewed').length}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">Pending action</p>
+                    <p className="mt-0.5 text-xs text-slate-400">Pending action</p>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
-                    <p className="font-display text-xl font-extrabold text-emerald-600">
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-center text-white">
+                    <p className="font-display text-xl font-extrabold text-emerald-300">
                       {candidates.filter(c => c.stage === 'Offer').length}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">Hired</p>
+                    <p className="mt-0.5 text-xs text-slate-400">Hired</p>
                   </div>
                 </div>
               )}
 
               {selected.category === 'interviews' && (
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
-                    <p className="font-display text-xl font-extrabold text-brand-700">{interviews.length}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">Scheduled interviews</p>
+                  <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-center text-white">
+                    <p className="font-display text-xl font-extrabold text-teal-300">{interviews.length}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">Scheduled interviews</p>
                   </div>
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-center">
-                    <p className="font-display text-xl font-extrabold text-amber-700">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-950/60 p-3 text-center text-white">
+                    <p className="font-display text-xl font-extrabold text-amber-300">
                       {interviews.filter(i => i.rescheduleRequested).length}
                     </p>
-                    <p className="mt-0.5 text-xs text-amber-600">Reschedule requests</p>
+                    <p className="mt-0.5 text-xs text-amber-200">Reschedule requests</p>
                   </div>
                 </div>
               )}
@@ -487,16 +487,16 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="mt-4 flex items-center gap-2.5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm font-semibold text-emerald-700"
+                    className="mt-4 flex items-center gap-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/30 px-4 py-3 text-sm font-bold text-emerald-200"
                   >
-                    <CheckCircle2Icon className="h-5 w-5" /> Reply sent successfully.
+                    <CheckCircle2Icon className="h-5 w-5 text-emerald-400" /> Reply sent successfully.
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
             {/* Reply area */}
-            <div className="border-t border-slate-100 p-4 sm:p-5">
+            <div className="border-t border-slate-800 p-4 sm:p-5 bg-slate-950/60">
               {replying ? (
                 <div className="space-y-3">
                   <textarea
@@ -505,19 +505,19 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
                     value={replyText}
                     onChange={e => setReplyText(e.target.value)}
                     placeholder={`Reply to ${selected.sender}…`}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 resize-none"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm text-white placeholder-slate-400 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 resize-none"
                   />
                   <div className="flex items-center gap-2">
                     <button
                       onClick={sendReply}
                       disabled={!replyText.trim()}
-                      className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-50"
+                      className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-500 disabled:opacity-50"
                     >
                       <MailPlusIcon className="h-4 w-4" /> Send reply
                     </button>
                     <button
                       onClick={() => { setReplying(false); setReplyText(''); }}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                      className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700"
                     >
                       Cancel
                     </button>
@@ -526,20 +526,21 @@ export function RecruiterInbox({ candidates = [], interviews = [] }: RecruiterIn
               ) : (
                 <button
                   onClick={() => setReplying(true)}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-700 transition-colors"
                 >
-                  <MailPlusIcon className="h-4 w-4 text-slate-400" /> Reply
+                  <MailPlusIcon className="h-4 w-4 text-teal-400" /> Reply
                 </button>
               )}
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <MailOpenIcon className="h-12 w-12 text-slate-200" />
-            <p className="mt-4 font-semibold text-slate-500">Select a message to read</p>
+          <div className="flex flex-col items-center justify-center py-24 text-center text-white">
+            <MailOpenIcon className="h-12 w-12 text-slate-400" />
+            <p className="mt-4 font-bold text-white">Select a message to read</p>
           </div>
         )}
       </section>
     </motion.div>
   );
 }
+

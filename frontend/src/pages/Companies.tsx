@@ -60,13 +60,19 @@ export function Companies() {
   }, []);
 
   return (
-    <div className="w-full bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <h1 className="font-display text-3xl font-extrabold text-slate-900">
+    <div className="w-full bg-slate-950 text-white min-h-screen">
+      <div className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-brand-950 text-white border-b border-slate-800">
+        <div className="absolute -left-20 -top-20 h-80 w-80 rounded-full bg-brand-600/30 blur-3xl pointer-events-none" />
+        <div className="absolute right-10 -bottom-10 h-80 w-80 rounded-full bg-teal-500/20 blur-3xl pointer-events-none" />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <Badge tone="brand" className="mb-3 bg-white/10 text-teal-300 border border-white/15 backdrop-blur-md px-3 py-1">
+            Featured Companies
+          </Badge>
+          <h1 className="font-display text-3xl font-black tracking-tight sm:text-4xl text-white">
             Companies hiring now
           </h1>
-          <p className="mt-2 max-w-xl text-slate-500">
+          <p className="mt-2 max-w-xl text-slate-300 font-medium">
             Explore the teams hiring on Talenta and discover live roles across
             departments.
           </p>
@@ -76,15 +82,15 @@ export function Companies() {
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {loading ? (
           <div className="flex justify-center py-20">
-            <Loader2Icon className="h-8 w-8 animate-spin text-brand-600" />
+            <Loader2Icon className="h-8 w-8 animate-spin text-teal-400" />
           </div>
         ) : companies.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
-            <p className="font-semibold text-slate-900">No companies hiring yet</p>
-            <p className="mt-1 text-sm text-slate-500">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 py-16 text-center shadow-xl text-white">
+            <p className="font-semibold text-white">No companies hiring yet</p>
+            <p className="mt-1 text-sm text-slate-400">
               Published job openings will appear here as teams start hiring.
             </p>
-            <Button className="mt-5" onClick={() => navigate('/jobs')}>
+            <Button className="mt-5 bg-brand-600 hover:bg-brand-500 text-white font-bold" onClick={() => navigate('/jobs')}>
               Browse jobs
             </Button>
           </div>
@@ -97,37 +103,37 @@ export function Companies() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.35, delay: i * 0.04 }}
-                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-soft transition-all hover:-translate-y-1 hover:shadow-lift"
+                className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white transition-all hover:-translate-y-1 hover:border-brand-500/50"
               >
                 <div className="flex items-center gap-4">
                   <img
                     src={c.logo}
                     alt={`${c.name} logo`}
-                    className="h-14 w-14 rounded-2xl ring-1 ring-slate-100"
+                    className="h-14 w-14 rounded-2xl ring-1 ring-slate-700 object-cover"
                   />
                   <div>
-                    <h2 className="font-display text-lg font-bold text-slate-900">
+                    <h2 className="font-display text-lg font-extrabold text-white">
                       {c.name}
                     </h2>
-                    <p className="text-sm font-medium text-brand-600">
+                    <p className="text-sm font-bold text-teal-300">
                       {c.openRoles} open role{c.openRoles === 1 ? '' : 's'}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {c.categories.slice(0, 3).map((cat) => (
-                    <Badge key={cat} tone="accent">
+                    <Badge key={cat} tone="accent" className="bg-teal-500/20 text-teal-300 border border-teal-500/30">
                       {cat}
                     </Badge>
                   ))}
                 </div>
-                <p className="mt-4 flex items-center gap-1.5 text-sm text-slate-500">
+                <p className="mt-4 flex items-center gap-1.5 text-sm text-slate-400">
                   <MapPinIcon className="h-4 w-4" /> {c.locations[0]}
                   {c.locations.length > 1 && ` +${c.locations.length - 1} more`}
                 </p>
                 <Button
                   variant="outline"
-                  className="mt-5"
+                  className="mt-5 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold"
                   onClick={() =>
                     navigate(`/jobs?q=${encodeURIComponent(c.name)}`)
                   }

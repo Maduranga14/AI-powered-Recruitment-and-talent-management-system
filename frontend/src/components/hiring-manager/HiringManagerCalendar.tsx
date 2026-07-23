@@ -265,32 +265,32 @@ export function HiringManagerCalendar({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-[1280px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8"
+      className="mx-auto max-w-[1280px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8 text-white"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-slate-400">
             {new Date().toLocaleDateString(undefined, {
               weekday: 'long',
               month: 'long',
               day: 'numeric',
             })}
           </p>
-          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-white">
             Interview calendar
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-slate-400">
             Join meetings, request a new time, and close feedback quickly.
           </p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 shadow-inner">
+          <div className="flex items-center rounded-xl border border-slate-700 bg-slate-800 p-1 shadow-inner">
             <button
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 viewMode === 'grid'
-                  ? 'bg-white text-brand-600 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <LayoutGridIcon className="h-3.5 w-3.5" /> 5-Day Grid
@@ -300,14 +300,14 @@ export function HiringManagerCalendar({
               onClick={() => setViewMode('agenda')}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
                 viewMode === 'agenda'
-                  ? 'bg-white text-brand-600 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <ListIcon className="h-3.5 w-3.5" /> Agenda List
             </button>
           </div>
-          <Badge tone="accent">
+          <Badge tone="accent" className="bg-brand-500/20 text-teal-300 border-brand-500/30">
             <CalendarClockIcon className="h-3.5 w-3.5" /> {upcoming.length}{' '}
             upcoming
           </Badge>
@@ -317,9 +317,9 @@ export function HiringManagerCalendar({
       {message && (
         <div
           role="status"
-          className="mt-6 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+          className="mt-6 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/60 px-4 py-3 text-sm font-semibold text-emerald-200"
         >
-          <CheckCircle2Icon className="h-4 w-4" />
+          <CheckCircle2Icon className="h-4 w-4 text-emerald-400" />
           {message}
         </div>
       )}
@@ -336,7 +336,7 @@ export function HiringManagerCalendar({
 
       {/* Search & Filter Toolbar */}
 
-      <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl sm:flex-row sm:items-center sm:justify-between">
         {/* Search Input */}
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -345,12 +345,12 @@ export function HiringManagerCalendar({
             placeholder="Search candidate name, role, or focus..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-9 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 transition focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            className="w-full rounded-xl border border-slate-700 bg-slate-800 pl-10 pr-9 py-2 text-xs font-medium text-white placeholder-slate-400 transition focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
             >
               <XIcon className="h-3.5 w-3.5" />
             </button>
@@ -363,7 +363,7 @@ export function HiringManagerCalendar({
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-slate-700 transition focus:border-brand-500 focus:bg-white focus:outline-none"
+            className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white transition focus:border-teal-400 focus:outline-none"
           >
             <option value="all">All Roles</option>
             {uniqueRoles.map((role) => (
@@ -377,7 +377,7 @@ export function HiringManagerCalendar({
           <select
             value={formatFilter}
             onChange={(e) => setFormatFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-slate-700 transition focus:border-brand-500 focus:bg-white focus:outline-none"
+            className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white transition focus:border-teal-400 focus:outline-none"
           >
             <option value="all">All Formats</option>
             <option value="video">Video</option>
@@ -389,7 +389,7 @@ export function HiringManagerCalendar({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-slate-700 transition focus:border-brand-500 focus:bg-white focus:outline-none"
+            className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white transition focus:border-teal-400 focus:outline-none"
           >
             <option value="all">All Statuses</option>
             <option value="pending">Pending Feedback</option>
@@ -402,10 +402,10 @@ export function HiringManagerCalendar({
           {hasActiveFilters && (
             <button
               onClick={handleResetFilters}
-              className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition"
+              className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 transition"
               title="Clear search and filters"
             >
-              <RotateCcwIcon className="h-3.5 w-3.5" /> Clear
+              <RotateCcwIcon className="h-3.5 w-3.5 text-teal-400" /> Clear
             </button>
           )}
         </div>
@@ -428,29 +428,29 @@ export function HiringManagerCalendar({
 
         <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
           <section
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
+            className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 text-white shadow-xl"
             aria-labelledby="upcoming-interviews-title"
           >
 
-          <div className="border-b border-slate-100 p-5 sm:p-6">
+          <div className="border-b border-slate-800 p-5 sm:p-6 bg-slate-950/60">
             <h2
               id="upcoming-interviews-title"
-              className="font-display text-lg font-bold"
+              className="font-display text-lg font-extrabold text-white"
             >
               Upcoming interviews
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-400">
               Your assigned conversations and their preparation notes.
             </p>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-800">
             {upcoming.length === 0 && (
-              <div className="px-6 py-12 text-center text-sm text-slate-500">
+              <div className="px-6 py-12 text-center text-sm text-slate-400">
                 <p>{hasActiveFilters ? 'No interviews match your search and filter criteria.' : 'No interviews scheduled for your roles yet.'}</p>
                 {hasActiveFilters && (
                   <button
                     onClick={handleResetFilters}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-600 hover:bg-slate-50 transition"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-bold text-teal-300 hover:bg-slate-700 transition"
                   >
                     <RotateCcwIcon className="h-3.5 w-3.5" /> Clear filters
                   </button>
@@ -459,53 +459,53 @@ export function HiringManagerCalendar({
             )}
 
             {upcoming.map((interview) => (
-              <article key={interview.id} className="p-5 sm:p-6">
+              <article key={interview.id} className="p-5 sm:p-6 hover:bg-slate-800/40 transition">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                   <img
                     src={interview.avatar}
                     alt=""
-                    className="h-12 w-12 rounded-xl"
+                    className="h-12 w-12 rounded-xl object-cover border border-slate-700 bg-slate-950"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-base font-bold text-slate-800">
+                      <h3 className="text-base font-extrabold text-white">
                         {interview.candidate}
                       </h3>
-                      <Badge tone="brand">{interview.role}</Badge>
+                      <Badge tone="brand" className="bg-brand-500/20 text-teal-300 border-brand-500/30">{interview.role}</Badge>
                       {interview.rescheduleRequested && (
-                        <Badge tone="amber">Reschedule requested</Badge>
+                        <Badge tone="amber" className="bg-amber-500/20 text-amber-300 border-amber-500/30">Reschedule requested</Badge>
                       )}
                       {interview.feedbackSubmitted && (
-                        <Badge tone="green">
+                        <Badge tone="green" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                           <CheckCircle2Icon className="h-3 w-3" />
                           Completed
                         </Badge>
                       )}
                       {interview.isSyncedToGoogleCalendar ? (
-                        <Badge tone="accent">
-                          <CalendarDaysIcon className="h-3 w-3 text-brand-600" />
+                        <Badge tone="accent" className="bg-brand-500/20 text-teal-300 border-brand-500/30">
+                          <CalendarDaysIcon className="h-3 w-3 text-teal-400" />
                           In Google Calendar ✓
                         </Badge>
                       ) : null}
                     </div>
-                    <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                    <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-slate-300">
                       <Clock3Icon className="h-4 w-4 text-slate-400" />
                       {interview.time} &middot; {interview.duration}
                     </p>
-                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                      <VideoIcon className="h-3.5 w-3.5" />
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                      <VideoIcon className="h-3.5 w-3.5 text-teal-400" />
                       {interview.format}
                     </p>
                     {interview.rescheduleReason && (
-                      <p className="mt-2 text-xs text-amber-700">
+                      <p className="mt-2 text-xs text-amber-400">
                         Note to recruiter: {interview.rescheduleReason}
                       </p>
                     )}
-                    <div className="mt-4 rounded-xl bg-slate-50 p-3">
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-teal-400">
                         Preparation focus
                       </p>
-                      <p className="mt-1 text-sm text-slate-600">
+                      <p className="mt-1 text-sm text-slate-300">
                         {interview.focus}
                       </p>
                     </div>
@@ -517,23 +517,23 @@ export function HiringManagerCalendar({
                         href={interview.googleCalendarHtmlLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 transition"
                         title="Open event in Google Calendar"
                       >
-                        <CalendarDaysIcon className="h-3.5 w-3.5 text-brand-600" />
+                        <CalendarDaysIcon className="h-3.5 w-3.5 text-teal-400" />
                         Open in Google Calendar ↗
                       </a>
                     ) : (
                       <button
                         onClick={() => handleSyncSingleInterview(interview)}
                         disabled={syncingInterviewId === interview.id}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 transition disabled:opacity-50"
                         title="Sync to Google Calendar"
                       >
                         {syncingInterviewId === interview.id ? (
-                          <Loader2Icon className="h-3.5 w-3.5 animate-spin text-brand-600" />
+                          <Loader2Icon className="h-3.5 w-3.5 animate-spin text-teal-400" />
                         ) : (
-                          <CalendarDaysIcon className="h-3.5 w-3.5 text-brand-600" />
+                          <CalendarDaysIcon className="h-3.5 w-3.5 text-teal-400" />
                         )}
                         Add to Google Calendar
                       </button>
@@ -550,6 +550,7 @@ export function HiringManagerCalendar({
                             'noopener,noreferrer'
                           )
                         }
+                        className="bg-teal-600 hover:bg-teal-500 text-white font-bold"
                       >
                         <ExternalLinkIcon className="h-4 w-4" /> Join
                       </Button>
@@ -561,7 +562,7 @@ export function HiringManagerCalendar({
                         setRescheduleTarget(interview);
                       }}
                       disabled={interview.rescheduleRequested || interview.feedbackSubmitted}
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                      className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 transition"
                     >
                       {interview.rescheduleRequested
                         ? 'Requested'
@@ -572,16 +573,16 @@ export function HiringManagerCalendar({
                 </div>
                 {/* Add Feedback / Feedback Submitted actions */}
                 {interview.feedbackSubmitted ? (
-                  <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5">
-                    <CheckCircle2Icon className="h-4 w-4 text-emerald-600" />
-                    <span className="text-sm font-semibold text-emerald-700">
+                  <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/60 px-4 py-2.5">
+                    <CheckCircle2Icon className="h-4 w-4 text-emerald-400" />
+                    <span className="text-sm font-semibold text-emerald-200">
                       Interview Completed &mdash; Feedback submitted
                     </span>
                   </div>
                 ) : (
                   <button
                     onClick={() => handleOpenFeedback(interview)}
-                    className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-brand-200 hover:bg-brand-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white shadow-md hover:bg-brand-500 transition"
                   >
                     <ClipboardCheckIcon className="h-4 w-4" />
                     Add Interview Feedback
@@ -592,12 +593,12 @@ export function HiringManagerCalendar({
           </div>
         </section>
         <aside className="space-y-6">
-          <section className="rounded-2xl border border-brand-100 bg-brand-50/60 p-5 shadow-soft sm:p-6">
-            <LightbulbIcon className="h-5 w-5 text-brand-600" />
-            <h2 className="mt-3 font-display text-lg font-bold">
+          <section className="rounded-2xl border border-brand-500/30 bg-slate-900/90 p-5 shadow-xl sm:p-6 text-white">
+            <LightbulbIcon className="h-5 w-5 text-teal-400" />
+            <h2 className="mt-3 font-display text-lg font-bold text-white">
               Need a new time?
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <p className="mt-2 text-sm leading-6 text-slate-300">
               Request a reschedule and the recruiter will update the interview
               and notify the candidate.
             </p>
@@ -615,7 +616,7 @@ export function HiringManagerCalendar({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
               aria-label="Close"
               onClick={() => setRescheduleTarget(null)}
             />
@@ -625,50 +626,54 @@ export function HiringManagerCalendar({
               exit={{ opacity: 0, y: 20 }}
               role="dialog"
               aria-modal="true"
-              className="relative z-10 w-full max-w-md rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+              className="relative z-10 w-full max-w-md rounded-t-3xl border border-slate-700 bg-slate-900 text-white shadow-2xl backdrop-blur-2xl sm:rounded-3xl"
             >
-              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
                 <div>
-                  <h2 className="font-display text-lg font-extrabold text-slate-900">
+                  <h2 className="font-display text-lg font-extrabold text-white">
                     Request reschedule
                   </h2>
-                  <p className="mt-0.5 text-sm text-slate-500">
+                  <p className="mt-0.5 text-sm text-slate-400">
                     {rescheduleTarget.candidate} &middot; {rescheduleTarget.role}
                   </p>
                 </div>
                 <button
                   onClick={() => setRescheduleTarget(null)}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
                   aria-label="Close"
                 >
                   <XIcon className="h-5 w-5" />
                 </button>
               </div>
-              <div className="space-y-4 px-5 py-5">
-                <p className="text-sm text-slate-600">
+              <div className="space-y-4 px-5 py-5 text-white">
+                <p className="text-sm text-slate-300">
                   Current time:{' '}
-                  <span className="font-semibold text-slate-800">
+                  <span className="font-bold text-white">
                     {rescheduleTarget.time}
                   </span>
                 </p>
-                <Textarea
-                  label="Reason or preferred times (optional)"
-                  placeholder="e.g. Conflict on Thursday AM — Friday after 2pm works."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  rows={4}
-                />
+                <div>
+                  <label className="block text-xs font-bold text-white mb-1">Reason or preferred times (optional)</label>
+                  <textarea
+                    placeholder="e.g. Conflict on Thursday AM — Friday after 2pm works."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
+                  />
+                </div>
                 {error && (
-                  <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+                  <p className="rounded-lg border border-red-500/30 bg-red-950/60 px-3 py-2 text-sm font-semibold text-red-200">
                     {error}
                   </p>
                 )}
               </div>
-              <div className="flex gap-3 border-t border-slate-100 px-5 py-4">
+              <div className="flex gap-3 border-t border-slate-800 px-5 py-4">
                 <Button
                   fullWidth
                   variant="outline"
                   onClick={() => setRescheduleTarget(null)}
+                  className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold"
                 >
                   Cancel
                 </Button>
@@ -676,6 +681,7 @@ export function HiringManagerCalendar({
                   fullWidth
                   disabled={submitting}
                   onClick={submitRescheduleRequest}
+                  className="bg-brand-600 hover:bg-brand-500 text-white font-bold"
                 >
                   {submitting ? (
                     <>
@@ -699,6 +705,7 @@ export function HiringManagerCalendar({
       />
     </motion.div>
   );
+
 }
 
 

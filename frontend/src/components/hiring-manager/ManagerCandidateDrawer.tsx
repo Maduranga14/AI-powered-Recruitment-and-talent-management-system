@@ -82,7 +82,7 @@ export function ManagerCandidateDrawer({
             exit={{ opacity: 0 }}
             onClick={onClose}
             aria-label="Close candidate modal"
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-md"
           />
 
           {/* Centered Modal Card Container */}
@@ -94,33 +94,33 @@ export function ManagerCandidateDrawer({
             role="dialog"
             aria-modal="true"
             aria-label={`${candidate.name} profile`}
-            className="relative z-10 my-auto flex w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl max-h-[90vh]"
+            className="relative z-10 my-auto flex w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 text-white shadow-2xl backdrop-blur-2xl max-h-[90vh]"
           >
             {/* Sticky Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-6 py-4 backdrop-blur-md">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-6 py-4 backdrop-blur-md">
               <div className="flex items-center gap-3">
                 <img
                   src={candidate.avatar}
                   alt=""
-                  className="h-10 w-10 rounded-xl object-cover"
+                  className="h-10 w-10 rounded-xl object-cover ring-1 ring-slate-700 bg-slate-950"
                 />
                 <div>
-                  <h2 className="font-display text-lg font-extrabold text-slate-900 leading-tight">
+                  <h2 className="font-display text-lg font-extrabold text-white leading-tight">
                     {candidate.name}
                   </h2>
-                  <p className="text-xs font-medium text-slate-500">
+                  <p className="text-xs font-medium text-slate-400">
                     {candidate.role} &middot; {candidate.location}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <Badge tone={DECISION_TONES[candidate.decisionStatus] || 'slate'}>
+                <Badge tone={DECISION_TONES[candidate.decisionStatus] || 'slate'} className="bg-brand-500/20 text-teal-300 border-brand-500/30">
                   {candidate.decisionStatus}
                 </Badge>
                 <button
                   onClick={onClose}
-                  className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
                   aria-label="Close modal"
                 >
                   <XIcon className="h-5 w-5" />
@@ -128,26 +128,24 @@ export function ManagerCandidateDrawer({
               </div>
             </div>
 
+            <div className="flex-1 overflow-y-auto p-6 sm:p-7 space-y-6 text-white">
 
-            <div className="flex-1 overflow-y-auto p-6 sm:p-7 space-y-6">
-
-
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-white">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <img
                       src={candidate.avatar}
                       alt=""
-                      className="h-16 w-16 rounded-2xl shadow-sm object-cover"
+                      className="h-16 w-16 rounded-2xl shadow-sm object-cover border border-slate-800 bg-slate-900"
                     />
                     <div className="min-w-0">
-                      <h3 className="font-display text-2xl font-extrabold text-slate-900">
+                      <h3 className="font-display text-2xl font-extrabold text-white">
                         {candidate.name}
                       </h3>
-                      <p className="mt-0.5 text-sm font-semibold text-slate-600">
+                      <p className="mt-0.5 text-sm font-semibold text-slate-300">
                         {candidate.title}
                       </p>
-                      <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
                         <MapPinIcon className="h-3.5 w-3.5" />
                         {candidate.location} &middot; Applied {candidate.applied}
                       </p>
@@ -155,15 +153,15 @@ export function ManagerCandidateDrawer({
                   </div>
                   <div className="shrink-0 flex items-center gap-3">
                     {candidate.decisionStatus === 'Interview' ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-50 border border-blue-100 px-3.5 py-2 text-xs font-bold text-blue-700 shadow-xs">
+                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-500/20 border border-blue-500/30 px-3.5 py-2 text-xs font-bold text-blue-300 shadow-xs">
                         <CalendarIcon className="h-4 w-4" /> Interview Scheduled
                       </span>
                     ) : candidate.decisionStatus === 'Offer' ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-50 border border-emerald-100 px-3.5 py-2 text-xs font-bold text-emerald-700 shadow-xs">
+                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 px-3.5 py-2 text-xs font-bold text-emerald-300 shadow-xs">
                         <CheckCircle2Icon className="h-4 w-4" /> Offer Extended
                       </span>
                     ) : candidate.decisionStatus === 'Rejected' ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-600 shadow-xs">
+                      <span className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-800 border border-slate-700 px-3.5 py-2 text-xs font-bold text-slate-400 shadow-xs">
                         <XCircleIcon className="h-4 w-4" /> Application Closed
                       </span>
                     ) : (
@@ -173,44 +171,45 @@ export function ManagerCandidateDrawer({
                 </div>
 
                 {/* Quick Action Buttons */}
-                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-4 border-t border-slate-200/60">
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-4 border-t border-slate-800">
                   <Button
                     onClick={() => onGiveFeedback(candidate.id)}
                     disabled={hasFeedback}
                     variant={hasFeedback ? 'secondary' : 'primary'}
+                    className={hasFeedback ? 'border-slate-700 bg-slate-800 text-slate-400 font-bold' : 'bg-brand-600 hover:bg-brand-500 text-white font-bold'}
                   >
                     <BrainCircuitIcon className="h-4 w-4" />
                     {hasFeedback ? 'Feedback Submitted' : 'Give feedback'}
                   </Button>
                   <Link
                     to={`/candidate-profile/${candidate.candidateProfileId ?? candidate.id}`}
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 text-xs font-bold shadow-sm transition"
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-4 py-2.5 text-xs font-bold shadow-sm transition"
                   >
-                    <BrainCircuitIcon className="h-4 w-4" /> View Full Profile
+                    <BrainCircuitIcon className="h-4 w-4 text-teal-400" /> View Full Profile
                   </Link>
                 </div>
               </div>
 
               {/* Hiring Manager Decision Management Card */}
               {onMakeDecision && (
-                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
+                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-white shadow-xs">
+                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-teal-400">
                     Hiring Manager Decision
                   </h4>
                   {candidate.decisionStatus === 'Hired' || candidate.decisionStatus === 'Offer' ? (
-                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-emerald-800 border border-emerald-200">
-                      <CheckCircle2Icon className="h-5 w-5 text-emerald-600 shrink-0" />
+                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-emerald-950/60 px-4 py-3 text-emerald-200 border border-emerald-500/30">
+                      <CheckCircle2Icon className="h-5 w-5 text-emerald-400 shrink-0" />
                       <div>
                         <p className="text-sm font-bold">Candidate Selected for Offer 🎉</p>
-                        <p className="text-xs text-emerald-700">Final decision has been recorded as Offer Extended.</p>
+                        <p className="text-xs text-emerald-300">Final decision has been recorded as Offer Extended.</p>
                       </div>
                     </div>
                   ) : candidate.decisionStatus === 'Rejected' ? (
-                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-rose-50 px-4 py-3 text-rose-800 border border-rose-200">
-                      <UserXIcon className="h-5 w-5 text-rose-600 shrink-0" />
+                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-red-950/60 px-4 py-3 text-red-200 border border-red-500/30">
+                      <UserXIcon className="h-5 w-5 text-red-400 shrink-0" />
                       <div>
                         <p className="text-sm font-bold">Candidate Rejected</p>
-                        <p className="text-xs text-rose-700">Final decision has been recorded as Rejected.</p>
+                        <p className="text-xs text-red-300">Final decision has been recorded as Rejected.</p>
                       </div>
                     </div>
                   ) : isUnderFinalReview ? (
@@ -218,21 +217,21 @@ export function ManagerCandidateDrawer({
                       <button
                         type="button"
                         onClick={() => setDecisionModal('Hired')}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 text-xs font-bold shadow-sm transition"
+                        className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 text-xs font-bold shadow-sm transition"
                       >
                         <UserCheckIcon className="h-4 w-4" /> Extend Offer
                       </button>
                       <button
                         type="button"
                         onClick={() => setDecisionModal('Rejected')}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white py-2.5 text-xs font-bold shadow-sm transition"
+                        className="flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-white py-2.5 text-xs font-bold shadow-sm transition"
                       >
                         <UserXIcon className="h-4 w-4" /> Reject Candidate
                       </button>
                     </div>
                   ) : (
-                    <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 p-3.5 border border-slate-200 text-xs text-slate-600">
-                      <BrainCircuitIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                    <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-900 p-3.5 border border-slate-800 text-xs text-slate-300">
+                      <BrainCircuitIcon className="h-4 w-4 text-teal-400 shrink-0" />
                       <span className="font-medium">Hiring decision buttons will appear once the applicant moves to Under Final Review stage.</span>
                     </div>
                   )}
@@ -241,28 +240,28 @@ export function ManagerCandidateDrawer({
 
               {/* Profile Snapshot & Recommended Focus Grid */}
               <div className="grid gap-4 sm:grid-cols-2">
-                <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
-                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
+                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-white shadow-xs">
+                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-teal-400">
                     Profile Snapshot
                   </h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300">
                     {candidate.summary}
                   </p>
                   {candidate.experience && (
-                    <p className="mt-2 text-xs font-semibold text-slate-600">
+                    <p className="mt-2 text-xs font-semibold text-slate-400">
                       {candidate.experience}
                     </p>
                   )}
                 </section>
 
-                <section className="rounded-2xl border border-brand-100 bg-brand-50/50 p-4 shadow-xs">
-                  <div className="flex items-center gap-2 text-brand-700">
+                <section className="rounded-2xl border border-brand-500/30 bg-slate-950/70 p-4 text-white shadow-xs">
+                  <div className="flex items-center gap-2 text-teal-300">
                     <BrainCircuitIcon className="h-4 w-4" />
                     <h4 className="font-display text-xs font-bold uppercase tracking-wider">
                       Recommended Interview Focus
                     </h4>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300">
                     {candidate.interviewFocus}
                   </p>
                 </section>
@@ -270,11 +269,11 @@ export function ManagerCandidateDrawer({
 
               {/* Hiring Manager Pre-Interview Review Block */}
               {(candidate.evidence || candidate.recommendation || candidate.overallRating) && (
-                <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <section className="rounded-2xl border border-brand-500/30 bg-slate-950/70 p-5 text-white shadow-xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div className="flex items-center gap-2">
-                      <BrainCircuitIcon className="h-4 w-4 text-brand-600" />
-                      <h4 className="font-display text-sm font-extrabold text-slate-900">
+                      <BrainCircuitIcon className="h-4 w-4 text-teal-300" />
+                      <h4 className="font-display text-sm font-extrabold text-white">
                         Hiring Manager Pre-Interview Review
                       </h4>
                     </div>
@@ -287,6 +286,7 @@ export function ManagerCandidateDrawer({
                               ? 'amber'
                               : 'red'
                         }
+                        className="bg-brand-500/20 text-teal-300 border-brand-500/30"
                       >
                         {candidate.recommendation}
                       </Badge>
@@ -295,30 +295,30 @@ export function ManagerCandidateDrawer({
 
                   {candidate.evidence && (
                     <div>
-                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         Manager Comments
                       </span>
-                      <p className="mt-1.5 text-sm leading-relaxed text-slate-800 whitespace-pre-line bg-slate-50 rounded-xl p-3.5 border border-slate-200/60 font-medium">
+                      <p className="mt-1.5 text-sm leading-relaxed text-slate-200 whitespace-pre-line bg-slate-900 rounded-xl p-3.5 border border-slate-800 font-medium">
                         {candidate.evidence}
                       </p>
                     </div>
                   )}
 
                   {candidate.overallRating && (
-                    <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Overall Rating:</span>
+                    <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Overall Rating:</span>
                       <div className="flex items-center gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <StarIcon
                             key={star}
                             className={`h-4 w-4 ${(candidate.overallRating || 0) >= star
                               ? 'fill-amber-400 text-amber-400'
-                              : 'text-slate-300'
+                              : 'text-slate-700'
                               }`}
                           />
                         ))}
                       </div>
-                      <span className="text-xs font-bold text-slate-700 ml-1">
+                      <span className="text-xs font-bold text-white ml-1">
                         {candidate.overallRating} / 5
                       </span>
                     </div>
@@ -328,13 +328,13 @@ export function ManagerCandidateDrawer({
 
               {/* Post-Interview Evaluation Block */}
               {(candidate.interviewRecommendation || candidate.interviewComments || candidate.interviewTechnicalScore || candidate.interviewSkillRatings) && (
-                <section className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-soft space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <section className="rounded-2xl border border-emerald-500/30 bg-slate-950/70 p-5 text-white shadow-soft space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div className="flex items-center gap-2">
                       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-xs">
                         ✓
                       </span>
-                      <h4 className="font-display text-sm font-extrabold text-slate-900">
+                      <h4 className="font-display text-sm font-extrabold text-white">
                         Post-Interview Evaluation
                       </h4>
                     </div>
@@ -345,7 +345,7 @@ export function ManagerCandidateDrawer({
                             key={star}
                             className={`h-4 w-4 ${(candidate.interviewOverallRating || 0) >= star
                               ? 'fill-amber-400 text-amber-400'
-                              : 'text-slate-300'
+                              : 'text-slate-700'
                               }`}
                           />
                         ))}
@@ -356,7 +356,7 @@ export function ManagerCandidateDrawer({
                   <div className="space-y-3">
                     {candidate.interviewRecommendation && (
                       <div>
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                           Interview Recommendation
                         </span>
                         <div className="mt-1">
@@ -379,10 +379,10 @@ export function ManagerCandidateDrawer({
 
                     {candidate.interviewComments && (
                       <div>
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                           Interviewer Evaluation &amp; Comments
                         </span>
-                        <p className="mt-1 text-sm leading-relaxed text-slate-800 whitespace-pre-line bg-white rounded-xl p-3.5 border border-emerald-100 shadow-xs font-medium">
+                        <p className="mt-1 text-sm leading-relaxed text-slate-200 whitespace-pre-line bg-slate-900 rounded-xl p-3.5 border border-slate-800 font-medium">
                           {candidate.interviewComments}
                         </p>
                       </div>
@@ -390,10 +390,10 @@ export function ManagerCandidateDrawer({
 
                     {candidate.interviewTechnicalScore && (
                       <div>
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                           Technical Assessment Score
                         </span>
-                        <p className="mt-1 text-sm font-extrabold text-slate-800 bg-white rounded-xl p-2.5 border border-emerald-100 inline-block px-4">
+                        <p className="mt-1 text-sm font-extrabold text-white bg-slate-900 rounded-xl p-2.5 border border-slate-800 inline-block px-4">
                           {candidate.interviewTechnicalScore} / 5
                         </p>
                       </div>
@@ -406,19 +406,19 @@ export function ManagerCandidateDrawer({
                         if (skills.length === 0) return null;
                         return (
                           <div>
-                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                               Skill Scorecard
                             </span>
                             <div className="mt-2 grid grid-cols-3 gap-2">
                               {skills.map((skill) => (
                                 <div
                                   key={skill}
-                                  className="rounded-lg bg-white border border-emerald-100 p-2.5 text-center shadow-xs"
+                                  className="rounded-lg bg-slate-900 border border-slate-800 p-2.5 text-center text-white"
                                 >
-                                  <p className="text-[10px] font-semibold text-slate-500 truncate">
+                                  <p className="text-[10px] font-semibold text-slate-400 truncate">
                                     {skill}
                                   </p>
-                                  <p className="mt-1 text-base font-extrabold text-slate-800">
+                                  <p className="mt-1 text-base font-extrabold text-white">
                                     {parsed[skill]} / 5
                                   </p>
                                 </div>
@@ -436,14 +436,14 @@ export function ManagerCandidateDrawer({
 
               {/* Key Signals */}
               {candidate.signals.length > 0 && (
-                <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
-                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400">
+                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-white shadow-xs">
+                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-teal-400">
                     Key Signals
                   </h4>
                   <ul className="mt-2.5 space-y-2">
                     {candidate.signals.map((signal) => (
-                      <li key={signal} className="flex gap-2.5 text-sm text-slate-600">
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-500" />
+                      <li key={signal} className="flex gap-2.5 text-sm text-slate-300">
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-400" />
                         {signal}
                       </li>
                     ))}
@@ -454,12 +454,12 @@ export function ManagerCandidateDrawer({
               {/* Skills Badges */}
               {candidate.skills.length > 0 && (
                 <section>
-                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-teal-400 mb-2">
                     Skills & Competencies
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {candidate.skills.map((skill) => (
-                      <Badge key={skill} tone="brand">
+                      <Badge key={skill} tone="brand" className="bg-brand-500/20 text-teal-300 border-brand-500/30">
                         {skill}
                       </Badge>
                     ))}
@@ -470,18 +470,18 @@ export function ManagerCandidateDrawer({
               {/* Work Experiences */}
               {candidate.experiences && candidate.experiences.length > 0 && (
                 <section>
-                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-teal-400 mb-3">
                     Work Experience
                   </h4>
                   <div className="space-y-3">
                     {candidate.experiences.map((exp, idx) => (
-                      <div key={idx} className="rounded-xl border border-slate-200 bg-white p-3.5 text-xs">
-                        <p className="font-bold text-slate-800">{exp.title}</p>
-                        <p className="text-slate-500 flex items-center gap-1 mt-0.5">
-                          <BuildingIcon className="h-3 w-3" /> {exp.company}
+                      <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/70 p-3.5 text-xs text-white">
+                        <p className="font-bold text-white">{exp.title}</p>
+                        <p className="text-slate-400 flex items-center gap-1 mt-0.5">
+                          <BuildingIcon className="h-3 w-3 text-teal-400" /> {exp.company}
                         </p>
                         {exp.description && (
-                          <p className="mt-1.5 text-slate-600 leading-relaxed">{exp.description}</p>
+                          <p className="mt-1.5 text-slate-300 leading-relaxed">{exp.description}</p>
                         )}
                       </div>
                     ))}
@@ -492,16 +492,16 @@ export function ManagerCandidateDrawer({
               {/* Education Entries */}
               {candidate.educations && candidate.educations.length > 0 && (
                 <section>
-                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  <h4 className="font-display text-xs font-bold uppercase tracking-wider text-teal-400 mb-2">
                     Education
                   </h4>
                   <div className="space-y-2">
                     {candidate.educations.map((edu, idx) => (
-                      <div key={idx} className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-3 text-xs">
-                        <GraduationCapIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                      <div key={idx} className="flex items-center gap-2.5 rounded-xl bg-slate-900 border border-slate-800 p-3 text-xs text-white">
+                        <GraduationCapIcon className="h-4 w-4 text-teal-400 shrink-0" />
                         <div>
-                          <p className="font-bold text-slate-800">{edu.degree} &middot; {edu.fieldOfStudy}</p>
-                          <p className="text-slate-500">{edu.institution}</p>
+                          <p className="font-bold text-white">{edu.degree} &middot; {edu.fieldOfStudy}</p>
+                          <p className="text-slate-400">{edu.institution}</p>
                         </div>
                       </div>
                     ))}
@@ -522,26 +522,26 @@ export function ManagerCandidateDrawer({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setDecisionModal(null)}
-            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative z-10 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100"
+            className="relative z-10 w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 text-white shadow-2xl backdrop-blur-2xl"
           >
-            <h3 className="font-display text-xl font-extrabold text-slate-900">
+            <h3 className="font-display text-xl font-extrabold text-white">
               Confirm {decisionModal === 'Hired' ? 'Job Offer' : 'Rejection'} Decision
             </h3>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-slate-300">
               Are you sure you want to mark <strong>{candidate.name}</strong> for an{' '}
-              <span className={decisionModal === 'Hired' ? 'font-bold text-emerald-600' : 'font-bold text-rose-600'}>
+              <span className={decisionModal === 'Hired' ? 'font-bold text-emerald-400' : 'font-bold text-red-400'}>
                 {decisionModal === 'Hired' ? 'Offer Extended' : 'Rejected'}
               </span>
               ?
             </p>
             <div className="mt-4">
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-white mb-1">
                 Decision Notes (Optional)
               </label>
               <textarea
@@ -549,11 +549,11 @@ export function ManagerCandidateDrawer({
                 value={decisionNotes}
                 onChange={(e) => setDecisionNotes(e.target.value)}
                 placeholder="Add notes about your hiring choice..."
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
               />
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDecisionModal(null)}>
+              <Button variant="outline" onClick={() => setDecisionModal(null)} className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
                 Cancel
               </Button>
               <button
@@ -561,8 +561,8 @@ export function ManagerCandidateDrawer({
                 disabled={isSubmitting}
                 onClick={confirmDecision}
                 className={`rounded-xl px-4 py-2 text-sm font-bold text-white transition ${decisionModal === 'Hired'
-                  ? 'bg-emerald-600 hover:bg-emerald-700'
-                  : 'bg-rose-600 hover:bg-rose-700'
+                  ? 'bg-emerald-600 hover:bg-emerald-500'
+                  : 'bg-red-600 hover:bg-red-500'
                   }`}
               >
                 {isSubmitting ? 'Saving...' : `Confirm ${decisionModal}`}
@@ -574,3 +574,4 @@ export function ManagerCandidateDrawer({
     </AnimatePresence>
   );
 }
+

@@ -270,17 +270,17 @@ export function ProfilePanel() {
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
         {/* Basic info */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 className="font-display text-lg font-bold text-slate-900">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
+          <h2 className="font-display text-lg font-bold text-white">
             Basic information
           </h2>
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-50 p-4 border border-slate-100">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-950/60 p-4 border border-slate-800">
             <div className="flex items-center gap-4">
               <div className="relative group">
                 <img
                   src={user.photoUrl ? (user.photoUrl.startsWith('http') ? user.photoUrl : `http://localhost:5073${user.photoUrl.startsWith('/') ? '' : '/'}${user.photoUrl}`) : user.avatar}
                   alt={user.name}
-                  className="h-20 w-20 rounded-2xl object-cover border-2 border-white shadow-sm ring-1 ring-slate-200"
+                  className="h-20 w-20 rounded-2xl object-cover border-2 border-slate-700 shadow-sm ring-1 ring-slate-600"
                 />
                 <button
                   type="button"
@@ -298,10 +298,10 @@ export function ProfilePanel() {
               </div>
 
               <div>
-                <p className="font-display text-lg font-bold text-slate-900">
+                <p className="font-display text-lg font-bold text-white">
                   {user.name}
                 </p>
-                <p className="text-xs text-slate-500 font-medium">{user.email}</p>
+                <p className="text-xs text-slate-400 font-medium">{user.email}</p>
                 <p className="mt-1 text-[11px] text-slate-400">
                   Allowed: JPG, PNG, WEBP, GIF (Max 5MB)
                 </p>
@@ -396,16 +396,16 @@ export function ProfilePanel() {
         </div>
 
         {/* Work Experience */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <BriefcaseIcon className="h-5 w-5 text-slate-600" />
-              <h2 className="font-display text-lg font-bold text-slate-900">
+              <BriefcaseIcon className="h-5 w-5 text-teal-400" />
+              <h2 className="font-display text-lg font-bold text-white">
                 Work experience
               </h2>
             </div>
             {!showExpForm && (
-              <Button size="sm" variant="outline" onClick={() => setShowExpForm(true)}>
+              <Button size="sm" variant="outline" onClick={() => setShowExpForm(true)} className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
                 <PlusIcon className="h-4 w-4 mr-1" /> Add
               </Button>
             )}
@@ -485,22 +485,22 @@ export function ProfilePanel() {
               <p className="text-sm text-slate-400 text-center py-4">No work experience entries added.</p>
             )}
             {user.experiences && user.experiences.map((exp) => (
-              <div key={exp.id} className="flex justify-between items-start p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition-colors">
+              <div key={exp.id} className="flex justify-between items-start p-4 border border-slate-800 bg-slate-950/60 rounded-xl hover:border-slate-700 transition-colors">
                 <div>
-                  <h4 className="font-semibold text-slate-900">{exp.title}</h4>
-                  <p className="text-sm text-slate-600">{exp.company}</p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <h4 className="font-bold text-white text-base">{exp.title}</h4>
+                  <p className="text-sm font-semibold text-teal-300 mt-0.5">{exp.company}</p>
+                  <p className="text-xs text-slate-400 mt-1 font-medium">
                     {formatDate(exp.startDate)} – {exp.isCurrent ? 'Present' : exp.endDate ? formatDate(exp.endDate) : ''}
                   </p>
                   {exp.description && (
-                    <p className="text-sm text-slate-500 mt-2 whitespace-pre-line leading-relaxed">
+                    <p className="text-sm text-slate-300 mt-2 whitespace-pre-line leading-relaxed">
                       {exp.description}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => handleDeleteExperience(exp.id)}
-                  className="p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-lg"
+                  className="p-1.5 text-slate-400 hover:bg-red-500/20 hover:text-red-400 rounded-lg"
                   aria-label={`Remove experience at ${exp.company}`}
                 >
                   <Trash2Icon className="h-4 w-4" />
@@ -511,16 +511,16 @@ export function ProfilePanel() {
         </div>
 
         {/* Education */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <GraduationCapIcon className="h-5 w-5 text-slate-600" />
-              <h2 className="font-display text-lg font-bold text-slate-900">
+              <GraduationCapIcon className="h-5 w-5 text-teal-400" />
+              <h2 className="font-display text-lg font-bold text-white">
                 Education
               </h2>
             </div>
             {!showEdForm && (
-              <Button size="sm" variant="outline" onClick={() => setShowEdForm(true)}>
+              <Button size="sm" variant="outline" onClick={() => setShowEdForm(true)} className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
                 <PlusIcon className="h-4 w-4 mr-1" /> Add
               </Button>
             )}
@@ -531,7 +531,7 @@ export function ProfilePanel() {
               initial={{ opacity: 0, y: -10 }} 
               animate={{ opacity: 1, y: 0 }} 
               onSubmit={handleAddEducation} 
-              className="mt-4 p-4 border border-slate-100 rounded-xl bg-slate-50/50 space-y-4"
+              className="mt-4 p-4 border border-slate-800 rounded-xl bg-slate-950/60 space-y-4"
             >
               <Input
                 label="Institution Name"
@@ -587,17 +587,17 @@ export function ProfilePanel() {
               <p className="text-sm text-slate-400 text-center py-4">No education entries added.</p>
             )}
             {user.educations && user.educations.map((ed) => (
-              <div key={ed.id} className="flex justify-between items-start p-4 border border-slate-100 rounded-xl hover:border-slate-200 transition-colors">
+              <div key={ed.id} className="flex justify-between items-start p-4 border border-slate-800 bg-slate-950/50 rounded-xl hover:border-slate-700 transition-colors">
                 <div>
-                  <h4 className="font-semibold text-slate-900">{ed.degree} in {ed.fieldOfStudy}</h4>
-                  <p className="text-sm text-slate-600">{ed.institution}</p>
+                  <h4 className="font-bold text-white">{ed.degree} in {ed.fieldOfStudy}</h4>
+                  <p className="text-sm font-semibold text-slate-400">{ed.institution}</p>
                   <p className="text-xs text-slate-400 mt-1">
                     {formatDate(ed.startDate)} – {ed.endDate ? formatDate(ed.endDate) : 'Present'}
                   </p>
                 </div>
                 <button
                   onClick={() => handleDeleteEducation(ed.id)}
-                  className="p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-lg"
+                  className="p-1.5 text-slate-400 hover:bg-red-500/20 hover:text-red-400 rounded-lg"
                   aria-label={`Remove education at ${ed.institution}`}
                 >
                   <Trash2Icon className="h-4 w-4" />
@@ -608,14 +608,14 @@ export function ProfilePanel() {
         </div>
 
         {/* Social / Portfolio Links */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
           <div className="flex items-center gap-2">
-            <Link2Icon className="h-5 w-5 text-slate-600" />
-            <h2 className="font-display text-lg font-bold text-slate-900">
+            <Link2Icon className="h-5 w-5 text-teal-400" />
+            <h2 className="font-display text-lg font-bold text-white">
               Social & Portfolio links
             </h2>
           </div>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-400">
             Provide links to showcase your professional credentials and projects.
           </p>
           <div className="mt-5 space-y-4">
@@ -662,11 +662,11 @@ export function ProfilePanel() {
         </div>
 
         {/* Skills */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h2 className="font-display text-lg font-bold text-slate-900">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
+          <h2 className="font-display text-lg font-bold text-white">
             Skills
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-400">
             Skills power your AI job matches — add the ones that represent you
             best.
           </p>
@@ -682,7 +682,7 @@ export function ProfilePanel() {
                 }
               }} />
             
-            <Button variant="outline" onClick={addSkill} aria-label="Add skill">
+            <Button variant="outline" onClick={addSkill} aria-label="Add skill" className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
               <PlusIcon className="h-4 w-4" />
             </Button>
           </div>
@@ -693,11 +693,11 @@ export function ProfilePanel() {
             {user.skills && user.skills.map((s) =>
               <span
                 key={s}
-                className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 py-1 pl-3 pr-1.5 text-sm font-medium text-brand-700">
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand-500/20 py-1 pl-3 pr-1.5 text-sm font-bold text-teal-300 border border-brand-500/30">
                 {s}
                 <button
                   onClick={() => removeSkill(s)}
-                  className="rounded-full p-0.5 hover:bg-brand-100"
+                  className="rounded-full p-0.5 hover:bg-brand-500/30 text-teal-300"
                   aria-label={`Remove ${s}`}>
                   <XIcon className="h-3.5 w-3.5" />
                 </button>
@@ -708,14 +708,14 @@ export function ProfilePanel() {
 
         {/* Save button */}
         <div className="flex items-center gap-3">
-          <Button onClick={save} disabled={saving}>
+          <Button onClick={save} disabled={saving} className="bg-brand-600 hover:bg-brand-500 text-white font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-brand-600/30">
             {saving ? 'Saving changes…' : 'Save changes'}
           </Button>
           {saved &&
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-400"
             >
               <CheckCircle2Icon className="h-4 w-4" /> Saved successfully!
             </motion.span>
@@ -726,15 +726,15 @@ export function ProfilePanel() {
       {/* Sidebar: completion + resume */}
       <aside className="space-y-6">
         {/* Profile completeness card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h3 className="font-display text-base font-bold text-slate-900">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
+          <h3 className="font-display text-base font-bold text-white">
             Profile strength
           </h3>
           <div className="mt-4 flex items-center justify-between text-sm">
-            <span className="text-slate-500">Completion</span>
-            <span className="font-bold text-slate-900">{completion}%</span>
+            <span className="text-slate-400">Completion</span>
+            <span className="font-bold text-white">{completion}%</span>
           </div>
-          <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
             <motion.div
               className="h-full rounded-full bg-brand-600"
               initial={{
@@ -747,14 +747,14 @@ export function ProfilePanel() {
                 duration: 0.5
               }} />
           </div>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-slate-400">
             {completion < 100 ?
               'Complete your profile to improve match accuracy.' :
               'Great! Your profile is fully complete.'}
           </p>
 
           {user.missingFields && user.missingFields.length > 0 && (
-            <div className="mt-5 border-t border-slate-100 pt-4">
+            <div className="mt-5 border-t border-slate-800 pt-4">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Suggested missing sections
               </p>
@@ -762,7 +762,7 @@ export function ProfilePanel() {
                 {user.missingFields.map((field) => (
                   <span
                     key={field}
-                    className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 border border-amber-200"
+                    className="inline-flex items-center rounded-md bg-amber-500/20 px-2 py-0.5 text-xs font-semibold text-amber-300 border border-amber-500/30"
                   >
                     + {field}
                   </span>
@@ -773,8 +773,8 @@ export function ProfilePanel() {
         </div>
 
         {/* Resume CV card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-          <h3 className="font-display text-base font-bold text-slate-900">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
+          <h3 className="font-display text-base font-bold text-white">
             Resume / CV
           </h3>
           <input
@@ -791,19 +791,19 @@ export function ProfilePanel() {
 
           {user.resumeUrl ? (
             <div className="mt-4 flex flex-col gap-3">
-              <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+              <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500/20 text-teal-300 border border-brand-500/30">
                   <FileTextIcon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900">
+                  <p className="truncate text-sm font-bold text-white">
                     {user.resumeName || 'Uploaded CV'}
                   </p>
                   <a
                     href={user.resumeUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs text-brand-600 hover:underline inline-block mt-0.5"
+                    className="text-xs text-teal-300 hover:underline inline-block mt-0.5"
                   >
                     View Document
                   </a>
@@ -811,7 +811,7 @@ export function ProfilePanel() {
                 <button
                   onClick={handleResumeDelete}
                   disabled={uploading || isParsing}
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-red-500/20 hover:text-red-400"
                   aria-label="Remove resume"
                 >
                   <Trash2Icon className="h-4 w-4" />
@@ -823,9 +823,9 @@ export function ProfilePanel() {
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading || isParsing}
-                className="mt-1 border-brand-200 text-brand-700 hover:bg-brand-50/50"
+                className="mt-1 border-slate-700 bg-slate-800 text-teal-300 hover:bg-slate-700 font-bold"
               >
-                <SparklesIcon className="h-4 w-4 mr-1.5 text-brand-500" />
+                <SparklesIcon className="h-4 w-4 mr-1.5 text-teal-300" />
                 Re-parse with AI
               </Button>
             </div>
@@ -833,10 +833,10 @@ export function ProfilePanel() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading || isParsing}
-              className="mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 py-8 text-center transition-colors hover:border-brand-400 hover:bg-brand-50/40"
+              className="mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-700 bg-slate-950/40 py-8 text-center transition-colors hover:border-brand-500/50 hover:bg-slate-800/50"
             >
               <UploadCloudIcon className="h-8 w-8 text-slate-400" />
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-sm font-bold text-white">
                 {uploading || isParsing ? 'Processing...' : 'Upload & Parse with AI'}
               </span>
               <span className="text-xs text-slate-400">
@@ -845,19 +845,19 @@ export function ProfilePanel() {
             </button>
           )}
           <div className="mt-4">
-            <Badge tone="accent">AI-parsed profile ready</Badge>
+            <Badge tone="accent" className="bg-teal-500/20 text-teal-300 border border-teal-500/30">AI-parsed profile ready</Badge>
           </div>
         </div>
 
         {/* GDPR Privacy & Compliance Card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
           <div className="flex items-center gap-2">
-            <ShieldAlertIcon className="h-5 w-5 text-slate-700" />
-            <h3 className="font-display text-base font-bold text-slate-900">
+            <ShieldAlertIcon className="h-5 w-5 text-teal-400" />
+            <h3 className="font-display text-base font-bold text-white">
               Privacy & data controls
             </h3>
           </div>
-          <p className="mt-2 text-xs text-slate-500 leading-normal">
+          <p className="mt-2 text-xs text-slate-300 leading-normal">
             We prioritize compliance with GDPR and CCPA. Manage your data transparency or remove profile information securely below.
           </p>
           <div className="mt-4 space-y-2">

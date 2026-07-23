@@ -147,26 +147,26 @@ export function RecruiterCandidates({
         </div>
       </div>
       {loading ? (
-        <div className="mt-7 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-16 text-center">
-          <p className="font-semibold text-slate-900">Loading applicants…</p>
-          <p className="mt-1 text-sm text-slate-500">
+        <div className="mt-7 rounded-2xl border border-dashed border-slate-800 bg-slate-900/90 px-5 py-16 text-center shadow-xl text-white">
+          <p className="font-bold text-white text-base">Loading applicants…</p>
+          <p className="mt-1 text-sm text-slate-400">
             Fetching candidates who applied to this role.
           </p>
         </div>
       ) : (
       <>
       <section
-        className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5"
+        className="mt-7 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl text-white sm:p-5"
         aria-label="Candidate filters">
         
         <div className="grid gap-3 lg:grid-cols-[1fr_170px_170px_160px]">
-          <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
+          <label className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-3.5 focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-400/20">
             <SearchIcon className="h-5 w-5 text-slate-400" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search candidate name, skills, role, or department..."
-              className="w-full bg-transparent py-2.5 text-sm outline-none placeholder:text-slate-400"
+              className="w-full bg-transparent py-2.5 text-sm text-white outline-none placeholder:text-slate-400"
               aria-label="Search candidates" />
             
           </label>
@@ -175,11 +175,11 @@ export function RecruiterCandidates({
             <select
               value={deptFilter}
               onChange={(event) => setDeptFilter(event.target.value)}
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+              className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20">
               
-              <option>All departments</option>
+              <option className="bg-slate-900 text-white">All departments</option>
               {departmentOptions.map((dept) => (
-                <option key={dept}>{dept}</option>
+                <option key={dept} className="bg-slate-900 text-white">{dept}</option>
               ))}
             </select>
             <FilterIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
@@ -189,11 +189,11 @@ export function RecruiterCandidates({
             <select
               value={roleFilter}
               onChange={(event) => setRoleFilter(event.target.value)}
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+              className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20">
               
-              <option>All roles</option>
+              <option className="bg-slate-900 text-white">All roles</option>
               {roles.map((role) =>
-              <option key={role}>{role}</option>
+              <option key={role} className="bg-slate-900 text-white">{role}</option>
               )}
             </select>
             <FilterIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
@@ -207,9 +207,9 @@ export function RecruiterCandidates({
                 event.target.value as 'All stages' | RecruiterStage
               )
               }
-              className="w-full appearance-none rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+              className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20">
               
-              <option>All stages</option>
+              <option className="bg-slate-900 text-white">All stages</option>
               {(
                 [
                   'New',
@@ -222,16 +222,16 @@ export function RecruiterCandidates({
                   'Rejected',
                 ] as RecruiterStage[]
               ).map((stage) => (
-                <option key={stage}>{stage}</option>
+                <option key={stage} className="bg-slate-900 text-white">{stage}</option>
               ))}
             </select>
             <FilterIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
           </label>
         </div>
       </section>
-      <div className="mt-5 flex items-center justify-between">
-        <p className="text-sm text-slate-500">
-          <strong className="text-slate-900">{visibleCandidates.length}</strong>{' '}
+      <div className="mt-5 flex items-center justify-between text-white">
+        <p className="text-sm text-slate-400">
+          <strong className="text-white">{visibleCandidates.length}</strong>{' '}
           candidates shown
         </p>
         <button
@@ -241,17 +241,17 @@ export function RecruiterCandidates({
             setRoleFilter('All roles');
             setStageFilter('All stages');
           }}
-          className="text-sm font-semibold text-brand-600 hover:underline">
+          className="text-sm font-bold text-teal-300 hover:text-white underline">
           
           Clear filters
         </button>
       </div>
       {visibleCandidates.length ?
       <section
-        className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
+        className="mt-4 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white"
         aria-label="Candidate list">
         
-          <div className={`hidden gap-4 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid ${
+          <div className={`hidden gap-4 border-b border-slate-800 bg-slate-950/60 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 lg:grid ${
             showAiScore
               ? 'grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_120px_130px_170px]'
               : 'grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_130px_170px]'
@@ -262,11 +262,11 @@ export function RecruiterCandidates({
             <span>Stage</span>
             <span>Actions</span>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-800">
             {visibleCandidates.map((candidate) =>
           <article
             key={candidate.id}
-            className={`grid gap-4 p-4 transition-colors hover:bg-slate-50 lg:items-center lg:px-5 ${
+            className={`grid gap-4 p-4 transition-colors hover:bg-slate-800/60 lg:items-center lg:px-5 ${
               showAiScore
                 ? 'lg:grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_120px_130px_170px]'
                 : 'lg:grid-cols-[minmax(270px,1.5fr)_minmax(180px,1fr)_130px_170px]'
@@ -274,23 +274,23 @@ export function RecruiterCandidates({
             
                 <button
               onClick={() => onCandidateSelect(candidate)}
-              className="flex min-w-0 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+              className="flex min-w-0 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
               
                   <img
                 src={candidate.avatar}
                 alt=""
-                className="h-10 w-10 rounded-xl" />
+                className="h-10 w-10 rounded-xl border border-slate-800 bg-slate-950" />
               
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-bold text-slate-800">
+                    <span className="block truncate text-sm font-bold text-white">
                       {candidate.name}
                     </span>
-                    <span className="mt-0.5 block truncate text-xs text-slate-500">
+                    <span className="mt-0.5 block truncate text-xs text-slate-400">
                       {candidate.title} · {candidate.location}
                     </span>
                     <span className="mt-2 flex flex-wrap gap-1.5 lg:hidden">
                       {candidate.skills.slice(0, 3).map((skill) =>
-                  <Badge key={skill} tone="slate">
+                  <Badge key={skill} tone="slate" className="bg-slate-800 text-slate-200 border-slate-700">
                           {skill}
                         </Badge>
                   )}
@@ -298,31 +298,31 @@ export function RecruiterCandidates({
                   </span>
                 </button>
                 <div>
-                  <p className="text-sm font-semibold text-slate-700">
+                  <p className="text-sm font-bold text-white">
                     {candidate.role}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-400">
                     Applied {candidate.applied}
                   </p>
                 </div>
                 {showAiScore && (
                   <div className="flex items-center gap-2">
                     {candidate.stage === 'Interview' ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-blue-500/20 px-2.5 py-1 text-xs font-bold text-blue-300 border border-blue-500/30">
                         <CalendarIcon className="h-3.5 w-3.5" /> Scheduled
                       </span>
                     ) : candidate.stage === 'Offer' ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-300 border border-emerald-500/30">
                         <CheckCircle2Icon className="h-3.5 w-3.5" /> Offered
                       </span>
                     ) : candidate.stage === 'Rejected' ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-400 border border-slate-700">
                         <XCircleIcon className="h-3.5 w-3.5" /> Passed
                       </span>
                     ) : (
                       <>
                         <MatchScore score={candidate.matchScore} size={38} />
-                        <span className="text-xs font-semibold text-slate-500 lg:hidden">
+                        <span className="text-xs font-semibold text-slate-400 lg:hidden">
                           AI match
                         </span>
                       </>
@@ -330,7 +330,7 @@ export function RecruiterCandidates({
                   </div>
                 )}
                 <div>
-                  <Badge tone={STAGE_TONES[candidate.stage]}>
+                  <Badge tone={STAGE_TONES[candidate.stage]} className="bg-brand-500/20 text-teal-300 border-brand-500/30">
                     {candidate.stage}
                   </Badge>
                 </div>
@@ -339,7 +339,7 @@ export function RecruiterCandidates({
                     <>
                       <Button
                         size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
                         onClick={() => onStageChange(candidate.id, 'Offer')}
                       >
                         <UserRoundCheckIcon className="h-4 w-4" />
@@ -347,7 +347,7 @@ export function RecruiterCandidates({
                       </Button>
                       <button
                         onClick={() => onStageChange(candidate.id, 'Rejected')}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 transition"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-500/20 hover:text-red-400 transition"
                         aria-label={`Reject ${candidate.name}`}
                       >
                         <UserRoundXIcon className="h-4 w-4" />
@@ -360,8 +360,9 @@ export function RecruiterCandidates({
                         variant={candidate.stage !== 'New' ? 'secondary' : 'primary'}
                         onClick={() => onStageChange(candidate.id, 'Shortlisted')}
                         disabled={candidate.stage !== 'New'}
+                        className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold"
                       >
-                        <UserRoundCheckIcon className="h-4 w-4" />
+                        <UserRoundCheckIcon className="h-4 w-4 text-teal-400" />
                         <span className="hidden xl:inline">
                           {candidate.stage !== 'New' ? 'Shortlisted' : 'Shortlist'}
                         </span>
@@ -369,7 +370,7 @@ export function RecruiterCandidates({
                       <button
                         onClick={() => onStageChange(candidate.id, 'Rejected')}
                         disabled={candidate.stage === 'Rejected'}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-red-500/20 hover:text-red-400 disabled:opacity-40"
                         aria-label={`Reject ${candidate.name}`}
                       >
                         <UserRoundXIcon className="h-4 w-4" />
@@ -382,16 +383,16 @@ export function RecruiterCandidates({
           </div>
         </section> :
 
-      <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-16 text-center">
-          <SearchIcon className="mx-auto h-9 w-9 text-slate-300" />
-          <p className="mt-3 font-semibold text-slate-900">
+      <div className="mt-4 rounded-2xl border border-dashed border-slate-800 bg-slate-900/90 px-5 py-16 text-center shadow-xl text-white">
+          <SearchIcon className="mx-auto h-9 w-9 text-slate-400" />
+          <p className="mt-3 font-bold text-white text-base">
             {jobTitle
               ? 'No applicants yet'
               : candidates.length === 0
                 ? 'No applicants yet'
                 : 'No candidates match these filters'}
           </p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-400">
             {jobTitle
               ? 'When candidates apply to this job, they will appear here.'
               : candidates.length === 0
@@ -403,5 +404,6 @@ export function RecruiterCandidates({
       </>
       )}
     </motion.div>);
+
 
 }

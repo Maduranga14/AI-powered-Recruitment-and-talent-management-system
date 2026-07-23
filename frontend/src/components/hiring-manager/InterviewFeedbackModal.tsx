@@ -214,7 +214,7 @@ export function InterviewFeedbackModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
           />
 
           {/* Modal */}
@@ -224,26 +224,26 @@ export function InterviewFeedbackModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
             transition={{ type: 'spring', stiffness: 340, damping: 28 }}
-            className="relative z-10 flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-100"
+            className="relative z-10 flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 text-white shadow-2xl backdrop-blur-2xl"
           >
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 bg-gradient-to-r from-brand-50 to-slate-50 px-6 py-5">
+            <div className="flex items-start justify-between border-b border-slate-800 bg-slate-950/95 px-6 py-5">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-md shadow-brand-200">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-md">
                   <ClipboardListIcon className="h-5 w-5" />
                 </span>
                 <div>
-                  <h2 className="font-display text-lg font-extrabold text-slate-900">
+                  <h2 className="font-display text-lg font-extrabold text-white">
                     Interview Feedback
                   </h2>
-                  <p className="mt-0.5 text-xs text-slate-500 font-medium">
+                  <p className="mt-0.5 text-xs text-slate-400 font-medium">
                     {interview.candidateName} &middot; {interview.jobTitle}
                   </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="ml-4 flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                className="ml-4 flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition"
                 aria-label="Close"
               >
                 <XIcon className="h-4 w-4" />
@@ -251,26 +251,26 @@ export function InterviewFeedbackModal({
             </div>
 
             {/* Scrollable body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 text-white">
 
               {/* Overall Rating */}
               <section>
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <StarIcon className="h-4 w-4 text-amber-400" />
                   Overall Rating
-                  <span className="text-red-500">*</span>
+                  <span className="text-red-400">*</span>
                 </h3>
-                <div className="mt-3 flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">
+                <div className="mt-3 flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
                   <StarPicker value={overallRating} onChange={setOverallRating} size="lg" />
                 </div>
               </section>
 
               {/* Recommendation */}
               <section>
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <ThumbsUpIcon className="h-4 w-4 text-brand-500" />
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <ThumbsUpIcon className="h-4 w-4 text-teal-400" />
                   Recommendation
-                  <span className="text-red-500">*</span>
+                  <span className="text-red-400">*</span>
                 </h3>
                 <div className="mt-3 grid grid-cols-5 gap-2">
                   {(
@@ -288,20 +288,20 @@ export function InterviewFeedbackModal({
 
               {/* Skill Scorecard */}
               <section>
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <ClipboardListIcon className="h-4 w-4 text-brand-500" />
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <ClipboardListIcon className="h-4 w-4 text-teal-400" />
                   Skill Scorecard
-                  <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                  <span className="ml-1 rounded-full bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-semibold text-slate-300 uppercase tracking-wide">
                     Optional
                   </span>
                 </h3>
-                <div className="mt-3 divide-y divide-slate-100 rounded-2xl border border-slate-100 bg-slate-50/60 px-4">
+                <div className="mt-3 divide-y divide-slate-800 rounded-2xl border border-slate-800 bg-slate-950/70 px-4">
                   {SKILL_DIMENSIONS.map((dim) => (
                     <fieldset
                       key={dim}
                       className="flex items-center justify-between py-3"
                     >
-                      <legend className="text-sm font-semibold text-slate-700">
+                      <legend className="text-sm font-bold text-white">
                         {dim}
                       </legend>
                       <div className="flex gap-1.5">
@@ -328,13 +328,13 @@ export function InterviewFeedbackModal({
                     type="checkbox"
                     checked={showTechScore}
                     onChange={(e) => setShowTechScore(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-brand-600 focus:ring-teal-400"
                   />
-                  <span className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                    <CodeIcon className="h-4 w-4 text-brand-500" />
+                  <span className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <CodeIcon className="h-4 w-4 text-teal-400" />
                     Include Technical Assessment Score
                   </span>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                  <span className="rounded-full bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-semibold text-slate-300 uppercase tracking-wide">
                     Optional
                   </span>
                 </label>
@@ -342,9 +342,9 @@ export function InterviewFeedbackModal({
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="mt-3 flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3"
+                    className="mt-3 flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3"
                   >
-                    <span className="text-xs font-semibold text-slate-500 w-32 shrink-0">
+                    <span className="text-xs font-semibold text-slate-300 w-32 shrink-0">
                       Technical score
                     </span>
                     <div className="flex gap-1.5">
@@ -363,13 +363,13 @@ export function InterviewFeedbackModal({
 
               {/* Written Comments */}
               <section>
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <MessageSquareTextIcon className="h-4 w-4 text-brand-500" />
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <MessageSquareTextIcon className="h-4 w-4 text-teal-400" />
                   Written Evaluation
                 </h3>
                 <div className="mt-3 space-y-3">
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                    <label className="mb-1.5 block text-xs font-bold text-white">
                       Strengths
                       <span className="ml-1 font-normal text-slate-400">(optional)</span>
                     </label>
@@ -378,11 +378,11 @@ export function InterviewFeedbackModal({
                       value={strengths}
                       onChange={(e) => setStrengths(e.target.value)}
                       placeholder="What did they excel at? Technical competence, communication, problem-solving..."
-                      className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                      className="w-full resize-none rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                    <label className="mb-1.5 block text-xs font-bold text-white">
                       Concerns
                       <span className="ml-1 font-normal text-slate-400">(optional)</span>
                     </label>
@@ -391,20 +391,20 @@ export function InterviewFeedbackModal({
                       value={concerns}
                       onChange={(e) => setConcerns(e.target.value)}
                       placeholder="Any gaps, concerns, or areas to probe further..."
-                      className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                      className="w-full resize-none rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                    <label className="mb-1.5 block text-xs font-bold text-white">
                       General Impression
-                      <span className="ml-1 text-red-500">*</span>
+                      <span className="ml-1 text-red-400">*</span>
                     </label>
                     <textarea
                       rows={3}
                       value={generalImpression}
                       onChange={(e) => setGeneralImpression(e.target.value)}
                       placeholder="Summarize your overall impression — fit for the role, team, and culture..."
-                      className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                      className="w-full resize-none rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
                     />
                     <p className="mt-1 text-right text-[10px] text-slate-400">
                       {generalImpression.trim().length} / 10 min characters
@@ -414,15 +414,15 @@ export function InterviewFeedbackModal({
               </section>
 
               {error && (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600">
+                <p className="rounded-xl border border-red-500/30 bg-red-950/60 px-4 py-2.5 text-sm font-semibold text-red-200">
                   {error}
                 </p>
               )}
             </div>
 
             {/* Footer */}
-            <div className="border-t border-slate-100 bg-slate-50/70 px-7 py-4.5 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+            <div className="border-t border-slate-800 bg-slate-950 px-7 py-4.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
                 <StarIcon className="h-4 w-4 text-amber-400 shrink-0" />
                 Rating, recommendation &amp; impression required.
               </p>
@@ -430,7 +430,7 @@ export function InterviewFeedbackModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+                  className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700 transition"
                 >
                   Cancel
                 </button>
@@ -438,7 +438,7 @@ export function InterviewFeedbackModal({
                   type="button"
                   disabled={!canSubmit || submitting}
                   onClick={() => handleSubmit('Offer')}
-                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <UserCheckIcon className="h-4 w-4" />
                   Extend Offer
@@ -447,7 +447,7 @@ export function InterviewFeedbackModal({
                   type="button"
                   disabled={!canSubmit || submitting}
                   onClick={() => handleSubmit('Rejected')}
-                  className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <UserXIcon className="h-4 w-4" />
                   Reject Candidate
@@ -456,7 +456,7 @@ export function InterviewFeedbackModal({
                   type="button"
                   disabled={!canSubmit || submitting}
                   onClick={() => handleSubmit('UnderFinalReview')}
-                  className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-brand-100 transition hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <CheckCircle2Icon className="h-4 w-4" />
                   Submit Feedback Only
@@ -469,3 +469,4 @@ export function InterviewFeedbackModal({
     </AnimatePresence>
   );
 }
+

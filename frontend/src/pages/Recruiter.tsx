@@ -831,7 +831,7 @@ function CreateJobModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 w-full bg-slate-900/45 backdrop-blur-sm"
+            className="absolute inset-0 w-full bg-slate-950/70 backdrop-blur-md"
             aria-label="Close"
           />
           <motion.div
@@ -842,21 +842,21 @@ function CreateJobModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-job-title"
-            className="relative z-10 w-full max-w-2xl rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
+            className="relative z-10 w-full max-w-2xl rounded-t-3xl border border-slate-700 bg-slate-900 text-white shadow-2xl backdrop-blur-2xl sm:rounded-3xl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+            <div className="flex items-center justify-between border-b border-slate-800 px-6 py-5">
               <div>
-                <h2 id="create-job-title" className="font-display text-xl font-extrabold text-slate-900">
+                <h2 id="create-job-title" className="font-display text-xl font-extrabold text-white">
                   {editingJob ? 'Edit job opening' : 'Create a job'}
                 </h2>
-                <p className="mt-0.5 text-sm text-slate-500">
+                <p className="mt-0.5 text-sm text-slate-300">
                   Step {step} of 2 &mdash; {step === 1 ? 'Basic details' : 'Description & requirements'}
                 </p>
               </div>
               <button
                 onClick={onClose}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white"
                 aria-label="Close"
               >
                 <XIcon className="h-5 w-5" />
@@ -864,16 +864,16 @@ function CreateJobModal({
             </div>
 
             {/* Progress bar */}
-            <div className="h-1 w-full bg-slate-100">
+            <div className="h-1 w-full bg-slate-800">
               <motion.div
-                className="h-full bg-brand-600"
+                className="h-full bg-teal-400"
                 animate={{ width: step === 1 ? '50%' : '100%' }}
                 transition={{ duration: 0.3 }}
               />
             </div>
 
             {/* Body */}
-            <div className="max-h-[68vh] overflow-y-auto px-6 py-6">
+            <div className="max-h-[68vh] overflow-y-auto px-6 py-6 text-white">
 
               {/* STEP 1 */}
               {step === 1 && (
@@ -889,16 +889,16 @@ function CreateJobModal({
 
                   {/* 2. Department Assignment */}
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-sm font-bold text-white">
                       Department
                     </label>
                     <Select
                       value={departmentId}
                       onChange={(e) => setDepartmentId(e.target.value)}
                     >
-                      <option value="">Select a department...</option>
+                      <option value="" className="bg-slate-900 text-white">Select a department...</option>
                       {departments.map((dept) => (
-                        <option key={dept.id} value={dept.id}>
+                        <option key={dept.id} value={dept.id} className="bg-slate-900 text-white">
                           {dept.name}
                         </option>
                       ))}
@@ -914,25 +914,25 @@ function CreateJobModal({
 
                   {/* 4. Employment Type */}
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-sm font-bold text-white">
                       Employment type
                     </label>
                     <Select
                       value={employmentType}
                       onChange={(e) => setEmploymentType(e.target.value)}
                     >
-                      <option value="FullTime">Full-time</option>
-                      <option value="PartTime">Part-time</option>
-                      <option value="Contract">Contract</option>
-                      <option value="Internship">Internship</option>
-                      <option value="Remote">Remote</option>
+                      <option value="FullTime" className="bg-slate-900 text-white">Full-time</option>
+                      <option value="PartTime" className="bg-slate-900 text-white">Part-time</option>
+                      <option value="Contract" className="bg-slate-900 text-white">Contract</option>
+                      <option value="Internship" className="bg-slate-900 text-white">Internship</option>
+                      <option value="Remote" className="bg-slate-900 text-white">Remote</option>
                     </Select>
                   </div>
 
                   {/* 5. Location */}
                   <div>
-                    <span className="block text-sm font-medium text-slate-700">Location</span>
-                    <div className="mt-2 flex rounded-xl border border-slate-200 p-1">
+                    <span className="block text-sm font-bold text-white">Location</span>
+                    <div className="mt-2 flex rounded-xl border border-slate-700 bg-slate-800 p-1">
                       {locationTypes.map((t) => (
                         <button
                           key={t.value}
@@ -940,8 +940,8 @@ function CreateJobModal({
                           onClick={() => setLocationType(t.value)}
                           className={`flex-1 rounded-lg py-2 text-center text-xs font-bold transition ${
                             locationType === t.value
-                              ? 'bg-slate-900 text-white'
-                              : 'text-slate-500 hover:text-slate-800'
+                              ? 'bg-brand-600 text-white shadow-md'
+                              : 'text-slate-400 hover:text-white'
                           }`}
                         >
                           {t.label}
@@ -971,7 +971,7 @@ function CreateJobModal({
 
                   {/* 1. Job Description */}
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-sm font-bold text-white">
                       Job description
                     </label>
                     <textarea
@@ -979,13 +979,13 @@ function CreateJobModal({
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Describe the role, day-to-day operations, and what they will do..."
-                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
                     />
                   </div>
 
                   {/* 2. Key Requirements */}
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-sm font-bold text-white">
                       Key requirements
                       <span className="ml-1.5 font-normal text-slate-400">(optional)</span>
                     </label>
@@ -994,7 +994,7 @@ function CreateJobModal({
                       value={requirements}
                       onChange={(e) => setRequirements(e.target.value)}
                       placeholder="What qualifications, experience levels, or certifications are needed..."
-                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white placeholder-slate-400 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
                     />
                   </div>
 
@@ -1010,12 +1010,12 @@ function CreateJobModal({
                   {/* 4. Salary */}
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700">Salary range</span>
+                      <span className="text-sm font-bold text-white">Salary range</span>
                       <button
                         type="button"
                         onClick={() => setSalaryPublic(!salaryPublic)}
-                        className={`text-xs font-semibold ${
-                          salaryPublic ? 'text-brand-600 hover:text-brand-700' : 'text-slate-400 hover:text-slate-600'
+                        className={`text-xs font-bold ${
+                          salaryPublic ? 'text-teal-300 hover:text-white underline' : 'text-slate-400 hover:text-slate-300'
                         }`}
                       >
                         {salaryPublic ? 'Publicly visible' : 'Hidden / Confidential'}
@@ -1041,17 +1041,17 @@ function CreateJobModal({
                         onChange={(e) => setSalaryCurrency(e.target.value)}
                         className="w-24"
                       >
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
-                        <option value="LKR">LKR</option>
-                        <option value="INR">INR</option>
-                        <option value="AUD">AUD</option>
-                        <option value="CAD">CAD</option>
+                        <option value="USD" className="bg-slate-900 text-white">USD</option>
+                        <option value="EUR" className="bg-slate-900 text-white">EUR</option>
+                        <option value="GBP" className="bg-slate-900 text-white">GBP</option>
+                        <option value="LKR" className="bg-slate-900 text-white">LKR</option>
+                        <option value="INR" className="bg-slate-900 text-white">INR</option>
+                        <option value="AUD" className="bg-slate-900 text-white">AUD</option>
+                        <option value="CAD" className="bg-slate-900 text-white">CAD</option>
                       </Select>
                     </div>
                     {!salaryRangeValid && (
-                      <p className="mt-1.5 text-xs font-medium text-red-600">
+                      <p className="mt-1.5 text-xs font-bold text-red-400">
                         Minimum cannot be greater than maximum.
                       </p>
                     )}
@@ -1059,7 +1059,7 @@ function CreateJobModal({
 
                   {/* 5. Application Deadline */}
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-sm font-bold text-white">
                       Application deadline
                       <span className="ml-1.5 font-normal text-slate-400">(optional)</span>
                     </label>
@@ -1068,7 +1068,7 @@ function CreateJobModal({
                       value={deadline}
                       min={new Date().toISOString().split('T')[0]}
                       onChange={(e) => setDeadline(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20"
                     />
                   </div>
                 </div>
@@ -1076,28 +1076,28 @@ function CreateJobModal({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-slate-100 px-6 py-4">
+            <div className="border-t border-slate-800 px-6 py-4">
               {error && (
-                <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+                <p className="mb-3 rounded-lg bg-red-950/60 border border-red-500/30 px-3 py-2 text-sm font-semibold text-red-200">
                   {error}
                 </p>
               )}
               <div className="flex gap-3">
                 {step === 1 ? (
                   <>
-                    <Button fullWidth variant="outline" onClick={onClose}>
+                    <Button fullWidth variant="outline" onClick={onClose} className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
                       Cancel
                     </Button>
-                    <Button fullWidth disabled={!step1Valid} onClick={() => setStep(2)}>
+                    <Button fullWidth disabled={!step1Valid} onClick={() => setStep(2)} className="bg-brand-600 hover:bg-brand-500 text-white font-bold">
                       Next step
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Button fullWidth variant="outline" onClick={() => setStep(1)}>
+                    <Button fullWidth variant="outline" onClick={() => setStep(1)} className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
                       Back
                     </Button>
-                    <Button fullWidth disabled={!canCreate || loading} onClick={handleCreate}>
+                    <Button fullWidth disabled={!canCreate || loading} onClick={handleCreate} className="bg-brand-600 hover:bg-brand-500 text-white font-bold">
                       {loading ? (
                         <>
                           <Loader2Icon className="h-4 w-4 animate-spin mr-1.5" />
@@ -1117,3 +1117,4 @@ function CreateJobModal({
     </AnimatePresence>
   );
 }
+

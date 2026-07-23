@@ -140,25 +140,25 @@ export function RecruiterOverview({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8"
+      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8 text-white"
     >
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-teal-400">
             {today.toLocaleDateString(undefined, {
               weekday: 'long',
               month: 'long',
               day: 'numeric',
             })}
           </p>
-          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-white">
             Good morning, {firstName}
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-slate-300">
             Live hiring metrics from your open roles and pipeline.
           </p>
         </div>
-        <Button onClick={() => onViewChange('candidates')}>
+        <Button onClick={() => onViewChange('candidates')} className="bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-md">
           <SparklesIcon className="h-4 w-4" /> Review candidates
         </Button>
       </div>
@@ -173,54 +173,54 @@ export function RecruiterOverview({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04 }}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft"
+            className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white"
           >
             <div className="flex items-start justify-between">
               <span
                 className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                   tone === 'brand'
-                    ? 'bg-brand-50 text-brand-600'
+                    ? 'bg-brand-500/20 text-teal-300 border border-brand-500/30'
                     : tone === 'accent'
-                      ? 'bg-accent-50 text-accent-600'
+                      ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
                       : tone === 'amber'
-                        ? 'bg-amber-50 text-amber-600'
-                        : 'bg-blue-50 text-blue-600'
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                 }`}
               >
                 <Icon className="h-5 w-5" />
               </span>
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-bold text-teal-400">
                 {change}
               </span>
             </div>
-            <p className="mt-4 font-display text-3xl font-extrabold text-slate-900">
+            <p className="mt-4 font-display text-3xl font-extrabold text-white">
               {value}
             </p>
-            <p className="mt-1 text-sm text-slate-500">{label}</p>
+            <p className="mt-1 text-sm text-slate-400">{label}</p>
           </motion.article>
         ))}
       </section>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.45fr_1fr]">
         <section
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
+          className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6"
           aria-labelledby="role-health-title"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2
                 id="role-health-title"
-                className="font-display text-lg font-bold"
+                className="font-display text-lg font-bold text-white"
               >
                 Role health
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-400">
                 Pipeline strength across your active searches.
               </p>
             </div>
             <button
               onClick={() => onViewChange('jobs')}
-              className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-brand-600 hover:underline"
+              className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-teal-300 hover:text-white underline"
             >
               View jobs <ArrowRightIcon className="h-4 w-4" />
             </button>
@@ -233,31 +233,31 @@ export function RecruiterOverview({
                 <div key={job.id}>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="text-sm font-bold text-slate-800">
+                      <p className="text-sm font-bold text-white">
                         {job.title}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500">
+                      <p className="mt-0.5 text-xs text-slate-400">
                         {job.applicants} applicants · {job.shortlisted}{' '}
                         shortlisted
                       </p>
                     </div>
-                    <Badge tone={job.interviews >= 1 ? 'accent' : 'amber'}>
+                    <Badge tone={job.interviews >= 1 ? 'accent' : 'amber'} className={job.interviews >= 1 ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'}>
                       {job.interviews >= 1 ? 'On track' : 'Needs attention'}
                     </Badge>
                   </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-800">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(progress, 100)}%` }}
                       transition={{ duration: 0.5 }}
                       className={
                         job.interviews >= 1
-                          ? 'h-full rounded-full bg-accent-500'
+                          ? 'h-full rounded-full bg-teal-400'
                           : 'h-full rounded-full bg-amber-400'
                       }
                     />
                   </div>
-                  <div className="mt-2 flex justify-between text-xs font-medium text-slate-500">
+                  <div className="mt-2 flex justify-between text-xs font-medium text-slate-400">
                     <span>{job.screened} screened</span>
                     <span>
                       {job.interviews} interview
@@ -268,7 +268,7 @@ export function RecruiterOverview({
               );
             })}
             {activeJobs.length === 0 && (
-              <p className="py-6 text-center text-sm text-slate-500">
+              <p className="py-6 text-center text-sm text-slate-400">
                 No active roles yet. Create a job to start your pipeline.
               </p>
             )}
@@ -276,29 +276,29 @@ export function RecruiterOverview({
         </section>
 
         <section
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
+          className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6"
           aria-labelledby="today-title"
         >
           <div className="flex items-start justify-between">
             <div>
-              <h2 id="today-title" className="font-display text-lg font-bold">
+              <h2 id="today-title" className="font-display text-lg font-bold text-white">
                 Upcoming interviews
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-400">
                 {todaysInterviews.length} conversation
                 {todaysInterviews.length === 1 ? '' : 's'} on deck.
               </p>
             </div>
             <button
               onClick={() => onViewChange('schedule')}
-              className="text-sm font-bold text-brand-600 hover:underline"
+              className="text-sm font-bold text-teal-300 hover:text-white underline"
             >
               Interviews
             </button>
           </div>
           <div className="mt-5 space-y-4">
             {todaysInterviews.length === 0 && (
-              <p className="py-4 text-center text-sm text-slate-500">
+              <p className="py-4 text-center text-sm text-slate-400">
                 No interviews scheduled yet.
               </p>
             )}
@@ -306,23 +306,23 @@ export function RecruiterOverview({
               <button
                 key={interview.id}
                 onClick={() => onViewChange('schedule')}
-                className="flex w-full items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-slate-800/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
               >
                 <img
                   src={interview.avatar}
                   alt=""
-                  className="h-10 w-10 rounded-xl"
+                  className="h-10 w-10 rounded-xl border border-slate-800 bg-slate-950"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-slate-800">
+                  <p className="truncate text-sm font-bold text-white">
                     {interview.candidate}
                   </p>
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-xs text-slate-400">
                     {interview.role}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-bold text-brand-700">
+                  <p className="text-xs font-bold text-teal-300">
                     {interview.time.replace('Today · ', '')}
                   </p>
                   <p className="mt-0.5 text-[11px] text-slate-400">
@@ -334,7 +334,7 @@ export function RecruiterOverview({
           </div>
           <button
             onClick={() => onViewChange('schedule')}
-            className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="mt-5 w-full rounded-xl border border-slate-700 bg-slate-800 py-2.5 text-sm font-bold text-white hover:bg-slate-700 transition"
           >
             View full schedule
           </button>
@@ -343,31 +343,31 @@ export function RecruiterOverview({
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.45fr_1fr]">
         <section
-          className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
+          className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white"
           aria-labelledby="activity-title"
         >
-          <div className="flex items-center justify-between p-5 sm:p-6">
+          <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-800 bg-slate-950/60">
             <div>
               <h2
                 id="activity-title"
-                className="font-display text-lg font-bold"
+                className="font-display text-lg font-bold text-white"
               >
                 Candidate activity
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-400">
                 Recent applications and stage movement.
               </p>
             </div>
             <button
               onClick={() => onViewChange('candidates')}
-              className="text-sm font-bold text-brand-600 hover:underline"
+              className="text-sm font-bold text-teal-300 hover:text-white underline"
             >
               All candidates
             </button>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-800">
             {activities.length === 0 && (
-              <p className="px-6 py-10 text-center text-sm text-slate-500">
+              <p className="px-6 py-10 text-center text-sm text-slate-400">
                 No applicants yet.
               </p>
             )}
@@ -375,18 +375,18 @@ export function RecruiterOverview({
               <button
                 key={candidate.id}
                 onClick={() => onCandidateSelect(candidate)}
-                className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-slate-50 sm:px-6"
+                className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-slate-800/60 sm:px-6"
               >
                 <img
                   src={candidate.avatar}
                   alt=""
-                  className="h-9 w-9 rounded-xl"
+                  className="h-9 w-9 rounded-xl border border-slate-800 bg-slate-950"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-slate-800">
+                  <p className="truncate text-sm font-bold text-white">
                     {candidate.name}
                   </p>
-                  <p className="truncate text-xs text-slate-500">
+                  <p className="truncate text-xs text-slate-400">
                     Applied for {candidate.role} · {candidate.applied}
                   </p>
                 </div>
@@ -400,6 +400,7 @@ export function RecruiterOverview({
                           ? 'brand'
                           : 'amber'
                     }
+                    className="bg-brand-500/20 text-teal-300 border-brand-500/30"
                   >
                     {candidate.stage}
                   </Badge>
@@ -413,35 +414,35 @@ export function RecruiterOverview({
             ))}
           </div>
         </section>
-        <section className="rounded-2xl border border-brand-100 bg-brand-50/60 p-5 shadow-soft sm:p-6">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white">
+        <section className="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-brand-950 p-5 shadow-xl text-white sm:p-6">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md">
             <SparklesIcon className="h-5 w-5" />
           </span>
-          <h2 className="mt-5 font-display text-lg font-bold">
+          <h2 className="mt-5 font-display text-lg font-bold text-white">
             Pipeline signal
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-slate-300">
             {reviewedReady > 0
               ? `${reviewedReady} candidate${reviewedReady === 1 ? '' : 's'} ready for your next decision after hiring manager review.`
               : 'Shortlist applicants and send them for hiring manager review to build interview-ready benches.'}
           </p>
-          <div className="mt-5 rounded-xl border border-brand-100 bg-white/80 p-4">
+          <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/70 p-4 text-white">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-sm font-bold text-slate-300">
                 Highest activity role
               </span>
               {bestJob && (
-                <Badge tone="accent">
+                <Badge tone="accent" className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30">
                   {bestJob.applicants} applicants
                 </Badge>
               )}
             </div>
-            <p className="mt-2 font-display font-bold text-slate-900">
+            <p className="mt-2 font-display font-extrabold text-white text-base">
               {bestJob?.title ?? 'No active roles yet'}
             </p>
             <button
               onClick={() => onViewChange('candidates')}
-              className="mt-3 text-sm font-bold text-brand-600 hover:underline"
+              className="mt-3 text-sm font-bold text-teal-300 hover:text-white underline"
             >
               Review candidates
             </button>
@@ -451,3 +452,4 @@ export function RecruiterOverview({
     </motion.div>
   );
 }
+

@@ -20,6 +20,7 @@ export interface CandidateProfile {
   name: string;
   email: string;
   title: string;
+  role?: string;
   location: string;
   bio: string;
   skills: string[];
@@ -208,6 +209,7 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
       name: res.data.fullName,
       email: res.data.email,
       title: res.data.role,
+      role: res.data.role,
       location: 'Office',
       bio: 'Workspace user.',
       skills: [],
