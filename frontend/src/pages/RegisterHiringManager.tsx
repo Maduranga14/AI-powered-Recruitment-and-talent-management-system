@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input, PasswordInput } from '../components/ui/Input';
+import { Logo } from '../components/ui/Logo';
 import { useAuth } from '../context/AuthContext';
 import { authApi, type InviteInfo } from '../services/api';
 
@@ -141,12 +142,7 @@ export function RegisterHiringManager() {
         className="w-full max-w-md"
       >
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
-            <SparklesIcon className="h-5 w-5" />
-          </span>
-          <span className="font-display text-xl font-extrabold text-white">Wayfare <span className="text-teal-400 font-semibold text-sm">Global</span></span>
-        </Link>
+        <Logo to="/" size="md" />
 
         {/* Header */}
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-soft">

@@ -4,10 +4,10 @@ import { motion } from 'framer-motion';
 import {
   SparklesIcon,
   CheckCircle2Icon,
-  UserIcon,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input, PasswordInput } from '../components/ui/Input';
+import { Logo } from '../components/ui/Logo';
 import { useAuth } from '../context/AuthContext';
 
 const candidatePerks = [
@@ -72,14 +72,7 @@ export function Register() {
         {/* Left Side: Candidate Perks & Branding */}
         <div className="flex flex-col justify-between border-b border-slate-800 bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 p-8 sm:p-10 md:border-b-0 md:border-r">
           <div>
-            <Link to="/" className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
-                <SparklesIcon className="h-5 w-5" />
-              </span>
-              <span className="font-display text-xl font-black text-white">
-                Wayfare <span className="text-teal-400 font-semibold text-sm">Global</span>
-              </span>
-            </Link>
+            <Logo to="/" size="md" />
 
             <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
               <SparklesIcon className="h-3.5 w-3.5" />

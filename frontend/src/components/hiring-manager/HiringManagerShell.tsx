@@ -115,12 +115,10 @@ export function HiringManagerShell({
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-800 bg-slate-950 p-4 text-white lg:flex">
         <button
           onClick={() => changeView('overview')}
-          className="flex items-center gap-2.5 px-2 py-2 text-left"
+          className="flex items-center gap-2.5 px-2 py-2 text-left hover:opacity-90 transition-opacity"
           aria-label="Wayfare Manager home">
           
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
-            <SparklesIcon className="h-5 w-5" />
-          </span>
+          <img src="/logo.png" alt="Wayfare Global" className="h-9 w-auto rounded-xl object-contain border border-slate-700/50 bg-slate-900/80 p-0.5" />
           <span>
             <span className="block font-display text-lg font-black tracking-tight text-white">
               Wayfare
@@ -297,9 +295,7 @@ export function HiringManagerShell({
                 onClick={() => changeView('overview')}
                 className="flex items-center gap-2 font-display font-extrabold text-white">
                 
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
-                    <SparklesIcon className="h-5 w-5" />
-                  </span>
+                  <img src="/logo.png" alt="Wayfare Global" className="h-9 w-auto rounded-xl object-contain border border-slate-700/50 bg-slate-900/80 p-0.5" />
                   Wayfare Manager
                 </button>
                 <button

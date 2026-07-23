@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { SparklesIcon } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input, PasswordInput } from '../components/ui/Input';
+import { Logo } from '../components/ui/Logo';
 import { useAuth } from '../context/AuthContext';
 export function Login() {
   const { login } = useAuth();
@@ -67,14 +68,7 @@ export function Login() {
         }}
         className="relative z-10 w-full max-w-md rounded-3xl border border-white/15 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-2xl">
         
-        <Link to="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
-            <SparklesIcon className="h-5 w-5" />
-          </span>
-          <span className="font-display text-xl font-black text-white">
-            Wayfare <span className="text-teal-400 font-semibold text-sm">Global</span>
-          </span>
-        </Link>
+        <Logo to="/" size="md" />
 
         <h1 className="mt-6 font-display text-2xl font-black text-white">
           Welcome back
