@@ -10,7 +10,6 @@ import { JobDetail } from './pages/JobDetail';
 import { Companies } from './pages/Companies';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
-import { RegisterHiringManager } from './pages/RegisterHiringManager';
 import { Dashboard } from './pages/Dashboard';
 import { Recruiter } from './pages/Recruiter';
 import { HiringManager } from './pages/HiringManager';
@@ -106,7 +105,6 @@ function Layout() {
           <Route path="/companies" element={<Companies />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/register-hm" element={<RegisterHiringManager />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/recruiter" element={<Recruiter />} />
           <Route path="/hiring-manager" element={<HiringManager />} />

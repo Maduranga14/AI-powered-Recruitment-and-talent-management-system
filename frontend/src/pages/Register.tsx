@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import {
   SparklesIcon,
   CheckCircle2Icon,
+  UserIcon,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input, PasswordInput } from '../components/ui/Input';

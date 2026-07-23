@@ -165,57 +165,7 @@ namespace backend.Controllers
             }
         }
 
-        // ─── Recruiter Approval Workflow ──────────────────────────────────────
-
-        [HttpGet("pending-recruiters")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetPendingRecruiters()
-        {
-            var list = await _adminUserService.GetPendingRecruitersAsync();
-            return Ok(list);
-        }
-
-        [HttpPut("recruiters/{id:guid}/approve")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ApproveRecruiter(Guid id)
-        {
-            try
-            {
-                await _adminUserService.ApproveRecruiterAsync(id);
-                return Ok(new { message = "Recruiter account approved successfully. They can now log in." });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
-
-        [HttpPut("recruiters/{id:guid}/reject")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> RejectRecruiter(Guid id)
-        {
-            try
-            {
-                await _adminUserService.RejectRecruiterAsync(id);
-                return Ok(new { message = "Recruiter application rejected." });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+        // ─── User Management Endpoints ─────────────────────────────────────
 
         // ─── Audit Logs ───────────────────────────────────────────────────────
 
