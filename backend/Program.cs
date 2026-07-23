@@ -97,9 +97,11 @@ builder.Services.AddScoped<ICandidateProfileService, CandidateProfileService>();
 builder.Services.AddScoped<ICloudStorageService, AzureBlobStorageService>();
             builder.Services.AddScoped<IAiChatService, AiChatService>();
             builder.Services.AddScoped<IAiResumeParserService, AiResumeParserService>();
-            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<ISystemSettingsService, SystemSettingsService>();
+builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 builder.Services.AddHttpContextAccessor();
+
 
 builder.Services.AddHttpClient("OpenAI", (sp, client) =>
 {

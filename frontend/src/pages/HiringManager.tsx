@@ -144,8 +144,11 @@ function toManagerInterview(item: InterviewDto): ManagerInterview {
     rescheduleRequested: item.rescheduleRequested,
     rescheduleReason: item.rescheduleReason,
     feedbackSubmitted: item.hasFeedback ?? !!item.feedbackSubmittedAt,
+    isSyncedToGoogleCalendar: item.isSyncedToGoogleCalendar,
+    googleCalendarHtmlLink: item.googleCalendarHtmlLink,
   };
 }
+
 
 function deriveRoles(candidates: ManagerCandidate[]): ManagerRole[] {
   const map = new Map<string, ManagerRole>();

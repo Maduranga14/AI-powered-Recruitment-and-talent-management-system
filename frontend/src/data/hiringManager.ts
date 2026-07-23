@@ -78,7 +78,10 @@ export interface ManagerInterview {
   rescheduleRequested?: boolean;
   rescheduleReason?: string | null;
   feedbackSubmitted?: boolean;
+  isSyncedToGoogleCalendar?: boolean;
+  googleCalendarHtmlLink?: string | null;
 }
+
 
 export interface ManagerRole {
   id: string;

@@ -6,7 +6,9 @@ using Microsoft.Extensions.Options;
 using backend.Data;
 using backend.DTOs.Candidate;
 using backend.Models;
+using backend.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace backend.Services
 {
@@ -877,11 +879,15 @@ Example structure:
                 ApplicationId = application.Id,
                 JobPostingId = application.JobPostingId,
                 JobTitle = application.JobPosting.Title,
-                DepartmentName = application.JobPosting.Department?.Name,
+                Company = application.JobPosting.PostedBy,
+                Location = application.JobPosting.Location,
+                EmploymentType = application.JobPosting.EmploymentType.ToString(),
                 Status = application.Status.ToString(),
                 AppliedAt = DateTime.SpecifyKind(application.AppliedAt, DateTimeKind.Utc),
+                UpdatedAt = DateTime.SpecifyKind(application.UpdatedAt, DateTimeKind.Utc),
                 CoverLetter = application.CoverLetter
             };
+
         }
     }
 }

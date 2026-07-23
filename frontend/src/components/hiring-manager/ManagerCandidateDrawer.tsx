@@ -128,10 +128,10 @@ export function ManagerCandidateDrawer({
               </div>
             </div>
 
-            {/* Scrollable Content Body */}
+
             <div className="flex-1 overflow-y-auto p-6 sm:p-7 space-y-6">
 
-              {/* Candidate Hero Card & Quick Actions */}
+
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-5">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
@@ -284,8 +284,8 @@ export function ManagerCandidateDrawer({
                           candidate.recommendation === 'Advance' || candidate.recommendation === 'Strong Yes' || candidate.recommendation === 'Yes'
                             ? 'green'
                             : candidate.recommendation === 'Hold' || candidate.recommendation === 'Maybe'
-                            ? 'amber'
-                            : 'red'
+                              ? 'amber'
+                              : 'red'
                         }
                       >
                         {candidate.recommendation}
@@ -311,11 +311,10 @@ export function ManagerCandidateDrawer({
                         {[1, 2, 3, 4, 5].map((star) => (
                           <StarIcon
                             key={star}
-                            className={`h-4 w-4 ${
-                              (candidate.overallRating || 0) >= star
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-slate-300'
-                            }`}
+                            className={`h-4 w-4 ${(candidate.overallRating || 0) >= star
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-slate-300'
+                              }`}
                           />
                         ))}
                       </div>
@@ -344,11 +343,10 @@ export function ManagerCandidateDrawer({
                         {[1, 2, 3, 4, 5].map((star) => (
                           <StarIcon
                             key={star}
-                            className={`h-4 w-4 ${
-                              (candidate.interviewOverallRating || 0) >= star
-                                ? 'fill-amber-400 text-amber-400'
-                                : 'text-slate-300'
-                            }`}
+                            className={`h-4 w-4 ${(candidate.interviewOverallRating || 0) >= star
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-slate-300'
+                              }`}
                           />
                         ))}
                       </div>
@@ -363,16 +361,15 @@ export function ManagerCandidateDrawer({
                         </span>
                         <div className="mt-1">
                           <span
-                            className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-bold ${
-                              candidate.interviewRecommendation === 'Strong Yes' ||
+                            className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-bold ${candidate.interviewRecommendation === 'Strong Yes' ||
                               candidate.interviewRecommendation === 'Yes' ||
                               candidate.interviewRecommendation === 'Advance'
-                                ? 'bg-emerald-600 text-white shadow-sm'
-                                : candidate.interviewRecommendation === 'Maybe' ||
-                                  candidate.interviewRecommendation === 'Hold'
+                              ? 'bg-emerald-600 text-white shadow-sm'
+                              : candidate.interviewRecommendation === 'Maybe' ||
+                                candidate.interviewRecommendation === 'Hold'
                                 ? 'bg-amber-500 text-white shadow-sm'
                                 : 'bg-red-600 text-white shadow-sm'
-                            }`}
+                              }`}
                           >
                             {candidate.interviewRecommendation}
                           </span>
@@ -563,11 +560,10 @@ export function ManagerCandidateDrawer({
                 type="button"
                 disabled={isSubmitting}
                 onClick={confirmDecision}
-                className={`rounded-xl px-4 py-2 text-sm font-bold text-white transition ${
-                  decisionModal === 'Hired'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-rose-600 hover:bg-rose-700'
-                }`}
+                className={`rounded-xl px-4 py-2 text-sm font-bold text-white transition ${decisionModal === 'Hired'
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
+                  : 'bg-rose-600 hover:bg-rose-700'
+                  }`}
               >
                 {isSubmitting ? 'Saving...' : `Confirm ${decisionModal}`}
               </button>
@@ -577,4 +573,4 @@ export function ManagerCandidateDrawer({
       )}
     </AnimatePresence>
   );
-}
+}

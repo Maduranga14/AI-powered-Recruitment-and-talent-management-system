@@ -785,11 +785,15 @@ namespace backend.Services
                 }
             }
 
-            return applications.Select(a => {
+            return applications
+                .Where(a => a.CandidateProfile?.User != null)
+                .Select(a => {
                 aiScores.TryGetValue(a.Id, out int aiScore);
-                return MapApplicant(a, a.JobPosting.Title, aiScore > 0 ? aiScore : null);
+                var jobTitle = a.JobPosting?.Title ?? "Position";
+                return MapApplicant(a, jobTitle, aiScore > 0 ? aiScore : null);
             }).ToList();
         }
+
 
         public async Task<JobApplicantDto> SubmitManagerFeedbackAsync(Guid applicationId, string recommendation, string feedback, int overallRating, string? skillRatings, Guid managerUserId)
         {
@@ -914,8 +918,9 @@ namespace backend.Services
                 var jobTitle = application.JobPosting.Title;
                 var orgName = manager.Organization?.Name ?? manager.OrganizationName ?? "Hiring Team";
 
-                if (targetStatus == ApplicationStatus.Hired)
+                if (targetStatus == ApplicationStatus.Offer || targetStatus == ApplicationStatus.Hired)
                 {
+
                     _ = Task.Run(async () =>
                     {
                         try
@@ -1146,18 +1151,22 @@ namespace backend.Services
                 .OrderBy(i => i.ScheduledAt)
                 .ToListAsync();
 
-            return interviews.Select(i =>
+            return interviews
+                .Where(i => i.JobApplication?.CandidateProfile?.User != null)
+                .Select(i =>
             {
                 var user = i.JobApplication.CandidateProfile.User;
                 var name = $"{user.FirstName} {user.LastName}".Trim();
+                var jobTitle = i.JobApplication.JobPosting?.Title ?? "Job Position";
                 return MapInterview(
                     i,
                     i.JobApplication,
-                    i.JobApplication.JobPosting.Title,
+                    jobTitle,
                     name,
                     user.Email);
             }).ToList();
         }
+
 
         private static InterviewDto MapInterview(
             Interview interview,
@@ -1203,8 +1212,12 @@ namespace backend.Services
                 FeedbackSubmittedAt = interview.FeedbackSubmittedAt.HasValue
                     ? DateTime.SpecifyKind(interview.FeedbackSubmittedAt.Value, DateTimeKind.Utc)
                     : null,
+                GoogleCalendarEventId = interview.GoogleCalendarEventId,
+                GoogleCalendarHtmlLink = interview.GoogleCalendarHtmlLink,
+                IsSyncedToGoogleCalendar = interview.IsSyncedToGoogleCalendar,
             };
         }
+
 
         public async Task<InterviewDto> RequestRescheduleAsync(
             Guid interviewId, string? reason, Guid managerUserId)

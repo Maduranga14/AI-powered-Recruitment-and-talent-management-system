@@ -306,7 +306,11 @@ namespace backend.DTOs.Jobs
         public int? FeedbackTechnicalScore { get; set; }
         public DateTime? FeedbackSubmittedAt { get; set; }
         public bool HasFeedback => FeedbackSubmittedAt.HasValue;
+        public string? GoogleCalendarEventId { get; set; }
+        public string? GoogleCalendarHtmlLink { get; set; }
+        public bool IsSyncedToGoogleCalendar { get; set; }
     }
+
 
     /// <summary>Payload for hiring manager submitting post-interview feedback.</summary>
     public class SubmitInterviewFeedbackDto
