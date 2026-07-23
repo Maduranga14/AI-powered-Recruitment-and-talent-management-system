@@ -33,11 +33,12 @@ namespace backend.Services
             PropertyNameCaseInsensitive = true
         };
 
-        // Allowed resume file extensions and size limit (5 MB)
+        
         private static readonly string[] AllowedExtensions = [".pdf", ".doc", ".docx"];
+        private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
         private const long MaxFileSizeBytes = 5 * 1024 * 1024;
 
-        // ── Create ────────────────────────────────────────────────────────────
+        
         public async Task<CandidateProfileResponseDto> CreateProfileAsync(
             Guid userId, CreateCandidateProfileDto dto)
         {
@@ -61,19 +62,19 @@ namespace backend.Services
                 UpdatedAt = DateTime.UtcNow
             };
 
-            // Experience
+            
             foreach (var exp in dto.Experiences)
                 profile.Experiences.Add(MapExperience(exp));
 
-            // Education
+           
             foreach (var ed in dto.Educations)
                 profile.Educations.Add(MapEducation(ed));
 
-            // Skills — deduplicate, trim
+            
             foreach (var skill in dto.Skills.Select(s => s.Trim()).Where(s => s.Length > 0).Distinct())
                 profile.Skills.Add(new CandidateSkill { Name = skill });
 
-            // Links
+           
             if (dto.Links != null)
                 profile.Links = MapLinks(dto.Links);
 
@@ -83,7 +84,7 @@ namespace backend.Services
             return await BuildResponseAsync(profile.Id, user);
         }
 
-        // ── Get ───────────────────────────────────────────────────────────────
+       
         public async Task<CandidateProfileResponseDto> GetProfileAsync(Guid userId)
         {
             var (profile, user) = await LoadProfileAsync(userId);
@@ -104,7 +105,7 @@ namespace backend.Services
             return await BuildResponseAsync(profile.Id, profile.User);
         }
 
-        // ── Update ────────────────────────────────────────────────────────────
+        
         public async Task<CandidateProfileResponseDto> UpdateProfileAsync(
             Guid userId, UpdateCandidateProfileDto dto)
         {
@@ -114,7 +115,7 @@ namespace backend.Services
             if (dto.Location != null) profile.Location = dto.Location.Trim();
             if (dto.Headline != null) profile.Headline = dto.Headline.Trim();
 
-            // Replace experience list if provided
+            
             if (dto.Experiences != null)
             {
                 _db.WorkExperiences.RemoveRange(profile.Experiences);
@@ -133,7 +134,7 @@ namespace backend.Services
                 }
             }
 
-            // Replace education list if provided
+            
             if (dto.Educations != null)
             {
                 _db.Educations.RemoveRange(profile.Educations);
@@ -151,7 +152,7 @@ namespace backend.Services
                 }
             }
 
-            // Replace skills if provided
+            
             if (dto.Skills != null)
             {
                 _db.CandidateSkills.RemoveRange(profile.Skills);
@@ -165,7 +166,7 @@ namespace backend.Services
                 }
             }
 
-            // Replace links if provided
+            
             if (dto.Links != null)
             {
                 if (profile.Links != null)
@@ -192,31 +193,31 @@ namespace backend.Services
             return await BuildResponseAsync(profile.Id, user);
         }
 
-        // ── Resume upload ─────────────────────────────────────────────────────
+       
         public async Task<string> UploadResumeAsync(Guid userId, IFormFile file)
         {
             var (profile, _) = await LoadProfileAsync(userId);
 
-            // Validate extension
+           
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!AllowedExtensions.Contains(ext))
                 throw new ArgumentException(
                     $"Unsupported file type '{ext}'. Allowed: {string.Join(", ", AllowedExtensions)}.");
 
-            // Validate size
+          
             if (file.Length > MaxFileSizeBytes)
                 throw new ArgumentException("File size exceeds the 5 MB limit.");
 
-            // Remove old file if present
+           
             if (!string.IsNullOrEmpty(profile.ResumeUrl))
                 await _cloudStorage.DeleteFileAsync(profile.ResumeUrl);
 
-            // Save new file via Cloud Storage (or local fallback)
+            
             var fileName = $"{profile.Id}_{Guid.NewGuid():N}{ext}";
             string fileUrl;
             using (var stream = file.OpenReadStream())
             {
-                fileUrl = await _cloudStorage.UploadFileAsync(stream, fileName, file.ContentType);
+                fileUrl = await _cloudStorage.UploadFileAsync(stream, fileName, file.ContentType, "candidate-resumes");
             }
 
             profile.ResumeUrl = fileUrl;
@@ -226,7 +227,7 @@ namespace backend.Services
             return fileUrl;
         }
 
-        // ── Resume delete ─────────────────────────────────────────────────────
+       
         public async Task DeleteResumeAsync(Guid userId)
         {
             var (profile, _) = await LoadProfileAsync(userId);
@@ -240,7 +241,52 @@ namespace backend.Services
             await _db.SaveChangesAsync();
         }
 
-        // ── Applications ──────────────────────────────────────────────────────
+       
+        public async Task<string> UploadPhotoAsync(Guid userId, IFormFile file)
+        {
+            var (profile, _) = await LoadProfileAsync(userId);
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!AllowedImageExtensions.Contains(ext))
+                throw new ArgumentException(
+                    $"Unsupported image type '{ext}'. Allowed: {string.Join(", ", AllowedImageExtensions)}.");
+
+            if (file.Length > MaxFileSizeBytes)
+                throw new ArgumentException("Image size exceeds the 5 MB limit.");
+
+            if (!string.IsNullOrEmpty(profile.PhotoUrl))
+            {
+                await _cloudStorage.DeleteFileAsync(profile.PhotoUrl);
+            }
+
+            var fileName = $"photo_{profile.Id}_{Guid.NewGuid():N}{ext}";
+            string photoUrl;
+            using (var stream = file.OpenReadStream())
+            {
+                photoUrl = await _cloudStorage.UploadFileAsync(stream, fileName, file.ContentType, "candidate-photos");
+            }
+
+            profile.PhotoUrl = photoUrl;
+            profile.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            return photoUrl;
+        }
+
+        public async Task DeletePhotoAsync(Guid userId)
+        {
+            var (profile, _) = await LoadProfileAsync(userId);
+
+            if (string.IsNullOrEmpty(profile.PhotoUrl))
+                throw new InvalidOperationException("No profile photo is currently uploaded.");
+
+            await _cloudStorage.DeleteFileAsync(profile.PhotoUrl);
+            profile.PhotoUrl = null;
+            profile.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
+       
         public async Task<List<ApplicationResponseDto>> GetApplicationsAsync(Guid userId)
         {
             var profile = await GetProfileEntityAsync(userId);
@@ -315,7 +361,7 @@ namespace backend.Services
             }).ToList();
         }
 
-        // ── Apply to job ──────────────────────────────────────────────────────
+       
         public async Task<ApplicationResponseDto> ApplyToJobAsync(Guid userId, ApplyToJobDto dto)
         {
             var profile = await GetProfileEntityAsync(userId);
@@ -356,12 +402,12 @@ namespace backend.Services
             };
         }
 
-        // ── Soft-delete profile ───────────────────────────────────────────────
+       
         public async Task DeleteProfileAsync(Guid userId)
         {
             var (profile, _) = await LoadProfileAsync(userId);
 
-            // Clear personal data fields
+         
             profile.Phone = null;
             profile.Location = null;
             profile.Headline = null;
@@ -373,7 +419,7 @@ namespace backend.Services
                 profile.ResumeUrl = null;
             }
 
-            // Clear child collections
+            
             _db.WorkExperiences.RemoveRange(profile.Experiences);
             _db.Educations.RemoveRange(profile.Educations);
             _db.CandidateSkills.RemoveRange(profile.Skills);
@@ -387,7 +433,7 @@ namespace backend.Services
             await _db.SaveChangesAsync();
         }
 
-        // ── Export ────────────────────────────────────────────────────────────
+        
         public async Task<CandidateProfileExportDto> ExportProfileAsync(Guid userId)
         {
             var (profile, user) = await LoadProfileAsync(userId);
@@ -453,12 +499,12 @@ namespace backend.Services
             };
         }
 
-        // ── Completeness calculator ───────────────────────────────────────────
+        
 
         private static (int percent, List<string> missing) CalculateCompleteness(
             CandidateProfile profile, User user)
         {
-            // 10 tracked fields
+           
             var checks = new (string field, bool filled)[]
             {
                 ("Name",        !string.IsNullOrWhiteSpace(user.FullName)),
@@ -481,9 +527,7 @@ namespace backend.Services
             return (percent, missing);
         }
 
-        // ── Private helpers ───────────────────────────────────────────────────
-
-        /// <summary>Load profile with all navigation properties, throw 404 if missing.</summary>
+        
         private async Task<(CandidateProfile profile, User user)> LoadProfileAsync(Guid userId)
         {
             var user = await _db.Users.FindAsync(userId)
@@ -501,7 +545,7 @@ namespace backend.Services
             return (profile, user);
         }
 
-        /// <summary>Load profile entity only (no User), throw 404 if missing.</summary>
+        
         private async Task<CandidateProfile> GetProfileEntityAsync(Guid userId)
         {
             return await _db.CandidateProfiles
@@ -590,19 +634,19 @@ namespace backend.Services
             GitHub = dto.GitHub
         };
 
-        /// <summary>Delete a file from disk given its absolute URL or relative path.</summary>
+       
         private void DeleteFileFromDisk(string fileUrl)
         {
             try
             {
-                // Strip scheme+host if present to get the relative path
+                
                 string relativePath;
                 if (Uri.TryCreate(fileUrl, UriKind.Absolute, out var uri))
                     relativePath = uri.AbsolutePath;
                 else
                     relativePath = fileUrl;
 
-                // relativePath is like /uploads/resumes/xxx.pdf
+               
                 var diskPath = Path.Combine(_env.WebRootPath, relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
 
                 if (File.Exists(diskPath))
@@ -610,7 +654,7 @@ namespace backend.Services
             }
             catch
             {
-                // Swallow file-not-found errors — DB update must still proceed
+                
             }
         }
 
@@ -626,7 +670,7 @@ namespace backend.Services
                 .AsNoTracking()
                 .Where(j => j.Status == backend.Models.Enums.JobStatus.Published)
                 .OrderByDescending(j => j.PublishedAt)
-                .Take(25) // Limit to top 25 recent jobs to keep token size fast and cost-effective
+                .Take(25) 
                 .ToListAsync();
 
             if (activeJobs.Count == 0)
@@ -636,7 +680,7 @@ namespace backend.Services
 
             var result = new List<JobRecommendationDto>();
 
-            // If the candidate profile doesn't exist or has no skills and no headline, return jobs with 0 score
+            
             if (profile == null || (profile.Skills.Count == 0 && string.IsNullOrWhiteSpace(profile.Headline)))
             {
                 return activeJobs.Select(j => new JobRecommendationDto
@@ -661,7 +705,7 @@ namespace backend.Services
             var apiKey = ResolveOpenAiApiKey();
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                // Fallback to basic keyword-based matching if OpenAI API Key is missing
+               
                 return RunKeywordMatchingFallback(profile, activeJobs);
             }
 

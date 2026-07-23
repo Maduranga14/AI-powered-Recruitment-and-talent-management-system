@@ -15,7 +15,7 @@ interface PasswordInputProps
     Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {}
 
 const inputBase =
-  'w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100';
+  'w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder:text-slate-400 transition-colors focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400/20';
 
 export const Input = forwardRef<
   HTMLInputElement,
@@ -26,7 +26,7 @@ export const Input = forwardRef<
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
+        <label htmlFor={inputId} className="mb-1.5 block text-sm font-semibold text-slate-300">
           {label}
         </label>
       )}
@@ -42,9 +42,9 @@ export const Input = forwardRef<
         {...props}
       />
       {error ? (
-        <p className="mt-1.5 text-xs font-medium text-red-600">{error}</p>
+        <p className="mt-1.5 text-xs font-medium text-red-400">{error}</p>
       ) : displayHint ? (
-        <p className="mt-1.5 text-xs text-slate-500">{displayHint}</p>
+        <p className="mt-1.5 text-xs text-slate-400">{displayHint}</p>
       ) : null}
     </div>
   );
@@ -58,7 +58,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
+          <label htmlFor={inputId} className="mb-1.5 block text-sm font-semibold text-slate-300">
             {label}
           </label>
         )}
@@ -79,7 +79,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           <button
             type="button"
             onClick={() => setShow((s) => !s)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white focus:outline-none"
             aria-label={show ? 'Hide password' : 'Show password'}
             tabIndex={-1}
           >
@@ -87,9 +87,9 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           </button>
         </div>
         {error ? (
-          <p className="mt-1.5 text-xs font-medium text-red-600">{error}</p>
+          <p className="mt-1.5 text-xs font-medium text-red-400">{error}</p>
         ) : hint ? (
-          <p className="mt-1.5 text-xs text-slate-500">{hint}</p>
+          <p className="mt-1.5 text-xs text-slate-400">{hint}</p>
         ) : null}
       </div>
     );
@@ -105,7 +105,7 @@ export const Textarea = forwardRef<
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
+        <label htmlFor={inputId} className="mb-1.5 block text-sm font-semibold text-slate-300">
           {label}
         </label>
       )}
@@ -115,8 +115,8 @@ export const Textarea = forwardRef<
         className={twMerge(inputBase, 'min-h-[110px] resize-y', error && 'border-red-400', className)}
         {...props}
       />
-      {hint && !error && <p className="mt-1.5 text-xs text-slate-500">{hint}</p>}
-      {error && <p className="mt-1.5 text-xs font-medium text-red-600">{error}</p>}
+      {hint && !error && <p className="mt-1.5 text-xs text-slate-400">{hint}</p>}
+      {error && <p className="mt-1.5 text-xs font-medium text-red-400">{error}</p>}
     </div>
   );
 });
@@ -130,14 +130,14 @@ export const Select = forwardRef<
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
+        <label htmlFor={inputId} className="mb-1.5 block text-sm font-semibold text-slate-300">
           {label}
         </label>
       )}
       <select
         id={inputId}
         ref={ref}
-        className={twMerge(inputBase, 'appearance-none bg-white pr-10', className)}
+        className={twMerge(inputBase, 'appearance-none bg-slate-800 pr-10 text-white', className)}
         {...props}
       >
         {children}
@@ -145,4 +145,4 @@ export const Select = forwardRef<
     </div>
   );
 });
-Select.displayName = 'Select';
+Select.displayName = 'Select';

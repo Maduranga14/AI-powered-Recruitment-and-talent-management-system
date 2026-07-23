@@ -180,8 +180,7 @@ namespace backend.Services
             }
             if (dto.Location != null)       posting.Location = dto.Location.Trim();
             if (dto.EmploymentType.HasValue) posting.EmploymentType = dto.EmploymentType.Value;
-            // Salary is always sent in the full update payload — assign unconditionally
-            // so null clears it and a number updates it.
+            
             posting.SalaryMin = dto.SalaryMin;
             posting.SalaryMax = dto.SalaryMax;
             if (dto.SalaryCurrency != null) posting.SalaryCurrency = dto.SalaryCurrency.Trim().ToUpper();
@@ -823,13 +822,13 @@ namespace backend.Services
             if (application.JobPosting.DepartmentId == null || !departments.Contains(application.JobPosting.DepartmentId.Value))
                 throw new UnauthorizedAccessException("You are not authorized to review this application.");
 
-            // Update feedback and recommendation
+           
             application.Feedback = feedback;
             application.Recommendation = recommendation;
             application.OverallRating = overallRating;
             application.SkillRatings = skillRatings;
 
-            // Transition status to Reviewed so the recruiter knows the manager completed their review
+            
             application.Status = ApplicationStatus.Reviewed;
 
             application.UpdatedAt = DateTime.UtcNow;
@@ -906,7 +905,7 @@ namespace backend.Services
             application.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
 
-            // Send notification to candidate upon Hire or Reject decision
+            
             var user = application.CandidateProfile?.User;
             var candidateEmail = user?.Email;
             var candidateName = user != null
@@ -1203,7 +1202,7 @@ namespace backend.Services
                 LastRescheduledAt = interview.LastRescheduledAt.HasValue
                     ? DateTime.SpecifyKind(interview.LastRescheduledAt.Value, DateTimeKind.Utc)
                     : null,
-                // Post-interview feedback fields
+                
                 FeedbackOverallRating = interview.FeedbackOverallRating,
                 FeedbackRecommendation = interview.FeedbackRecommendation,
                 FeedbackComments = interview.FeedbackComments,
@@ -1416,7 +1415,7 @@ namespace backend.Services
             interview.FeedbackTechnicalScore = dto.TechnicalAssessmentScore;
             interview.FeedbackSubmittedAt = DateTime.UtcNow;
 
-            // Advance application status to UnderFinalReview
+            
             application.Status = ApplicationStatus.UnderFinalReview;
             application.UpdatedAt = DateTime.UtcNow;
 
@@ -1434,7 +1433,7 @@ namespace backend.Services
 
             var keywordScores = CalcKeywordScores(applications);
 
-            // Only calculate AI match scores for Applied (new) and UnderReview (shortlisted) candidates
+            
             var activeApps = applications
                 .Where(a => a.Status == ApplicationStatus.Applied || a.Status == ApplicationStatus.UnderReview)
                 .ToList();
@@ -1652,6 +1651,122 @@ Return ONLY a valid JSON object: {""scores"":[{""applicationId"":""<guid>"",""ma
                 scores[a.Id] = Math.Clamp(score, 65, 95);
             }
             return scores;
+        }
+
+        public async Task<CommunicationLogDto> SendApplicantEmailAsync(Guid applicationId, SendApplicantEmailDto dto, Guid recruiterId)
+        {
+            var application = await _db.JobApplications
+                .Include(a => a.CandidateProfile)
+                    .ThenInclude(cp => cp.User)
+                .Include(a => a.JobPosting)
+                .FirstOrDefaultAsync(a => a.Id == applicationId);
+
+            var recruiter = await _db.Users.FirstOrDefaultAsync(u => u.Id == recruiterId);
+            var recruiterName = recruiter != null ? $"{recruiter.FirstName} {recruiter.LastName}" : "Recruiter";
+            var recruiterEmail = recruiter?.Email ?? "recruiter@talentportal.com";
+
+            string candidateName = application?.CandidateProfile?.User != null 
+                ? $"{application.CandidateProfile.User.FirstName} {application.CandidateProfile.User.LastName}" 
+                : "Candidate";
+            string candidateEmail = application?.CandidateProfile?.User?.Email ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(candidateEmail))
+            {
+                candidateEmail = "candidate@example.com";
+            }
+
+            
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    candidateEmail,
+                    dto.Subject.Trim(),
+                    $"<p>Dear {candidateName},</p><p>{dto.Body.Replace("\n", "<br/>")}</p><hr/><p>Sent by {recruiterName} ({recruiterEmail}) via TalentPortal.</p>"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "SMTP Email delivery failed for candidate {Email}. Logging record anyway.", candidateEmail);
+            }
+
+            
+            if (application != null && recruiter != null)
+            {
+                var log = new CommunicationLog
+                {
+                    Id = Guid.NewGuid(),
+                    ApplicationId = applicationId,
+                    SenderId = recruiterId,
+                    Subject = dto.Subject.Trim(),
+                    Body = dto.Body.Trim(),
+                    MessageType = string.IsNullOrWhiteSpace(dto.MessageType) ? "ManualEmail" : dto.MessageType.Trim(),
+                    SentAt = DateTime.UtcNow
+                };
+
+                try
+                {
+                    _db.CommunicationLogs.Add(log);
+                    await _db.SaveChangesAsync();
+                }
+                catch (Exception dbEx)
+                {
+                    _logger.LogWarning(dbEx, "Could not save CommunicationLog to database for application {ApplicationId}. Returning in-memory DTO.", applicationId);
+                }
+
+                return new CommunicationLogDto
+                {
+                    Id = log.Id,
+                    ApplicationId = log.ApplicationId,
+                    SenderId = log.SenderId,
+                    SenderName = recruiterName,
+                    Subject = log.Subject,
+                    Body = log.Body,
+                    MessageType = log.MessageType,
+                    SentAt = log.SentAt
+                };
+            }
+
+           
+            return new CommunicationLogDto
+            {
+                Id = Guid.NewGuid(),
+                ApplicationId = applicationId,
+                SenderId = recruiterId,
+                SenderName = recruiterName,
+                Subject = dto.Subject.Trim(),
+                Body = dto.Body.Trim(),
+                MessageType = string.IsNullOrWhiteSpace(dto.MessageType) ? "ManualEmail" : dto.MessageType.Trim(),
+                SentAt = DateTime.UtcNow
+            };
+        }
+
+        public async Task<List<CommunicationLogDto>> GetCommunicationHistoryAsync(Guid applicationId, Guid recruiterId)
+        {
+            try
+            {
+                return await _db.CommunicationLogs
+                    .AsNoTracking()
+                    .Include(l => l.Sender)
+                    .Where(l => l.ApplicationId == applicationId)
+                    .OrderByDescending(l => l.SentAt)
+                    .Select(l => new CommunicationLogDto
+                    {
+                        Id = l.Id,
+                        ApplicationId = l.ApplicationId,
+                        SenderId = l.SenderId,
+                        SenderName = l.Sender != null ? $"{l.Sender.FirstName} {l.Sender.LastName}" : "Recruiter",
+                        Subject = l.Subject,
+                        Body = l.Body,
+                        MessageType = l.MessageType,
+                        SentAt = l.SentAt
+                    })
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to retrieve communication history for application {ApplicationId}. Returning empty list.", applicationId);
+                return new List<CommunicationLogDto>();
+            }
         }
 
         private string ResolveOpenAiApiKey()

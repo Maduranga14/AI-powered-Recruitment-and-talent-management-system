@@ -7,10 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers
 {
-    /// <summary>
-    /// Candidate Profile — CRUD, resume management, applications, and privacy controls.
-    /// All endpoints require the Candidate role.
-    /// </summary>
+    
     [ApiController]
     [Route("api/candidate/profile")]
     [Authorize(Roles = "Candidate")]
@@ -22,9 +19,7 @@ namespace backend.Controllers
         private readonly ICandidateProfileService _profileService = profileService;
         private readonly IAiResumeParserService _parserService = parserService;
 
-        // ── Profile CRUD ──────────────────────────────────────────────────────
-
-        /// <summary>Create the candidate's profile (one per account).</summary>
+        
         [HttpPost]
         [ProducesResponseType(typeof(CandidateProfileResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -58,7 +53,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Get the caller's full profile including completeness metrics.</summary>
+        
         [HttpGet]
         [ProducesResponseType(typeof(CandidateProfileResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -80,7 +75,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Get AI job recommendations for the logged-in candidate.</summary>
+        
         [HttpGet("recommendations")]
         [ProducesResponseType(typeof(List<JobRecommendationDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -106,7 +101,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Update profile fields. Only provided fields are changed.</summary>
+       
         [HttpPut]
         [ProducesResponseType(typeof(CandidateProfileResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -142,12 +137,7 @@ namespace backend.Controllers
             }
         }
 
-        // ── Resume management ─────────────────────────────────────────────────
-
-        /// <summary>
-        /// Upload or replace resume file. Accepts multipart/form-data with a "file" field.
-        /// Allowed types: PDF, DOC, DOCX. Max size: 5 MB.
-        /// </summary>
+        
         [HttpPost("resume")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -187,9 +177,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>
-        /// Parse resume file using AI. Uploads the resume and parses its text, returning the profile recommendation pre-fills.
-        /// </summary>
+       
         [HttpPost("resume/parse")]
         [ProducesResponseType(typeof(ParsedResumeDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -205,10 +193,10 @@ namespace backend.Controllers
 
             try
             {
-                // 1. Upload/save resume to storage first
+               
                 var url = await _profileService.UploadResumeAsync(userId.Value, file);
 
-                // 2. Extract and parse with AI
+               
                 using var stream = file.OpenReadStream();
                 var parsedData = await _parserService.ParseResumeAsync(stream, file.ContentType);
 
@@ -242,7 +230,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Delete the uploaded resume from storage and clear the reference in the profile.</summary>
+       
         [HttpDelete("resume")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -279,9 +267,82 @@ namespace backend.Controllers
             }
         }
 
-        // ── Applications ──────────────────────────────────────────────────────
+        
+        [HttpPost("photo")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> UploadPhoto(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "No image file was provided." });
 
-        /// <summary>List all jobs the candidate has applied to with their current status.</summary>
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                var url = await _profileService.UploadPhotoAsync(userId.Value, file);
+                return Ok(new { message = "Profile picture uploaded successfully.", photoUrl = url });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "An error occurred while uploading profile picture.",
+                    error = ex.Message,
+                    detail = ex.InnerException?.Message
+                });
+            }
+        }
+
+       
+        [HttpDelete("photo")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> DeletePhoto()
+        {
+            var userId = GetUserId();
+            if (userId == null)
+                return Unauthorized(new { message = "Invalid session. Please log in again." });
+
+            try
+            {
+                await _profileService.DeletePhotoAsync(userId.Value);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new
+                {
+                    message = "An error occurred while deleting profile picture.",
+                    error = ex.Message,
+                    detail = ex.InnerException?.Message
+                });
+            }
+        }
+
+        
         [HttpGet("applications")]
         [ProducesResponseType(typeof(List<ApplicationResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -303,7 +364,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>List interviews scheduled for the logged-in candidate.</summary>
+        
         [HttpGet("interviews")]
         [ProducesResponseType(typeof(List<InterviewDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -325,7 +386,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Apply to a published job posting.</summary>
+       
         [HttpPost("applications")]
         [ProducesResponseType(typeof(ApplicationResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -360,12 +421,7 @@ namespace backend.Controllers
             }
         }
 
-        // ── Privacy controls ──────────────────────────────────────────────────
-
-        /// <summary>
-        /// Soft-delete the profile: sets IsDeleted=true and wipes personal data fields.
-        /// The user account itself is not removed.
-        /// </summary>
+       
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -387,7 +443,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Export all profile data as JSON (GDPR-style data export).</summary>
+       
         [HttpGet("export")]
         [ProducesResponseType(typeof(CandidateProfileExportDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -409,7 +465,7 @@ namespace backend.Controllers
             }
         }
 
-        // ── Helper ────────────────────────────────────────────────────────────
+        
 
         private Guid? GetUserId()
         {

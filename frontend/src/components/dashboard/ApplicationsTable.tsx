@@ -81,47 +81,47 @@ export function ApplicationsTable({
 }) {
   if (applications.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
-        <FileSearchIcon className="mx-auto h-10 w-10 text-slate-300" />
-        <p className="mt-3 font-semibold text-slate-900">No applications yet</p>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/90 py-16 text-center shadow-xl">
+        <FileSearchIcon className="mx-auto h-10 w-10 text-slate-500" />
+        <p className="mt-3 font-semibold text-white">No applications yet</p>
+        <p className="mt-1 text-sm text-slate-400">
           Start applying to track your progress here.
         </p>
         <Link to="/jobs">
-          <Button className="mt-5">Browse jobs</Button>
+          <Button className="mt-5 bg-brand-600 hover:bg-brand-500 text-white font-bold">Browse jobs</Button>
         </Link>
       </div>
     );
   }
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+    <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white">
       <table className="hidden w-full text-left sm:table">
         <thead>
-          <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-400">
-            <th className="px-5 py-3">Role</th>
-            <th className="px-5 py-3">Stage</th>
-            <th className="px-5 py-3">Status</th>
-            <th className="px-5 py-3">Applied</th>
-            <th className="px-5 py-3" />
+          <tr className="border-b border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-400 bg-slate-950/60">
+            <th className="px-5 py-3.5">Role</th>
+            <th className="px-5 py-3.5">Stage</th>
+            <th className="px-5 py-3.5">Status</th>
+            <th className="px-5 py-3.5">Applied</th>
+            <th className="px-5 py-3.5" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-slate-800">
           {applications.map((app) => {
             const { title, company, logo } = appDisplay(app);
             const hint = interviewHint(app, interviews);
             return (
               <tr
                 key={app.jobId}
-                className="transition-colors hover:bg-slate-50"
+                className="transition-colors hover:bg-slate-800/60"
               >
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <img src={logo} alt="" className="h-9 w-9 rounded-lg" />
+                    <img src={logo} alt="" className="h-9 w-9 rounded-lg object-cover ring-1 ring-slate-700" />
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">
+                      <p className="text-sm font-bold text-white">
                         {title}
                       </p>
-                      <p className="text-xs text-slate-500">{company}</p>
+                      <p className="text-xs text-slate-400">{company}</p>
                     </div>
                   </div>
                 </td>
@@ -136,13 +136,13 @@ export function ApplicationsTable({
                     )}
                   </div>
                 </td>
-                <td className="px-5 py-4 text-sm text-slate-500">
+                <td className="px-5 py-4 text-sm text-slate-400">
                   {formatDistanceToNow(app.appliedAt, { addSuffix: true })}
                 </td>
                 <td className="px-5 py-4 text-right">
                   <Link
                     to={`/jobs/${app.jobId}`}
-                    className="text-sm font-semibold text-brand-600 hover:underline"
+                    className="text-sm font-bold text-teal-300 hover:text-white hover:underline transition"
                   >
                     View
                   </Link>

@@ -6,7 +6,7 @@ namespace backend.Data
 {
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
-        // ── Existing tables ──────────────────────────────────────────────────
+       
         public DbSet<User> Users { get; set; }
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<Department> Departments { get; set; }
@@ -16,7 +16,7 @@ namespace backend.Data
         public DbSet<HiringManagerInvitation> HiringManagerInvitations { get; set; }
         public DbSet<JobPosting> JobPostings { get; set; }
 
-        // ── Candidate profile tables ─────────────────────────────────────────
+       
         public DbSet<CandidateProfile> CandidateProfiles { get; set; }
         public DbSet<WorkExperience> WorkExperiences { get; set; }
         public DbSet<Education> Educations { get; set; }
@@ -27,9 +27,10 @@ namespace backend.Data
         public DbSet<ChatConversation> ChatConversations { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<GoogleCalendarIntegration> GoogleCalendarIntegrations { get; set; }
+        public DbSet<CommunicationLog> CommunicationLogs { get; set; }
 
 
-        // ── Admin governance tables ───────────────────────────────────────────
+        
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<SystemSetting> SystemSettings { get; set; }
 
@@ -37,7 +38,7 @@ namespace backend.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // ── User ─────────────────────────────────────────────────────────
+          
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasKey(u => u.Id);
@@ -62,7 +63,7 @@ namespace backend.Data
                       .HasForeignKey(u => u.DepartmentId)
                       .OnDelete(DeleteBehavior.SetNull);
 
-                // 1:1 User → CandidateProfile
+               
                 entity.HasOne(u => u.CandidateProfile)
                       .WithOne(cp => cp.User)
                       .HasForeignKey<CandidateProfile>(cp => cp.UserId)
@@ -71,7 +72,7 @@ namespace backend.Data
                 entity.Ignore(u => u.FullName);
             });
 
-            // ── Department ───────────────────────────────────────────────────
+           
             modelBuilder.Entity<Department>(entity =>
             {
                 entity.HasKey(d => d.Id);
@@ -81,7 +82,7 @@ namespace backend.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ── CandidateProfile ──────────────────────────────────────────────
+           
             modelBuilder.Entity<CandidateProfile>(entity =>
             {
                 entity.HasKey(cp => cp.Id);
@@ -91,38 +92,38 @@ namespace backend.Data
                 entity.Property(cp => cp.ResumeUrl).HasMaxLength(500);
                 entity.Property(cp => cp.PhotoUrl).HasMaxLength(500);
 
-                // 1:many CandidateProfile → WorkExperience
+                
                 entity.HasMany(cp => cp.Experiences)
                       .WithOne(e => e.CandidateProfile)
                       .HasForeignKey(e => e.CandidateProfileId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                // 1:many CandidateProfile → Education
+               
                 entity.HasMany(cp => cp.Educations)
                       .WithOne(ed => ed.CandidateProfile)
                       .HasForeignKey(ed => ed.CandidateProfileId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                // 1:many CandidateProfile → CandidateSkill
+               
                 entity.HasMany(cp => cp.Skills)
                       .WithOne(s => s.CandidateProfile)
                       .HasForeignKey(s => s.CandidateProfileId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                // 1:many CandidateProfile → JobApplication
+               
                 entity.HasMany(cp => cp.Applications)
                       .WithOne(a => a.CandidateProfile)
                       .HasForeignKey(a => a.CandidateProfileId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                // 1:1 CandidateProfile → CandidateLinks
+                
                 entity.HasOne(cp => cp.Links)
                       .WithOne(l => l.CandidateProfile)
                       .HasForeignKey<CandidateLinks>(l => l.CandidateProfileId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ── WorkExperience ────────────────────────────────────────────────
+           
             modelBuilder.Entity<WorkExperience>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -131,7 +132,7 @@ namespace backend.Data
                 entity.Property(e => e.Description).HasMaxLength(1000);
             });
 
-            // ── Education ─────────────────────────────────────────────────────
+           
             modelBuilder.Entity<Education>(entity =>
             {
                 entity.HasKey(ed => ed.Id);
@@ -140,14 +141,14 @@ namespace backend.Data
                 entity.Property(ed => ed.FieldOfStudy).IsRequired().HasMaxLength(150);
             });
 
-            // ── CandidateSkill ────────────────────────────────────────────────
+            
             modelBuilder.Entity<CandidateSkill>(entity =>
             {
                 entity.HasKey(s => s.Id);
                 entity.Property(s => s.Name).IsRequired().HasMaxLength(80);
             });
 
-            // ── CandidateLinks ────────────────────────────────────────────────
+           
             modelBuilder.Entity<CandidateLinks>(entity =>
             {
                 entity.HasKey(l => l.Id);
@@ -156,24 +157,24 @@ namespace backend.Data
                 entity.Property(l => l.GitHub).HasMaxLength(300);
             });
 
-            // ── JobApplication ────────────────────────────────────────────────
+          
             modelBuilder.Entity<JobApplication>(entity =>
             {
                 entity.HasKey(a => a.Id);
                 entity.Property(a => a.Status).HasConversion<string>();
                 entity.Property(a => a.CoverLetter).HasMaxLength(3000);
 
-                // Prevent duplicate applications
+               
                 entity.HasIndex(a => new { a.CandidateProfileId, a.JobPostingId }).IsUnique();
 
-                // JobPosting side: restrict delete so posted job can't cascade-delete applications
+               
                 entity.HasOne(a => a.JobPosting)
                       .WithMany()
                       .HasForeignKey(a => a.JobPostingId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── Interview ─────────────────────────────────────────────────────
+          
             modelBuilder.Entity<Interview>(entity =>
             {
                 entity.HasKey(i => i.Id);
@@ -197,7 +198,7 @@ namespace backend.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── Role & RolePermission ─────────────────────────────────────────
+           
             modelBuilder.Entity<Role>(entity =>
             {
                 entity.HasKey(r => r.Id);
@@ -212,7 +213,7 @@ namespace backend.Data
                 entity.HasKey(rp => rp.Id);
             });
 
-            // ── JobPosting ────────────────────────────────────────────────────
+           
             modelBuilder.Entity<JobPosting>(entity =>
             {
                 entity.HasKey(j => j.Id);
@@ -244,7 +245,7 @@ namespace backend.Data
                 entity.HasIndex(j => j.CreatedByRecruiterId);
             });
 
-            // ── HiringManagerInvitation ───────────────────────────────────────
+           
             modelBuilder.Entity<HiringManagerInvitation>(entity =>
             {
                 entity.HasKey(i => i.Id);
@@ -254,7 +255,7 @@ namespace backend.Data
                 entity.Property(i => i.OrganizationName).IsRequired().HasMaxLength(200);
             });
 
-            // ── AI Chat ───────────────────────────────────────────────────────
+           
             modelBuilder.Entity<ChatConversation>(entity =>
             {
                 entity.HasKey(c => c.Id);
@@ -282,7 +283,7 @@ namespace backend.Data
                 entity.HasIndex(m => m.CreatedAt);
             });
 
-            // ── AuditLog ──────────────────────────────────────────────────────
+           
             modelBuilder.Entity<AuditLog>(entity =>
             {
                 entity.HasKey(a => a.Id);
@@ -296,7 +297,7 @@ namespace backend.Data
                 entity.HasIndex(a => a.Action);
             });
 
-            // ── SystemSetting ───────────────────────────────────────────────────
+           
             modelBuilder.Entity<SystemSetting>(entity =>
             {
                 entity.HasKey(s => s.Id);
@@ -307,7 +308,7 @@ namespace backend.Data
                 entity.HasIndex(s => s.Key).IsUnique();
             });
 
-            // ── GoogleCalendarIntegration ───────────────────────────────────────
+            
             modelBuilder.Entity<GoogleCalendarIntegration>(entity =>
             {
                 entity.HasKey(g => g.Id);

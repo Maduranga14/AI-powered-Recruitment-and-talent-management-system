@@ -201,11 +201,11 @@ export function Jobs() {
   const filterPanel = (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-base font-bold text-slate-900">Filters</h2>
+        <h2 className="font-display text-base font-bold text-white">Filters</h2>
         {activeFilterCount > 0 && (
           <button
             onClick={clearAll}
-            className="text-xs font-semibold text-brand-600 hover:underline"
+            className="text-xs font-semibold text-teal-300 hover:underline"
           >
             Clear all
           </button>
@@ -213,20 +213,20 @@ export function Jobs() {
       </div>
 
       {isAuthenticated && (
-        <div className="rounded-xl border border-brand-200 bg-gradient-to-br from-brand-50/80 to-indigo-50/80 p-3.5 shadow-xs">
+        <div className="rounded-xl border border-slate-700 bg-slate-800/80 p-3.5 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <SparklesIcon className="h-4 w-4 text-brand-600" />
-              <span className="text-xs font-bold text-slate-900">AI Recommendations</span>
+              <SparklesIcon className="h-4 w-4 text-teal-300" />
+              <span className="text-xs font-bold text-white">AI Recommendations</span>
             </div>
             <input
               type="checkbox"
               checked={showAiRecs}
               onChange={toggleAiRecommendations}
-              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
+              className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-teal-400 focus:ring-teal-400 cursor-pointer"
             />
           </div>
-          <p className="mt-1.5 text-[11px] leading-snug text-slate-600">
+          <p className="mt-1.5 text-[11px] leading-snug text-slate-300">
             Enable to see personalized AI match percentages on all job cards.
           </p>
         </div>
@@ -277,26 +277,33 @@ export function Jobs() {
   );
 
   return (
-    <div className="w-full bg-slate-50">
+    <div className="w-full bg-slate-950 text-white min-h-screen">
       {/* Search header */}
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="font-display text-3xl font-extrabold text-slate-900">
+      <div className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-brand-950 text-white border-b border-slate-800">
+        {/* Ambient Mesh Orbs */}
+        <div className="absolute -left-20 -top-20 h-80 w-80 rounded-full bg-brand-600/30 blur-3xl pointer-events-none" />
+        <div className="absolute right-10 -bottom-10 h-80 w-80 rounded-full bg-teal-500/20 blur-3xl pointer-events-none" />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <Badge tone="brand" className="mb-3 bg-white/10 text-teal-300 border border-white/15 backdrop-blur-md px-3 py-1">
+            <SparklesIcon className="h-3.5 w-3.5 text-teal-300 animate-pulse" /> Live Opportunities
+          </Badge>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
             Find your next role
           </h1>
-          <p className="mt-1 text-slate-500">
+          <p className="mt-1.5 text-sm text-slate-300 font-medium">
             {isAuthenticated
-              ? 'Roles are ranked by your AI match score.'
+              ? 'Roles are ranked by your personalized AI match score.'
               : 'Sign in to unlock personalized AI match scores.'}
           </p>
-          <form onSubmit={onSearch} className="mt-6 flex gap-2">
-            <div className="flex flex-1 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
-              <SearchIcon className="h-5 w-5 flex-shrink-0 text-slate-400" />
+          <form onSubmit={onSearch} className="mt-6 flex flex-col gap-2.5 sm:flex-row max-w-3xl">
+            <div className="flex flex-1 items-center gap-2.5 rounded-2xl border border-white/15 bg-white/10 px-4 shadow-xl backdrop-blur-xl focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-400/20">
+              <SearchIcon className="h-5 w-5 flex-shrink-0 text-slate-300" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by title, skill, or company"
-                className="w-full bg-transparent py-3 text-sm focus:outline-none"
+                className="w-full bg-transparent py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none"
                 aria-label="Search jobs"
               />
               {query && (
@@ -308,23 +315,23 @@ export function Jobs() {
                   }}
                   aria-label="Clear search"
                 >
-                  <XIcon className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+                  <XIcon className="h-4 w-4 text-slate-400 hover:text-white" />
                 </button>
               )}
             </div>
-            <Button type="submit" size="lg">
+            <Button type="submit" size="lg" className="bg-brand-600 hover:bg-brand-500 text-white font-bold px-6 rounded-xl shadow-lg shadow-brand-600/30">
               Search
             </Button>
             <Button
               type="button"
               variant="outline"
               size="lg"
-              className="lg:hidden"
+              className="lg:hidden bg-white/10 text-white border-white/20 hover:bg-white/20"
               onClick={() => setFiltersOpen(true)}
             >
               <SlidersHorizontalIcon className="h-4 w-4" />
               {activeFilterCount > 0 && (
-                <span className="ml-1 rounded-full bg-brand-600 px-1.5 text-xs text-white">
+                <span className="ml-1 rounded-full bg-teal-400 px-1.5 text-xs text-slate-900 font-bold">
                   {activeFilterCount}
                 </span>
               )}
@@ -336,7 +343,7 @@ export function Jobs() {
       <div className="mx-auto flex max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:px-8">
         {/* Desktop filters */}
         <aside className="hidden w-64 flex-shrink-0 lg:block">
-          <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
+          <div className="sticky top-24 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white">
             {filterPanel}
           </div>
         </aside>

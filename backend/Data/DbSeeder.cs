@@ -8,7 +8,7 @@ namespace backend.Data
     {
         public static async Task SeedAsync(AppDbContext db)
         {
-            // Dynamically alter schema to add OrganizationName column if it does not exist
+            
             await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Departments]') AND name = 'OrganizationName') BEGIN ALTER TABLE [dbo].[Departments] ADD [OrganizationName] NVARCHAR(MAX) NULL; END");
             await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[JobApplications]') AND name = 'Feedback') BEGIN ALTER TABLE [dbo].[JobApplications] ADD [Feedback] NVARCHAR(2000) NULL; END");
             await db.Database.ExecuteSqlRawAsync("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[JobApplications]') AND name = 'Recommendation') BEGIN ALTER TABLE [dbo].[JobApplications] ADD [Recommendation] NVARCHAR(50) NULL; END");
@@ -48,6 +48,26 @@ namespace backend.Data
                         CONSTRAINT [FK_GoogleCalendarIntegrations_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
                     );
                     CREATE UNIQUE INDEX [IX_GoogleCalendarIntegrations_UserId] ON [dbo].[GoogleCalendarIntegrations] ([UserId]);
+                END
+            ");
+
+            await db.Database.ExecuteSqlRawAsync(@"
+                IF OBJECT_ID(N'[dbo].[CommunicationLogs]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [dbo].[CommunicationLogs] (
+                        [Id] UNIQUEIDENTIFIER NOT NULL,
+                        [ApplicationId] UNIQUEIDENTIFIER NOT NULL,
+                        [SenderId] UNIQUEIDENTIFIER NOT NULL,
+                        [Subject] NVARCHAR(200) NOT NULL,
+                        [Body] NVARCHAR(MAX) NOT NULL,
+                        [MessageType] NVARCHAR(50) NULL,
+                        [SentAt] DATETIME2 NOT NULL,
+                        CONSTRAINT [PK_CommunicationLogs] PRIMARY KEY ([Id]),
+                        CONSTRAINT [FK_CommunicationLogs_JobApplications_ApplicationId] FOREIGN KEY ([ApplicationId]) REFERENCES [JobApplications] ([Id]) ON DELETE CASCADE,
+                        CONSTRAINT [FK_CommunicationLogs_Users_SenderId] FOREIGN KEY ([SenderId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION
+                    );
+                    CREATE INDEX [IX_CommunicationLogs_ApplicationId] ON [dbo].[CommunicationLogs] ([ApplicationId]);
+                    CREATE INDEX [IX_CommunicationLogs_SenderId] ON [dbo].[CommunicationLogs] ([SenderId]);
                 END
             ");
 

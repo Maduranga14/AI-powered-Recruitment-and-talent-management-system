@@ -2,14 +2,15 @@ import React from 'react';
 import { twMerge } from 'tailwind-merge';
 type Tone = 'brand' | 'accent' | 'slate' | 'green' | 'amber' | 'red' | 'blue';
 const tones: Record<Tone, string> = {
-  brand: 'bg-brand-50 text-brand-700 ring-brand-100',
-  accent: 'bg-accent-50 text-accent-700 ring-accent-100',
-  slate: 'bg-slate-100 text-slate-600 ring-slate-200',
-  green: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-  amber: 'bg-amber-50 text-amber-700 ring-amber-100',
-  red: 'bg-red-50 text-red-700 ring-red-100',
-  blue: 'bg-blue-50 text-blue-700 ring-blue-100'
+  brand: 'bg-brand-500/20 text-teal-300 ring-brand-500/30',
+  accent: 'bg-teal-500/20 text-teal-300 ring-teal-500/30',
+  slate: 'bg-slate-800 text-slate-300 ring-slate-700',
+  green: 'bg-emerald-500/20 text-emerald-300 ring-emerald-500/30',
+  amber: 'bg-amber-500/20 text-amber-300 ring-amber-500/30',
+  red: 'bg-red-500/20 text-red-300 ring-red-500/30',
+  blue: 'bg-blue-500/20 text-blue-300 ring-blue-500/30'
 };
+
 export function Badge({
   children,
   tone = 'slate',

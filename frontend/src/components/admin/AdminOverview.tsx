@@ -33,10 +33,10 @@ function FunnelBar({ label, value, max, color }: { label: string; value: number;
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-semibold text-slate-600">{label}</span>
-        <span className="text-xs font-bold text-slate-800">{value.toLocaleString()}</span>
+        <span className="text-xs font-semibold text-slate-300">{label}</span>
+        <span className="text-xs font-bold text-white">{value.toLocaleString()}</span>
       </div>
-      <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
         <motion.div
           className={`h-full rounded-full ${color}`}
           initial={{ width: 0 }}
@@ -114,25 +114,25 @@ export function AdminOverview({
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8"
+      className="mx-auto max-w-[1600px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8 text-white"
     >
       {/* Header */}
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-slate-400">
             {new Date().toLocaleDateString(undefined, {
               weekday: 'long', month: 'long', day: 'numeric',
             })}{' '}
             · Operations snapshot
           </p>
-          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-white">
             Platform overview
           </h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">
+          <p className="mt-2 max-w-2xl text-sm text-slate-300">
             Live counts from users, organizations, and recruitment activity.
           </p>
         </div>
-        <Button onClick={() => onViewChange('people')}>
+        <Button onClick={() => onViewChange('people')} className="bg-brand-600 hover:bg-brand-500 text-white font-bold">
           <UserPlusIcon className="h-4 w-4" /> Manage People
         </Button>
       </div>
@@ -145,18 +145,18 @@ export function AdminOverview({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04 }}
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft"
+            className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white"
           >
             <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-              tone === 'brand'  ? 'bg-brand-50 text-brand-600' :
-              tone === 'accent' ? 'bg-accent-50 text-accent-600' :
-              tone === 'green'  ? 'bg-emerald-50 text-emerald-600' :
-                                  'bg-blue-50 text-blue-600'
+              tone === 'brand'  ? 'bg-brand-500/20 text-teal-300 border border-brand-500/30' :
+              tone === 'accent' ? 'bg-accent-500/20 text-accent-300 border border-accent-500/30' :
+              tone === 'green'  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                                  'bg-blue-500/20 text-blue-300 border border-blue-500/30'
             }`}>
               <Icon className="h-5 w-5" />
             </span>
-            <p className="mt-4 font-display text-3xl font-extrabold text-slate-900">{value}</p>
-            <p className="mt-1 text-sm font-medium text-slate-600">{label}</p>
+            <p className="mt-4 font-display text-3xl font-extrabold text-white">{value}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-300">{label}</p>
             <p className="mt-1 text-xs text-slate-400">{detail}</p>
           </motion.article>
         ))}
@@ -167,26 +167,26 @@ export function AdminOverview({
 
         {/* Recruitment Pipeline Funnel — replaces moderation queue */}
         <section
-          className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft"
+          className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white"
           aria-labelledby="pipeline-title"
         >
           <div className="flex items-start justify-between gap-4 p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/20 text-teal-300 border border-brand-500/30">
                 <TrendingUpIcon className="h-5 w-5" />
               </span>
               <div>
-                <h2 id="pipeline-title" className="font-display text-lg font-bold">
+                <h2 id="pipeline-title" className="font-display text-lg font-bold text-white">
                   Recruitment Pipeline
                 </h2>
-                <p className="mt-0.5 text-sm text-slate-500">
+                <p className="mt-0.5 text-sm text-slate-400">
                   Candidate funnel across all active job postings.
                 </p>
               </div>
             </div>
             <button
               onClick={() => onViewChange('analytics')}
-              className="inline-flex items-center gap-1 text-sm font-bold text-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              className="inline-flex items-center gap-1 text-sm font-bold text-teal-300 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             >
               Full report <ArrowRightIcon className="h-4 w-4" />
             </button>
@@ -194,7 +194,7 @@ export function AdminOverview({
 
           {analyticsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2Icon className="h-6 w-6 animate-spin text-brand-600" />
+              <Loader2Icon className="h-6 w-6 animate-spin text-teal-300" />
             </div>
           ) : pipeline ? (
             <div className="px-5 pb-6 sm:px-6 space-y-4">
@@ -204,23 +204,23 @@ export function AdminOverview({
               <FunnelBar label="Hired"                  value={pipeline.hired}           max={funnelMax} color="bg-emerald-500" />
 
               {/* Summary row */}
-              <div className="mt-2 grid grid-cols-3 gap-3 pt-4 border-t border-slate-100">
-                <div className="rounded-xl bg-slate-50 p-3 text-center">
-                  <p className="font-display text-xl font-extrabold text-slate-900">{pipeline.received}</p>
-                  <p className="mt-0.5 text-[11px] text-slate-500">Total applied</p>
+              <div className="mt-2 grid grid-cols-3 gap-3 pt-4 border-t border-slate-800">
+                <div className="rounded-xl bg-slate-950/70 border border-slate-800 p-3 text-center">
+                  <p className="font-display text-xl font-extrabold text-white">{pipeline.received}</p>
+                  <p className="mt-0.5 text-[11px] text-slate-400 font-semibold">Total applied</p>
                 </div>
-                <div className="rounded-xl bg-emerald-50 p-3 text-center">
-                  <p className="font-display text-xl font-extrabold text-emerald-700">{pipeline.hired}</p>
-                  <p className="mt-0.5 text-[11px] text-emerald-600">Hired</p>
+                <div className="rounded-xl bg-emerald-950/60 border border-emerald-500/30 p-3 text-center">
+                  <p className="font-display text-xl font-extrabold text-emerald-300">{pipeline.hired}</p>
+                  <p className="mt-0.5 text-[11px] text-emerald-400 font-semibold">Hired</p>
                 </div>
-                <div className="rounded-xl bg-brand-50 p-3 text-center">
-                  <p className="font-display text-xl font-extrabold text-brand-700">{conversionRate}%</p>
-                  <p className="mt-0.5 text-[11px] text-brand-600">Conversion</p>
+                <div className="rounded-xl bg-brand-950/60 border border-brand-500/30 p-3 text-center">
+                  <p className="font-display text-xl font-extrabold text-teal-300">{conversionRate}%</p>
+                  <p className="mt-0.5 text-[11px] text-teal-400 font-semibold">Conversion</p>
                 </div>
               </div>
             </div>
           ) : (
-            <p className="px-6 pb-10 pt-2 text-sm text-slate-500">
+            <p className="px-6 pb-10 pt-2 text-sm text-slate-400">
               Analytics data unavailable. Check back when jobs and applications exist.
             </p>
           )}
@@ -228,37 +228,37 @@ export function AdminOverview({
 
         {/* Organization pulse */}
         <aside
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
+          className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6"
           aria-labelledby="org-title"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/20 text-teal-300 border border-brand-500/30">
             <Building2Icon className="h-5 w-5" />
           </span>
-          <h2 id="org-title" className="mt-5 font-display text-lg font-bold">
+          <h2 id="org-title" className="mt-5 font-display text-lg font-bold text-white">
             Organization pulse
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-slate-300">
             {organizations.length > 0
               ? `${organizations.length} organization${organizations.length === 1 ? '' : 's'} · ${publishedJobs} published role${publishedJobs === 1 ? '' : 's'}.`
               : 'Create organizations from the Organizations tab to get started.'}
           </p>
           <div className="mt-5 space-y-3">
             {organizations.slice(0, 4).map((org) => (
-              <div key={org.id} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2.5">
+              <div key={org.id} className="flex items-center justify-between rounded-xl bg-slate-950/70 border border-slate-800 px-3 py-2.5">
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">{org.name}</p>
-                  <p className="text-xs text-slate-500">{org.members} members · {org.activeJobs} jobs</p>
+                  <p className="text-sm font-semibold text-white">{org.name}</p>
+                  <p className="text-xs text-slate-400">{org.members} members · {org.activeJobs} jobs</p>
                 </div>
                 <Badge tone="green">{org.status}</Badge>
               </div>
             ))}
             {organizations.length === 0 && (
-              <p className="text-sm text-slate-500">No organizations created yet.</p>
+              <p className="text-sm text-slate-400">No organizations created yet.</p>
             )}
           </div>
           <button
             onClick={() => onViewChange('organizations')}
-            className="mt-5 text-sm font-bold text-brand-600 hover:underline"
+            className="mt-5 text-sm font-bold text-teal-300 hover:text-white underline transition"
           >
             View organizations
           </button>
@@ -270,26 +270,26 @@ export function AdminOverview({
 
         {/* Top hiring organizations */}
         <section
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
+          className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6"
           aria-labelledby="top-orgs-title"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-500/20 text-accent-300 border border-accent-500/30">
                 <BarChart3Icon className="h-5 w-5" />
               </span>
               <div>
-                <h2 id="top-orgs-title" className="font-display text-lg font-bold">
+                <h2 id="top-orgs-title" className="font-display text-lg font-bold text-white">
                   Top hiring organizations
                 </h2>
-                <p className="mt-0.5 text-sm text-slate-500">
+                <p className="mt-0.5 text-sm text-slate-400">
                   Ranked by total hires this period.
                 </p>
               </div>
             </div>
             <button
               onClick={() => onViewChange('analytics')}
-              className="text-sm font-bold text-brand-600 hover:underline"
+              className="text-sm font-bold text-teal-300 hover:text-white underline"
             >
               See all
             </button>
@@ -297,23 +297,23 @@ export function AdminOverview({
 
           {analyticsLoading ? (
             <div className="flex items-center justify-center py-10">
-              <Loader2Icon className="h-5 w-5 animate-spin text-brand-600" />
+              <Loader2Icon className="h-5 w-5 animate-spin text-teal-300" />
             </div>
           ) : analytics?.topOrganizations && analytics.topOrganizations.length > 0 ? (
             <div className="mt-5 space-y-3">
               {analytics.topOrganizations.slice(0, 4).map((org, i) => (
                 <div key={org.organizationName} className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-extrabold text-slate-600">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-xs font-extrabold text-teal-300 border border-slate-700">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-slate-800 truncate">{org.organizationName}</p>
-                      <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 shrink-0">
+                      <p className="text-sm font-semibold text-white truncate">{org.organizationName}</p>
+                      <span className="flex items-center gap-1 text-xs font-bold text-emerald-400 shrink-0">
                         <CheckCircle2Icon className="h-3.5 w-3.5" />{org.hired} hired
                       </span>
                     </div>
-                    <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
+                    <div className="mt-1 flex items-center gap-3 text-xs text-slate-400">
                       <span>{org.totalJobs} jobs</span>
                       <span>{org.totalApplications} applicants</span>
                     </div>
@@ -325,9 +325,9 @@ export function AdminOverview({
             <div className="mt-5 space-y-3">
               {recentPeople.slice(0, 4).map((p) => (
                 <div key={p.id} className="flex gap-3">
-                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent-500" />
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-teal-400" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-700">
+                    <p className="text-sm font-semibold text-white">
                       {p.role} account: {p.name}
                     </p>
                     <p className="mt-0.5 text-xs text-slate-400">{p.organization}</p>
@@ -335,7 +335,7 @@ export function AdminOverview({
                 </div>
               ))}
               {recentPeople.length === 0 && (
-                <p className="text-sm text-slate-500">No hiring data yet.</p>
+                <p className="text-sm text-slate-400">No hiring data yet.</p>
               )}
             </div>
           )}
@@ -343,46 +343,46 @@ export function AdminOverview({
 
         {/* Quick stats */}
         <section
-          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft sm:p-6"
+          className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white sm:p-6"
           aria-labelledby="stats-title"
         >
           <div className="flex items-center gap-3 mb-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-slate-300 border border-slate-700">
               <ActivityIcon className="h-5 w-5" />
             </span>
-            <h2 id="stats-title" className="font-display text-lg font-bold">Platform stats</h2>
+            <h2 id="stats-title" className="font-display text-lg font-bold text-white">Platform stats</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-brand-50 p-4">
-              <p className="font-display text-2xl font-extrabold text-brand-700">
+            <div className="rounded-xl bg-slate-950/70 border border-slate-800 p-4">
+              <p className="font-display text-2xl font-extrabold text-teal-300">
                 {analytics?.totalJobsPosted ?? publishedJobs}
               </p>
-              <p className="mt-1 text-xs text-brand-600 font-medium">Jobs posted</p>
+              <p className="mt-1 text-xs text-slate-400 font-medium">Jobs posted</p>
             </div>
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="font-display text-2xl font-extrabold text-slate-900">
+            <div className="rounded-xl bg-slate-950/70 border border-slate-800 p-4">
+              <p className="font-display text-2xl font-extrabold text-white">
                 {people.length}
               </p>
-              <p className="mt-1 text-xs text-slate-500 font-medium">Registered users</p>
+              <p className="mt-1 text-xs text-slate-400 font-medium">Registered users</p>
             </div>
-            <div className="rounded-xl bg-emerald-50 p-4">
-              <p className="font-display text-2xl font-extrabold text-emerald-700">
+            <div className="rounded-xl bg-emerald-950/60 border border-emerald-500/30 p-4">
+              <p className="font-display text-2xl font-extrabold text-emerald-300">
                 {analytics?.totalHired ?? 0}
               </p>
-              <p className="mt-1 text-xs text-emerald-600 font-medium">Total hires</p>
+              <p className="mt-1 text-xs text-emerald-400 font-medium">Total hires</p>
             </div>
-            <div className="rounded-xl bg-amber-50 p-4">
-              <p className="font-display text-2xl font-extrabold text-amber-700">
+            <div className="rounded-xl bg-amber-950/60 border border-amber-500/30 p-4">
+              <p className="font-display text-2xl font-extrabold text-amber-300">
                 {analytics?.pipeline?.interviewScheduled ?? 0}
               </p>
-              <p className="mt-1 text-xs text-amber-600 font-medium">Interviews scheduled</p>
+              <p className="mt-1 text-xs text-amber-300 font-medium">Interviews scheduled</p>
             </div>
           </div>
 
           <button
             onClick={() => onViewChange('analytics')}
-            className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-brand-600 hover:underline"
+            className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-teal-300 hover:text-white underline"
           >
             <BarChart3Icon className="h-4 w-4" /> Full analytics
           </button>
@@ -391,3 +391,4 @@ export function AdminOverview({
     </motion.div>
   );
 }
+

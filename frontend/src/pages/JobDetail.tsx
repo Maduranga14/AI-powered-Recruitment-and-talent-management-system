@@ -48,11 +48,11 @@ function Section({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
   return (
     <div>
-      <h2 className="font-display text-lg font-bold text-slate-900">{title}</h2>
+      <h2 className="font-display text-lg font-extrabold text-white">{title}</h2>
       <ul className="mt-3 space-y-2.5">
         {items.map((item, i) => (
-          <li key={i} className="flex gap-3 text-sm text-slate-600">
-            <CheckIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-accent-600" />
+          <li key={i} className="flex gap-3 text-sm text-slate-300 font-medium">
+            <CheckIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-teal-400" />
             <span>{item}</span>
           </li>
         ))}
@@ -85,18 +85,18 @@ export function JobDetail() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2Icon className="h-8 w-8 animate-spin text-brand-600" />
+      <div className="flex min-h-[60vh] items-center justify-center bg-slate-950">
+        <Loader2Icon className="h-8 w-8 animate-spin text-teal-400" />
       </div>
     );
   }
 
   if (notFound || !apiJob) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-24 text-center">
-        <h1 className="font-display text-2xl font-bold text-slate-900">Job not found</h1>
-        <p className="mt-2 text-slate-500">This role may have been filled or removed.</p>
-        <Button className="mt-6" onClick={() => navigate('/jobs')}>
+      <div className="mx-auto max-w-3xl px-4 py-24 text-center text-white">
+        <h1 className="font-display text-2xl font-extrabold text-white">Job not found</h1>
+        <p className="mt-2 text-slate-400">This role may have been filled or removed.</p>
+        <Button className="mt-6 bg-brand-600 hover:bg-brand-500 text-white font-bold" onClick={() => navigate('/jobs')}>
           Back to jobs
         </Button>
       </div>
@@ -170,11 +170,11 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
     .filter(Boolean);
 
   return (
-    <div className="w-full bg-slate-50">
+    <div className="w-full bg-slate-950 text-white min-h-screen">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
           to="/jobs"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-600"
+          className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-400 hover:text-teal-300 transition"
         >
           <ArrowLeftIcon className="h-4 w-4" /> Back to jobs
         </Link>
@@ -182,37 +182,37 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8"
+          className="mt-4 rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl backdrop-blur-xl sm:p-8"
         >
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex gap-4">
               <img
                 src={logoUrl}
                 alt={`${companyName} logo`}
-                className="h-16 w-16 flex-shrink-0 rounded-2xl ring-1 ring-slate-100"
+                className="h-16 w-16 flex-shrink-0 rounded-2xl ring-1 ring-slate-700 bg-slate-950"
               />
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-display text-2xl font-extrabold text-slate-900">
+                  <h1 className="font-display text-2xl font-extrabold text-white">
                     {job.title}
                   </h1>
-                  <Badge tone="green">Live</Badge>
+                  <Badge tone="green" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">Live</Badge>
                 </div>
-                <p className="mt-1 font-medium text-slate-600">{companyName}</p>
-                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
+                <p className="mt-1 font-semibold text-teal-300">{companyName}</p>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-300 font-medium">
                   <span className="inline-flex items-center gap-1.5">
-                    <MapPinIcon className="h-4 w-4" /> {job.location}
+                    <MapPinIcon className="h-4 w-4 text-teal-400" /> {job.location}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <BriefcaseIcon className="h-4 w-4" />{' '}
+                    <BriefcaseIcon className="h-4 w-4 text-teal-400" />{' '}
                     {job.employmentType.replace(/([A-Z])/g, ' $1').trim()}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <ClockIcon className="h-4 w-4" /> {postedLabel}
+                    <ClockIcon className="h-4 w-4 text-teal-400" /> {postedLabel}
                   </span>
                   {job.deadline && (
-                    <span className="inline-flex items-center gap-1.5 text-amber-600">
-                      <ClockIcon className="h-4 w-4" />
+                    <span className="inline-flex items-center gap-1.5 text-amber-400 font-bold">
+                      <ClockIcon className="h-4 w-4 text-amber-400" />
                       Deadline: {new Date(job.deadline).toLocaleDateString()}
                     </span>
                   )}
@@ -221,14 +221,14 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
             </div>
 
             {isAuthenticated && !hideCandidateActions && realMatchScore !== undefined && (
-              <div className="flex items-center gap-3.5 rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50/80 to-indigo-50/80 p-4 shadow-xs">
+              <div className="flex items-center gap-3.5 rounded-2xl border border-brand-500/30 bg-slate-950/70 p-4 shadow-lg text-white">
                 <MatchScore score={realMatchScore} size={54} />
                 <div>
-                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-900">
-                    <SparklesIcon className="h-3.5 w-3.5 text-brand-600" />
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-300">
+                    <SparklesIcon className="h-3.5 w-3.5 text-teal-400" />
                     <span>AI Match Score</span>
                   </div>
-                  <p className="mt-0.5 text-xs font-medium text-slate-600 max-w-[220px] line-clamp-2">
+                  <p className="mt-0.5 text-xs font-medium text-slate-300 max-w-[220px] line-clamp-2">
                     {matchRec?.matchExplanation ||
                       (realMatchScore >= 80
                         ? 'Strong alignment with your profile skills & experience.'
@@ -242,17 +242,17 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-2">
-            <Badge tone="brand">
+            <Badge tone="brand" className="bg-brand-500/20 text-teal-300 border-brand-500/30">
               {job.employmentType.replace(/([A-Z])/g, ' $1').trim()}
             </Badge>
-            {job.departmentName && <Badge tone="accent">{job.departmentName}</Badge>}
+            {job.departmentName && <Badge tone="accent" className="bg-teal-500/20 text-teal-300 border-teal-500/30">{job.departmentName}</Badge>}
             {job.experienceRequired && (
-              <Badge tone="slate">{job.experienceRequired}</Badge>
+              <Badge tone="slate" className="bg-slate-800 text-slate-300 border-slate-700">{job.experienceRequired}</Badge>
             )}
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <span className="font-display text-xl font-bold text-slate-900">
+          <div className="mt-6 flex flex-col gap-3 border-t border-slate-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <span className="font-display text-xl font-extrabold text-white">
               {formatApiSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}
               {(job.salaryMin || job.salaryMax) && (
                 <span className="ml-1 text-sm font-normal text-slate-400">/ year</span>
@@ -262,6 +262,7 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               {!hideCandidateActions && (
                 <Button
                   variant="outline"
+                  className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold"
                   onClick={() =>
                     isAuthenticated
                       ? toggleSaveJob(job.id, {
@@ -275,21 +276,21 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
                   aria-pressed={saved}
                 >
                   <BookmarkIcon
-                    className={`h-4 w-4 ${saved ? 'fill-brand-600 text-brand-600' : ''}`}
+                    className={`h-4 w-4 ${saved ? 'fill-teal-400 text-teal-400' : ''}`}
                   />
                   {saved ? 'Saved' : 'Save'}
                 </Button>
               )}
-              <Button variant="outline" aria-label="Share job">
+              <Button variant="outline" className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold" aria-label="Share job">
                 <Share2Icon className="h-4 w-4" />
               </Button>
               {!hideCandidateActions &&
                 (applied ? (
-                  <Button variant="secondary" disabled>
+                  <Button variant="secondary" disabled className="bg-slate-800 text-emerald-400 border border-emerald-500/30 font-bold">
                     <CheckCircle2Icon className="h-4 w-4" /> Applied
                   </Button>
                 ) : (
-                  <Button onClick={onApply}>
+                  <Button onClick={onApply} className="bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-lg shadow-brand-600/30">
                     {isAuthenticated ? 'Apply now' : 'Sign up to apply'}
                   </Button>
                 ))}
@@ -299,24 +300,24 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
 
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft sm:p-8">
-              <h2 className="font-display text-lg font-bold text-slate-900">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white sm:p-8">
+              <h2 className="font-display text-lg font-extrabold text-white">
                 About the role
               </h2>
               <div className="mt-3 space-y-3">
                 {descParagraphs.map((p, i) => (
-                  <p key={i} className="text-sm leading-relaxed text-slate-600">
+                  <p key={i} className="text-sm leading-relaxed text-slate-300 font-medium">
                     {p}
                   </p>
                 ))}
               </div>
 
               {job.requirements && (
-                <div className="mt-8 border-t border-slate-100 pt-6">
-                  <h2 className="font-display text-lg font-bold text-slate-900">
+                <div className="mt-8 border-t border-slate-800 pt-6">
+                  <h2 className="font-display text-lg font-extrabold text-white">
                     Key Requirements
                   </h2>
-                  <div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">
+                  <div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-300 font-medium">
                     {job.requirements}
                   </div>
                 </div>
@@ -332,13 +333,13 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
 
           <aside className="space-y-6">
             {job.requiredSkills.length > 0 && (
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-                <h3 className="font-display text-base font-bold text-slate-900">
+              <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
+                <h3 className="font-display text-base font-extrabold text-white">
                   Required skills
                 </h3>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {job.requiredSkills.map((s) => (
-                    <Badge key={s} tone="brand">
+                    <Badge key={s} tone="brand" className="bg-brand-500/20 text-teal-300 border-brand-500/30">
                       {s}
                     </Badge>
                   ))}
@@ -346,63 +347,63 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
               </div>
             )}
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-              <h3 className="font-display text-base font-bold text-slate-900">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
+              <h3 className="font-display text-base font-extrabold text-white">
                 Job details
               </h3>
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Type</dt>
-                  <dd className="font-semibold text-slate-900">
+                  <dt className="text-slate-400">Type</dt>
+                  <dd className="font-bold text-white">
                     {job.employmentType.replace(/([A-Z])/g, ' $1').trim()}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Location</dt>
-                  <dd className="font-semibold text-slate-900">{job.location}</dd>
+                  <dt className="text-slate-400">Location</dt>
+                  <dd className="font-bold text-white">{job.location}</dd>
                 </div>
                 {job.experienceRequired && (
                   <div className="flex justify-between">
-                    <dt className="text-slate-500">Experience</dt>
-                    <dd className="font-semibold text-slate-900">
+                    <dt className="text-slate-400">Experience</dt>
+                    <dd className="font-bold text-white">
                       {job.experienceRequired}
                     </dd>
                   </div>
                 )}
                 {job.departmentName && (
                   <div className="flex justify-between">
-                    <dt className="text-slate-500">Department</dt>
-                    <dd className="font-semibold text-slate-900">
+                    <dt className="text-slate-400">Department</dt>
+                    <dd className="font-bold text-white">
                       {job.departmentName}
                     </dd>
                   </div>
                 )}
                 {job.deadline && (
                   <div className="flex justify-between">
-                    <dt className="text-slate-500">Apply by</dt>
-                    <dd className="font-semibold text-amber-600">
+                    <dt className="text-slate-400">Apply by</dt>
+                    <dd className="font-bold text-amber-400">
                       {new Date(job.deadline).toLocaleDateString()}
                     </dd>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Posted</dt>
-                  <dd className="font-semibold text-slate-900">{postedLabel}</dd>
+                  <dt className="text-slate-400">Posted</dt>
+                  <dd className="font-bold text-white">{postedLabel}</dd>
                 </div>
               </dl>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
-              <h3 className="flex items-center gap-2 font-display text-base font-bold text-slate-900">
-                <BuildingIcon className="h-4 w-4 text-slate-400" /> {companyName}
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl text-white">
+              <h3 className="flex items-center gap-2 font-display text-base font-extrabold text-white">
+                <BuildingIcon className="h-4 w-4 text-teal-400" /> {companyName}
               </h3>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-slate-300 font-medium">
                 Explore open roles and learn more about the team at {companyName}.
               </p>
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-4"
+                className="mt-4 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold"
                 onClick={() => navigate('/companies')}
               >
                 View company
@@ -416,3 +417,4 @@ function ApiJobDetail({ job }: { job: PublicJob }) {
     </div>
   );
 }
+

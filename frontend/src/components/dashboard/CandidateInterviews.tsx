@@ -61,14 +61,14 @@ function formatWhen(iso: string): string {
 function DateBlock({ iso }: { iso: string }) {
   const at = new Date(iso);
   return (
-    <div className="flex h-[4.5rem] w-[4.5rem] flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
-      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">
+    <div className="flex h-[4.5rem] w-[4.5rem] flex-shrink-0 flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-md">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-teal-400">
         {at.toLocaleDateString(undefined, { weekday: 'short' })}
       </span>
-      <span className="font-display text-2xl font-extrabold leading-none">
+      <span className="font-display text-2xl font-extrabold leading-none text-white">
         {at.getDate()}
       </span>
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-300">
         {at.toLocaleDateString(undefined, { month: 'short' })}
       </span>
     </div>
@@ -100,14 +100,14 @@ function InterviewCard({
 
   return (
     <article
-      className={`relative overflow-hidden rounded-2xl border bg-white shadow-soft ${
+      className={`relative overflow-hidden rounded-2xl border bg-slate-900/90 shadow-xl text-white ${
         featured
-          ? 'border-brand-200 ring-1 ring-brand-100'
+          ? 'border-brand-500/50 ring-1 ring-brand-500/30'
           : pendingReschedule
-            ? 'border-amber-200 ring-1 ring-amber-100'
+            ? 'border-amber-500/50 ring-1 ring-amber-500/30'
             : wasRescheduled && !isPast
-              ? 'border-emerald-200 ring-1 ring-emerald-100'
-              : 'border-slate-200'
+              ? 'border-emerald-500/50 ring-1 ring-emerald-500/30'
+              : 'border-slate-800'
       } ${isPast ? 'opacity-75' : ''}`}
     >
       {featured && (
@@ -147,15 +147,15 @@ function InterviewCard({
             </Badge>
           </div>
 
-          <h3 className="mt-2 font-display text-lg font-bold text-slate-900 sm:text-xl">
+          <h3 className="mt-2 font-display text-lg font-extrabold text-white sm:text-xl">
             {interview.jobTitle}
           </h3>
-          <p className="mt-0.5 text-sm font-medium text-slate-600">{company}</p>
+          <p className="mt-0.5 text-sm font-semibold text-teal-300">{company}</p>
 
           {pendingReschedule && (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
-              <p className="font-semibold">Schedule change in progress</p>
-              <p className="mt-0.5 text-amber-800/90">
+            <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-950/60 p-3.5 text-sm text-amber-200">
+              <p className="font-bold text-amber-300">Schedule change in progress</p>
+              <p className="mt-0.5 text-amber-200/90 leading-relaxed font-medium">
                 The hiring team asked to move this interview. Your current time
                 still stands until the recruiter confirms a new slot
                 {interview.rescheduleReason
@@ -167,37 +167,37 @@ function InterviewCard({
           )}
 
           {wasRescheduled && !isPast && (
-            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-950">
-              <p className="font-semibold">Updated interview details</p>
-              <p className="mt-0.5 text-emerald-900/80">
+            <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-950/60 p-3.5 text-sm text-emerald-200">
+              <p className="font-bold text-emerald-300">Updated interview details</p>
+              <p className="mt-0.5 text-emerald-200/90 leading-relaxed font-medium">
                 Rescheduled{' '}
                 {interview.lastRescheduledAt
                   ? formatWhen(interview.lastRescheduledAt)
                   : 'recently'}
                 . Please use the new time and meeting details below.
               </p>
-              <ul className="mt-2 space-y-1 text-emerald-900/90">
+              <ul className="mt-2 space-y-1 text-emerald-200/90 font-medium">
                 <li>
-                  <span className="font-medium">When:</span> {dateLabel} at{' '}
+                  <span className="font-bold text-emerald-300">When:</span> {dateLabel} at{' '}
                   {timeLabel} ({interview.durationMinutes} min)
                 </li>
                 <li>
-                  <span className="font-medium">Type:</span>{' '}
+                  <span className="font-bold text-emerald-300">Type:</span>{' '}
                   {interview.interviewType}
                 </li>
                 <li>
-                  <span className="font-medium">Interviewer:</span>{' '}
+                  <span className="font-bold text-emerald-300">Interviewer:</span>{' '}
                   {interview.interviewerName}
                 </li>
                 {interview.interviewType === 'Video' && interview.meetingLink && (
                   <li className="break-all">
-                    <span className="font-medium">Meeting link:</span>{' '}
+                    <span className="font-bold text-emerald-300">Meeting link:</span>{' '}
                     {interview.meetingLink}
                   </li>
                 )}
                 {interview.interviewType === 'Onsite' && interview.location && (
                   <li>
-                    <span className="font-medium">Location:</span>{' '}
+                    <span className="font-bold text-emerald-300">Location:</span>{' '}
                     {interview.location}
                   </li>
                 )}
@@ -208,29 +208,29 @@ function InterviewCard({
             </div>
           )}
 
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-300 font-medium">
             <span className="inline-flex items-center gap-1.5">
-              <CalendarDaysIcon className="h-4 w-4 text-slate-400" />
+              <CalendarDaysIcon className="h-4 w-4 text-teal-400" />
               {dateLabel}
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Clock3Icon className="h-4 w-4 text-slate-400" />
+              <Clock3Icon className="h-4 w-4 text-teal-400" />
               {timeLabel} · {interview.durationMinutes} min
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <UserIcon className="h-4 w-4 text-slate-400" />
+              <UserIcon className="h-4 w-4 text-teal-400" />
               {interview.interviewerName}
             </span>
             {interview.interviewType === 'Onsite' && interview.location && (
               <span className="inline-flex items-center gap-1.5">
-                <MapPinIcon className="h-4 w-4 text-slate-400" />
+                <MapPinIcon className="h-4 w-4 text-teal-400" />
                 {interview.location}
               </span>
             )}
           </div>
 
           {interview.notes && (
-            <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-sm leading-relaxed text-slate-600">
+            <p className="mt-3 rounded-xl border border-slate-800 bg-slate-950/70 px-3.5 py-2.5 text-sm leading-relaxed text-slate-300 font-medium">
               {interview.notes}
             </p>
           )}
@@ -239,6 +239,7 @@ function InterviewCard({
             {interview.meetingLink && !isPast && !pendingReschedule && (
               <Button
                 size="sm"
+                className="bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-lg shadow-brand-600/30"
                 onClick={() => {
                   const url = toMeetingUrl(interview.meetingLink!);
                   window.open(url, '_blank', 'noopener,noreferrer');
@@ -249,7 +250,7 @@ function InterviewCard({
               </Button>
             )}
             <Link to={`/jobs/${interview.jobPostingId}`}>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" className="border-slate-700 bg-slate-800 text-white hover:bg-slate-700 font-bold">
                 View role
               </Button>
             </Link>
@@ -294,13 +295,13 @@ export function CandidateInterviews({ interviews }: CandidateInterviewsProps) {
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-brand-600">
+          <p className="text-xs font-bold uppercase tracking-widest text-teal-400">
             Interview schedule
           </p>
-          <h2 className="mt-1 font-display text-xl font-extrabold text-slate-900">
+          <h2 className="mt-1 font-display text-xl font-extrabold text-white">
             Your upcoming interviews
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-300 font-medium">
             Prepare ahead — join links and details update when interviews are
             rescheduled.
           </p>
@@ -327,14 +328,14 @@ export function CandidateInterviews({ interviews }: CandidateInterviewsProps) {
       )}
 
       {upcoming.length === 0 && past.length > 0 && (
-        <p className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
+        <p className="rounded-xl border border-slate-800 bg-slate-900/90 px-4 py-6 text-center text-sm font-semibold text-slate-400 shadow-xl">
           No upcoming interviews. Past sessions are listed below.
         </p>
       )}
 
       {past.length > 0 && (
         <div className="pt-2">
-          <h3 className="mb-3 text-sm font-bold text-slate-700">
+          <h3 className="mb-3 text-sm font-bold text-white">
             Past interviews
           </h3>
           <div className="space-y-3">
@@ -347,3 +348,4 @@ export function CandidateInterviews({ interviews }: CandidateInterviewsProps) {
     </motion.section>
   );
 }
+

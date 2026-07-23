@@ -20,6 +20,7 @@ export interface CandidateProfile {
   name: string;
   email: string;
   title: string;
+  role?: string;
   location: string;
   bio: string;
   skills: string[];
@@ -77,6 +78,8 @@ interface AuthContextValue {
   saveProfile: () => Promise<void>;
   uploadResume: (file: File) => Promise<void>;
   deleteResume: () => Promise<void>;
+  uploadPhoto: (file: File) => Promise<string>;
+  deletePhoto: () => Promise<void>;
   exportProfileData: () => Promise<void>;
   deleteCandidateProfile: () => Promise<void>;
   toggleSaveJob: (jobId: string, meta?: { title: string; company: string; logo: string; location: string }) => void;
@@ -206,6 +209,7 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
       name: res.data.fullName,
       email: res.data.email,
       title: res.data.role,
+      role: res.data.role,
       location: 'Office',
       bio: 'Workspace user.',
       skills: [],
@@ -428,6 +432,45 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
     }
   };
 
+  const uploadPhoto = async (file: File): Promise<string> => {
+    if (!user) return '';
+    try {
+      const res = await candidateApi.uploadPhoto(file);
+      setUser((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          photoUrl: res.photoUrl,
+          avatar: res.photoUrl,
+        };
+      });
+      await fetchProfile();
+      return res.photoUrl;
+    } catch (err) {
+      console.error('Failed to upload photo:', err);
+      throw err;
+    }
+  };
+
+  const deletePhoto = async () => {
+    if (!user) return;
+    try {
+      await candidateApi.deletePhoto();
+      setUser((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          photoUrl: null,
+          avatar: makeAvatar(prev.name),
+        };
+      });
+      await fetchProfile();
+    } catch (err) {
+      console.error('Failed to delete photo:', err);
+      throw err;
+    }
+  };
+
   const exportProfileData = async () => {
     if (!user) return;
     try {
@@ -520,6 +563,8 @@ export function AuthProvider({ children }: {children: React.ReactNode;}) {
       saveProfile,
       uploadResume,
       deleteResume,
+      uploadPhoto,
+      deletePhoto,
       exportProfileData,
       deleteCandidateProfile,
       toggleSaveJob,

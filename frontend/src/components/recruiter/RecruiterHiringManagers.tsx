@@ -53,14 +53,14 @@ export function RecruiterHiringManagers() {
   });
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 text-white">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">
+          <h1 className="font-display text-2xl font-extrabold text-white sm:text-3xl">
             Hiring Managers Directory
           </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <p className="mt-1.5 text-sm text-slate-300">
             View all hiring managers assigned to your organization and their designated departments.
           </p>
         </div>
@@ -76,7 +76,7 @@ export function RecruiterHiringManagers() {
               placeholder="Search manager by name, email, or department..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-xl border border-slate-700 bg-slate-800 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-400 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
             />
           </div>
         </div>
@@ -85,74 +85,74 @@ export function RecruiterHiringManagers() {
       {/* Main Content Area */}
       <div className="mt-6">
         {error && (
-          <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
-            <AlertCircleIcon className="h-5 w-5 text-red-500 flex-shrink-0" />
+          <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-950/60 p-4 text-sm font-semibold text-red-200">
+            <AlertCircleIcon className="h-5 w-5 text-red-400 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2Icon className="h-8 w-8 animate-spin text-brand-600" />
-            <p className="mt-2 text-sm text-slate-500">Loading directory...</p>
+          <div className="flex flex-col items-center justify-center py-20 text-white">
+            <Loader2Icon className="h-8 w-8 animate-spin text-teal-400" />
+            <p className="mt-2 text-sm text-slate-300">Loading directory...</p>
           </div>
         ) : hiringManagers.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
-            <UsersIcon className="mx-auto h-12 w-12 text-slate-300" />
-            <h3 className="mt-4 text-base font-bold text-slate-900">No hiring managers found</h3>
-            <p className="mt-1 text-sm text-slate-500">
+          <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/90 py-16 text-center shadow-xl text-white">
+            <UsersIcon className="mx-auto h-12 w-12 text-slate-400" />
+            <h3 className="mt-4 text-base font-bold text-white">No hiring managers found</h3>
+            <p className="mt-1 text-sm text-slate-400">
               Hiring managers created by your platform administrator will appear here.
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+          <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/75 text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <tr className="border-b border-slate-800 bg-slate-950/60 text-xs font-bold uppercase tracking-wider text-slate-400">
                     <th className="px-6 py-4">Manager</th>
                     <th className="px-6 py-4">Department</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Date Joined</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
+                <tbody className="divide-y divide-slate-800 text-sm">
                   {filteredManagers.map((manager) => (
-                    <tr key={manager.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={manager.id} className="hover:bg-slate-800/60 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 font-bold text-brand-700">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/20 font-bold text-teal-300 border border-brand-500/30">
                             {manager.firstName[0]}
                             {manager.lastName[0]}
                           </span>
                           <div>
-                            <p className="font-semibold text-slate-900">
+                            <p className="font-bold text-white">
                               {manager.firstName} {manager.lastName}
                             </p>
-                            <p className="text-xs text-slate-500">{manager.email}</p>
+                            <p className="text-xs text-slate-400">{manager.email}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                        <span className="inline-flex items-center rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-200 border border-slate-700">
                           {manager.departmentName || 'Global / Unassigned'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         {manager.isActive ? (
-                          <Badge tone="green">Active</Badge>
+                          <Badge tone="green" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">Active</Badge>
                         ) : (
-                          <Badge tone="red">Deactivated</Badge>
+                          <Badge tone="red" className="bg-red-500/20 text-red-300 border-red-500/30">Deactivated</Badge>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-slate-600">
+                      <td className="px-6 py-4 text-slate-400 font-medium">
                         {formatDate(manager.createdAt)}
                       </td>
                     </tr>
                   ))}
                   {filteredManagers.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-500">
+                      <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-400">
                         No hiring managers match your search criteria.
                       </td>
                     </tr>
@@ -165,4 +165,5 @@ export function RecruiterHiringManagers() {
       </div>
     </div>
   );
+
 }

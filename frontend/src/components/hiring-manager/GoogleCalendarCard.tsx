@@ -110,7 +110,7 @@ export function GoogleCalendarCard({
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-soft transition-all"
+      className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white transition-all"
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         {/* Left Info Section */}
@@ -118,107 +118,103 @@ export function GoogleCalendarCard({
           <div
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${
               isConnected
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
-                : 'border-slate-200 bg-slate-50 text-slate-600'
+                ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300'
+                : 'border-slate-700 bg-slate-800 text-slate-300'
             }`}
           >
-            <svg className="h-6 w-6" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-              />
-            </svg>
+            {isConnected ? (
+              <CalendarCheck2Icon className="h-6 w-6 text-emerald-400" />
+            ) : (
+              <CalendarDaysIcon className="h-6 w-6 text-teal-400" />
+            )}
           </div>
 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-display text-base font-bold text-slate-900">
-                Google Calendar Integration
+              <h3 className="font-display text-base font-extrabold text-white">
+                Google Calendar Sync
               </h3>
               {isConnected ? (
-                <Badge tone="green">
+                <Badge tone="green" className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                   <CheckCircle2Icon className="h-3 w-3" /> Connected
                 </Badge>
               ) : (
-                <Badge tone="neutral">Not Connected</Badge>
+                <Badge tone="slate" className="bg-slate-800 text-slate-300 border-slate-700">Not Connected</Badge>
               )}
             </div>
-
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-300 max-w-xl">
               {isConnected
-                ? `Synced to ${status?.googleEmail || 'your Google account'}. Scheduled interviews sync directly to Google Calendar.`
-                : 'Connect your Google account to automatically sync interview invitations, Google Meet links, and reminders.'}
+                ? 'Sync manager interviews directly to your primary Google Calendar and receive automatic updates.'
+                : 'Connect your Google account to automatically push interview schedules into your Google Calendar.'}
             </p>
           </div>
         </div>
 
-        {/* Right Action Buttons */}
-        <div className="flex items-center gap-2.5 flex-wrap self-end lg:self-auto">
+        {/* Action Controls */}
+        <div className="flex items-center gap-2.5 flex-wrap sm:shrink-0">
           {isConnected ? (
             <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleToggleAutoSync}
-                disabled={togglingAutoSync}
-                className="gap-1.5 text-xs"
-              >
-                {togglingAutoSync ? (
-                  <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Settings2Icon className="h-3.5 w-3.5 text-slate-500" />
-                )}
-                Auto-sync: {status?.autoSyncInterviews ? 'ON' : 'OFF'}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                type="button"
                 onClick={handleSyncAll}
                 disabled={syncing}
-                className="gap-1.5 text-xs text-slate-700 hover:text-slate-900"
+                className="flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white px-3.5 py-2 text-xs font-bold shadow-md transition disabled:opacity-50"
               >
                 {syncing ? (
-                  <Loader2Icon className="h-3.5 w-3.5 animate-spin text-brand-600" />
+                  <>
+                    <Loader2Icon className="h-3.5 w-3.5 animate-spin" /> Syncing...
+                  </>
                 ) : (
-                  <RefreshCwIcon className="h-3.5 w-3.5 text-brand-600" />
+                  <>
+                    <RefreshCwIcon className="h-3.5 w-3.5" /> Sync All Now
+                  </>
                 )}
-                Sync All Interviews
-              </Button>
+              </button>
 
               <button
+                type="button"
+                onClick={handleToggleAutoSync}
+                disabled={togglingAutoSync}
+                className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition ${
+                  status?.autoSyncInterviews
+                    ? 'border-teal-400/40 bg-brand-600/30 text-teal-300'
+                    : 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+                title="Toggle automatic synchronization when interviews are scheduled or updated"
+              >
+                <Settings2Icon className="h-3.5 w-3.5" />
+                Auto-sync: {status?.autoSyncInterviews ? 'ON' : 'OFF'}
+              </button>
+
+              <button
+                type="button"
                 onClick={handleDisconnect}
-                className="flex items-center gap-1 rounded-lg p-2 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-rose-600 transition"
+                className="flex items-center gap-1 rounded-xl border border-red-500/30 bg-red-950/60 text-red-300 hover:bg-red-900/80 px-2.5 py-2 text-xs font-bold transition"
                 title="Disconnect Google Calendar"
               >
                 <UnplugIcon className="h-3.5 w-3.5" />
               </button>
             </>
           ) : (
-            <Button size="sm" onClick={handleConnect} disabled={connecting} className="gap-2 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={handleConnect}
+              disabled={connecting}
+              className="flex items-center gap-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5 text-xs font-bold shadow-md transition disabled:opacity-50"
+            >
               {connecting ? (
-                <Loader2Icon className="h-4 w-4 animate-spin" />
+                <>
+                  <Loader2Icon className="h-4 w-4 animate-spin" /> Connecting...
+                </>
               ) : (
-                <CalendarDaysIcon className="h-4 w-4" />
+                <>
+                  <CalendarDaysIcon className="h-4 w-4" /> Connect Google Calendar
+                </>
               )}
-              {connecting ? 'Connecting...' : 'Connect Google Calendar'}
-            </Button>
+            </button>
           )}
         </div>
       </div>
     </motion.div>
   );
 }
-

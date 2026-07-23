@@ -150,6 +150,14 @@ function recToJob(r: JobRecommendationDto): Job {
   };
 }
 
+function getCandidatePhoto(user: any): string {
+  if (user?.photoUrl) {
+    if (user.photoUrl.startsWith('http')) return user.photoUrl;
+    return `http://localhost:5073${user.photoUrl.startsWith('/') ? '' : '/'}${user.photoUrl}`;
+  }
+  return user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Candidate')}&background=4f46e5&color=fff&bold=true&size=128&format=png`;
+}
+
 export function Dashboard() {
   const { user, isAuthenticated, applications, savedJobs } = useAuth();
   const [tab, setTab] = useState<Tab>('overview');
@@ -206,40 +214,86 @@ export function Dashboard() {
     profileCompleteness != null ? 'Profile strength' : 'Applications';
 
   return (
-    <div className="w-full bg-slate-50">
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Welcome back,</p>
-              <h1 className="font-display text-3xl font-extrabold text-slate-900">
-                {user.name.split(' ')[0]} 👋
-              </h1>
+    <div className="w-full bg-slate-950 text-white min-h-screen">
+      {/* Platform Matched Hero Section */}
+      <div className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          {/* Brand Gradient Hero Card */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-900 via-brand-800 to-slate-900 p-6 sm:p-8 text-white shadow-2xl border border-slate-800">
+            {/* Ambient Brand Mesh Orbs */}
+            <div className="absolute -right-10 -top-10 h-64 w-64 rounded-full bg-brand-500/25 blur-3xl pointer-events-none" />
+            <div className="absolute right-1/3 -bottom-10 h-64 w-64 rounded-full bg-accent-500/20 blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              {/* Left Column: Avatar & Greeting */}
+              <div className="flex items-center gap-5">
+                <div className="relative group">
+                  <img
+                    src={getCandidatePhoto(user)}
+                    alt={user.name}
+                    className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white/15 shadow-xl transition duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-brand-900 bg-emerald-400 ring-4 ring-emerald-400/20" />
+                </div>
+
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-brand-200 backdrop-blur-md border border-white/10 shadow-xs">
+                      <SparklesIcon className="h-3.5 w-3.5 text-brand-300 animate-pulse" />
+                      Candidate Portal
+                    </span>
+                    {user.title && (
+                      <span className="hidden sm:inline-flex rounded-full bg-brand-700/50 px-3 py-1 text-xs font-bold text-indigo-100 border border-brand-500/30">
+                        {user.title}
+                      </span>
+                    )}
+                  </div>
+
+                  <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
+                    Welcome back, {user.name.split(' ')[0]} <span className="inline-block animate-bounce">👋</span>
+                  </h1>
+                  <p className="mt-1 text-sm text-brand-100/90 font-medium">
+                    Ready for your next career move? Explore top AI job matches tailored for you.
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column: CTA Buttons */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Link to="/jobs">
+                  <Button className="bg-brand-600 hover:bg-brand-500 text-white font-bold px-5 py-3 rounded-xl shadow-lg shadow-brand-600/30 transition-all hover:shadow-brand-600/50 border border-brand-400/30">
+                    <SparklesIcon className="h-4 w-4" /> Find Jobs
+                  </Button>
+                </Link>
+                <button
+                  onClick={() => setTab('profile')}
+                  className="inline-flex items-center gap-2.5 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-bold text-white hover:bg-white/20 transition backdrop-blur-md shadow-sm"
+                >
+                  <UserIcon className="h-4 w-4 text-brand-300" />
+                  Profile Strength: <span className="text-teal-300 font-extrabold">{user.completenessPercent ?? 0}%</span>
+                </button>
+              </div>
             </div>
-            <Link to="/jobs">
-              <Button>
-                Find jobs <ArrowRightIcon className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
 
-          <div className="mt-6 flex gap-1 overflow-x-auto">
+          {/* Integrated Platform Navigation Tabs */}
+          <div className="mt-6 flex gap-1.5 overflow-x-auto border-b border-slate-800 pb-1">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
-                className={`relative flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+                className={`relative flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
                   tab === t.id
-                    ? 'text-brand-700'
-                    : 'text-slate-500 hover:text-slate-900'
+                    ? 'text-teal-300 bg-white/10 border border-white/15 font-bold shadow-md'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
                 }`}
               >
-                <t.icon className="h-4 w-4" />
+                <t.icon className={`h-4 w-4 ${tab === t.id ? 'text-teal-300' : 'text-slate-400'}`} />
                 {t.label}
                 {tab === t.id && (
                   <motion.span
                     layoutId="dash-tab"
-                    className="absolute inset-x-2 -bottom-[9px] h-0.5 rounded-full bg-brand-600"
+                    className="absolute inset-x-2 -bottom-[5px] h-0.5 rounded-full bg-teal-400"
                   />
                 )}
               </button>
@@ -283,7 +337,7 @@ export function Dashboard() {
             </div>
 
             <div>
-              <h2 className="mb-4 font-display text-xl font-extrabold text-slate-900">
+              <h2 className="mb-4 font-display text-xl font-extrabold text-white">
                 Your applications
               </h2>
               <ApplicationsTable
@@ -298,18 +352,18 @@ export function Dashboard() {
 
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-display text-xl font-extrabold text-slate-900">
+                <h2 className="font-display text-xl font-extrabold text-white">
                   Recommended for you
                 </h2>
                 <button
                   onClick={() => setTab('recommendations')}
-                  className="text-sm font-semibold text-brand-600 hover:underline"
+                  className="text-sm font-semibold text-teal-300 hover:text-white hover:underline transition"
                 >
                   See all
                 </button>
               </div>
               {jobsLoading ? (
-                <p className="text-sm text-slate-500">Loading roles…</p>
+                <p className="text-sm text-slate-400">Loading roles…</p>
               ) : recommended.length > 0 ? (
                 <div className="grid gap-6 sm:grid-cols-2">
                   {recommended.slice(0, 3).map((job) => (
@@ -317,13 +371,13 @@ export function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-12 text-center">
-                  <p className="font-semibold text-slate-900">No open roles yet</p>
-                  <p className="mt-1 text-sm text-slate-500">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/90 py-12 text-center text-white shadow-xl">
+                  <p className="font-semibold text-white">No open roles yet</p>
+                  <p className="mt-1 text-sm text-slate-400">
                     Check back soon or browse all jobs when recruiters publish openings.
                   </p>
                   <Link to="/jobs">
-                    <Button className="mt-4" variant="outline">
+                    <Button className="mt-4 bg-brand-600 hover:bg-brand-500 text-white font-bold" variant="outline">
                       Browse jobs
                     </Button>
                   </Link>
@@ -335,23 +389,23 @@ export function Dashboard() {
 
         {tab === 'recommendations' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="mb-6 flex items-start gap-4 rounded-2xl border border-brand-100 bg-brand-50/60 p-5">
-              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white animate-pulse">
+            <div className="mb-6 flex items-start gap-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 text-white shadow-xl">
+              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white animate-pulse">
                 <SparklesIcon className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="font-display text-lg font-bold text-slate-900">
+                <h2 className="font-display text-lg font-bold text-white">
                   AI-powered recommendations
                 </h2>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-slate-300">
                   TalentPortal AI matches you with the best available job roles based on the skills, location, and experiences in your profile. Update your resume to refine the matches.
                 </p>
               </div>
             </div>
             {recommendationsLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-200 border-t-brand-600"></div>
-                <p className="mt-4 text-sm text-slate-500 font-semibold animate-pulse">AI is running matching criteria...</p>
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-teal-400"></div>
+                <p className="mt-4 text-sm text-slate-400 font-semibold animate-pulse">AI is running matching criteria...</p>
               </div>
             ) : recommendations.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2">
@@ -360,25 +414,25 @@ export function Dashboard() {
                   return (
                     <div
                       key={rec.jobId}
-                      className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-soft hover:shadow-md transition-all duration-300"
+                      className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl text-white hover:border-brand-500/50 transition-all duration-300"
                     >
                       <div className="flex-1">
                         <JobCard job={job} showMatch={false} />
                       </div>
                       
                       {/* Premium AI Match Badge & Explanation */}
-                      <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/40 p-3.5">
+                      <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/70 p-3.5">
                         <div className="flex items-center gap-2 mb-1.5">
                           <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-bold text-white shadow-sm ${
-                            rec.matchScore >= 80 ? 'bg-emerald-600' : rec.matchScore >= 50 ? 'bg-amber-600' : 'bg-slate-500'
+                            rec.matchScore >= 80 ? 'bg-emerald-600' : rec.matchScore >= 50 ? 'bg-amber-600' : 'bg-slate-700'
                           }`}>
                             {rec.matchScore}% Match
                           </span>
-                          <span className="text-xs font-semibold text-brand-700 flex items-center gap-0.5">
+                          <span className="text-xs font-semibold text-teal-300 flex items-center gap-0.5">
                             <SparklesIcon className="h-3 w-3" /> AI Fit Analysis
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                        <p className="text-xs text-slate-300 leading-relaxed font-medium">
                           {rec.matchExplanation}
                         </p>
                       </div>
@@ -387,15 +441,15 @@ export function Dashboard() {
                 })}
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
-                <SparklesIcon className="mx-auto h-10 w-10 text-slate-300" />
-                <p className="mt-3 font-semibold text-slate-900">No matches yet</p>
-                <p className="mt-1 text-sm text-slate-500">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 py-16 text-center text-white shadow-xl">
+                <SparklesIcon className="mx-auto h-10 w-10 text-slate-400" />
+                <p className="mt-3 font-semibold text-white">No matches yet</p>
+                <p className="mt-1 text-sm text-slate-400">
                   No matches were found. Try updating your profile or uploading a resume to enrich your matching profile.
                 </p>
                 <button
                   onClick={() => setTab('profile')}
-                  className="mt-5 inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-750 transition-colors"
+                  className="mt-5 inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-500 transition-colors shadow-lg shadow-brand-600/30"
                 >
                   Go to Profile
                 </button>
@@ -407,7 +461,7 @@ export function Dashboard() {
         {tab === 'saved' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="mb-4 flex items-center gap-2">
-              <h2 className="font-display text-xl font-extrabold text-slate-900">
+              <h2 className="font-display text-xl font-extrabold text-white">
                 Saved jobs
               </h2>
               <Badge tone="slate">{allSaved.length}</Badge>
@@ -419,19 +473,20 @@ export function Dashboard() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
-                <BookmarkIcon className="mx-auto h-10 w-10 text-slate-300" />
-                <p className="mt-3 font-semibold text-slate-900">No saved jobs yet</p>
-                <p className="mt-1 text-sm text-slate-500">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/90 py-16 text-center text-white shadow-xl">
+                <BookmarkIcon className="mx-auto h-10 w-10 text-slate-400" />
+                <p className="mt-3 font-semibold text-white">No saved jobs yet</p>
+                <p className="mt-1 text-sm text-slate-400">
                   Tap the bookmark on any role to save it here.
                 </p>
                 <Link to="/jobs">
-                  <Button className="mt-5">Browse jobs</Button>
+                  <Button className="mt-5 bg-brand-600 hover:bg-brand-500 text-white font-bold">Browse jobs</Button>
                 </Link>
               </div>
             )}
           </motion.div>
         )}
+
 
         {tab === 'profile' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

@@ -51,7 +51,11 @@ export function Login() {
   };
 
   return (
-    <div className="flex w-full flex-1 items-center justify-center bg-slate-50 px-4 py-12">
+    <div className="relative min-h-screen flex w-full flex-1 items-center justify-center bg-gradient-to-b from-slate-950 via-slate-900 to-brand-950 px-4 py-16 text-white overflow-hidden">
+      {/* Ambient Mesh Orbs */}
+      <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-brand-600/25 blur-3xl pointer-events-none" />
+      <div className="absolute right-10 bottom-10 h-96 w-96 rounded-full bg-teal-500/20 blur-3xl pointer-events-none" />
+
       <motion.div
         initial={{
           opacity: 0,
@@ -61,21 +65,21 @@ export function Login() {
           opacity: 1,
           y: 0
         }}
-        className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-soft">
+        className="relative z-10 w-full max-w-md rounded-3xl border border-white/15 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-2xl">
         
-        <Link to="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
+        <Link to="/" className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
             <SparklesIcon className="h-5 w-5" />
           </span>
-          <span className="font-display text-xl font-extrabold text-slate-900">
+          <span className="font-display text-xl font-black text-white">
             Talenta
           </span>
         </Link>
 
-        <h1 className="mt-6 font-display text-2xl font-extrabold text-slate-900">
+        <h1 className="mt-6 font-display text-2xl font-black text-white">
           Welcome back
         </h1>
-        <p className="mt-1.5 text-sm text-slate-500">
+        <p className="mt-1.5 text-sm text-slate-300">
           Log in to continue your job search.
         </p>
 

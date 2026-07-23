@@ -113,10 +113,10 @@ function AuditLogTab() {
             placeholder="Search action, user, IP, module…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            className="w-full rounded-xl border border-slate-700 bg-slate-800 py-2.5 pl-10 pr-4 text-sm text-white outline-none placeholder:text-slate-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+            <button onClick={() => setSearch('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-white">
               <XCircleIcon className="h-4 w-4" />
             </button>
           )}
@@ -125,40 +125,40 @@ function AuditLogTab() {
           <select
             value={module}
             onChange={e => { setModule(e.target.value); setPage(1); }}
-            className="w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-3.5 pr-8 text-sm font-medium text-slate-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            className="w-full appearance-none rounded-xl border border-slate-700 bg-slate-800 py-2.5 pl-3.5 pr-8 text-sm font-semibold text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
           >
-            <option value="">All modules</option>
-            {modules.map(m => <option key={m} value={m}>{m}</option>)}
+            <option value="" className="bg-slate-900 text-white">All modules</option>
+            {modules.map(m => <option key={m} value={m} className="bg-slate-900 text-white">{m}</option>)}
           </select>
           <FilterIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-slate-400" />
         </div>
       </div>
 
       {/* Count */}
-      <p className="mt-3 text-sm text-slate-500">
-        <span className="font-semibold text-slate-800">{totalCount.toLocaleString()}</span> events
+      <p className="mt-3 text-sm text-slate-400">
+        <span className="font-bold text-white">{totalCount.toLocaleString()}</span> events
         {(debouncedSearch || module) ? ' matching filters' : ' total'}
       </p>
 
       {/* Table */}
-      <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+      <div className="mt-3 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-xl text-white">
         {error ? (
-          <div className="flex items-center gap-2.5 px-5 py-8 text-sm font-medium text-red-600">
+          <div className="flex items-center gap-2.5 px-5 py-8 text-sm font-medium text-red-400">
             <AlertCircleIcon className="h-5 w-5 shrink-0" /> {error}
           </div>
         ) : loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2Icon className="h-7 w-7 animate-spin text-brand-600" />
+            <Loader2Icon className="h-7 w-7 animate-spin text-teal-300" />
           </div>
         ) : logs.length === 0 ? (
-          <div className="py-16 text-center text-sm text-slate-500">
+          <div className="py-16 text-center text-sm text-slate-400">
             No audit events match your current filters.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <th className="px-4 py-3 w-40">Timestamp</th>
                   <th className="px-4 py-3">User</th>
                   <th className="px-4 py-3">Action</th>
@@ -167,14 +167,14 @@ function AuditLogTab() {
                   <th className="px-4 py-3">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800">
                 {logs.map(log => (
-                  <tr key={log.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                  <tr key={log.id} className="hover:bg-slate-800/60 transition-colors">
+                    <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
                       {formatTs(log.timestamp)}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-semibold text-slate-800">{log.userName}</span>
+                      <span className="font-bold text-white">{log.userName}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`font-mono text-xs font-bold ${actionTone(log.action)}`}>
@@ -186,16 +186,16 @@ function AuditLogTab() {
                         {log.module}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono text-slate-500">
+                    <td className="px-4 py-3 text-xs font-mono text-slate-400">
                       {log.ipAddress}
                     </td>
                     <td className="px-4 py-3 max-w-xs">
                       {log.details ? (
-                        <span className="block truncate text-xs text-slate-600" title={log.details}>
+                        <span className="block truncate text-xs text-slate-300" title={log.details}>
                           {log.details}
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-300">—</span>
+                        <span className="text-xs text-slate-500">—</span>
                       )}
                     </td>
                   </tr>
@@ -208,22 +208,22 @@ function AuditLogTab() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <span className="text-slate-500">
-            Page <span className="font-bold text-slate-700">{page}</span> of {totalPages}
+        <div className="mt-4 flex items-center justify-between text-sm text-white">
+          <span className="text-slate-400">
+            Page <span className="font-bold text-white">{page}</span> of {totalPages}
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-40"
             >
               <ChevronLeftIcon className="h-4 w-4" />
             </button>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-40"
             >
               <ChevronRightIcon className="h-4 w-4" />
             </button>
@@ -288,7 +288,7 @@ function SystemSettingsTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2Icon className="h-7 w-7 animate-spin text-brand-600" />
+        <Loader2Icon className="h-7 w-7 animate-spin text-teal-300" />
       </div>
     );
   }
@@ -296,13 +296,13 @@ function SystemSettingsTab() {
   return (
     <div>
       {error && (
-        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm font-medium text-red-700">
-          <AlertCircleIcon className="h-5 w-5 shrink-0" /> {error}
+        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-950/60 p-3.5 text-sm font-medium text-red-200">
+          <AlertCircleIcon className="h-5 w-5 shrink-0 text-red-400" /> {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-sm font-medium text-emerald-700">
-          <CheckCircle2Icon className="h-5 w-5 shrink-0" /> {success}
+        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-950/60 p-3.5 text-sm font-medium text-emerald-200">
+          <CheckCircle2Icon className="h-5 w-5 shrink-0 text-emerald-400" /> {success}
         </div>
       )}
 
@@ -316,21 +316,21 @@ function SystemSettingsTab() {
           return (
             <div
               key={setting.key}
-              className={`rounded-2xl border bg-white p-5 shadow-soft transition-colors ${isDirty ? 'border-brand-300 ring-1 ring-brand-200' : 'border-slate-200'}`}
+              className={`rounded-2xl border bg-slate-900/90 p-5 shadow-xl text-white transition-colors ${isDirty ? 'border-teal-400 ring-1 ring-teal-400/30' : 'border-slate-800'}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-mono text-xs font-bold text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">
+                    <p className="font-mono text-xs font-bold text-teal-300 bg-slate-800 border border-slate-700 rounded px-2 py-0.5">
                       {setting.key}
                     </p>
                     {isDirty && (
-                      <span className="text-[10px] font-bold text-brand-600 bg-brand-50 rounded px-1.5 py-0.5">
+                      <span className="text-[10px] font-bold text-teal-300 bg-teal-500/20 border border-teal-500/30 rounded px-1.5 py-0.5">
                         modified
                       </span>
                     )}
                   </div>
-                  <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-300">
                     {setting.description}
                   </p>
                   <p className="mt-1 text-[10px] text-slate-400">
@@ -346,7 +346,7 @@ function SystemSettingsTab() {
                     aria-checked={currentVal === 'true'}
                     aria-label={setting.key}
                     onClick={() => setValue(setting.key, currentVal === 'true' ? 'false' : 'true')}
-                    className={`relative mt-1 h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${currentVal === 'true' ? 'bg-brand-600' : 'bg-slate-300'}`}
+                    className={`relative mt-1 h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${currentVal === 'true' ? 'bg-teal-500' : 'bg-slate-700'}`}
                   >
                     <span
                       className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${currentVal === 'true' ? 'translate-x-5' : 'translate-x-0.5'}`}
@@ -358,7 +358,7 @@ function SystemSettingsTab() {
                     value={currentVal}
                     min={isNum ? 0 : undefined}
                     onChange={e => setValue(setting.key, e.target.value)}
-                    className="w-24 shrink-0 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-right text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                    className="w-24 shrink-0 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-right text-sm font-bold text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20"
                   />
                 )}
               </div>
@@ -368,8 +368,8 @@ function SystemSettingsTab() {
       </div>
 
       {/* Save bar */}
-      <div className="mt-6 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-soft">
-        <span className="text-sm text-slate-500">
+      <div className="mt-6 flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/90 px-5 py-4 shadow-xl text-white">
+        <span className="text-sm text-slate-300 font-medium">
           {hasChanges
             ? `${settings.filter(s => draft[s.key] !== s.value).length} unsaved change(s)`
             : 'All settings saved'}
@@ -377,7 +377,7 @@ function SystemSettingsTab() {
         <button
           onClick={handleSave}
           disabled={!hasChanges || saving}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-soft hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/30 hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving
             ? <Loader2Icon className="h-4 w-4 animate-spin" />
@@ -398,27 +398,27 @@ export function AdminAuditSettings() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-[1400px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8"
+      className="mx-auto max-w-[1400px] px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-8 text-white"
     >
       {/* Page header */}
       <div>
-        <p className="text-sm font-medium text-slate-500">Governance controls</p>
-        <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
+        <p className="text-sm font-medium text-slate-400">Governance controls</p>
+        <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-white">
           Audit & Settings
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-slate-300">
           Monitor platform activity and manage system configuration.
         </p>
       </div>
 
       {/* Tab switcher */}
-      <div className="mt-6 flex gap-1 rounded-2xl border border-slate-200 bg-slate-100/60 p-1 w-fit">
+      <div className="mt-6 flex gap-1 rounded-2xl border border-slate-800 bg-slate-900/90 p-1.5 w-fit shadow-xl">
         <button
           onClick={() => setTab('audit')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
             tab === 'audit'
-              ? 'bg-white shadow-soft text-brand-700'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'text-teal-300 bg-white/10 border border-white/15 shadow-md'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
           <HistoryIcon className="h-4 w-4" />
@@ -426,10 +426,10 @@ export function AdminAuditSettings() {
         </button>
         <button
           onClick={() => setTab('settings')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors ${
             tab === 'settings'
-              ? 'bg-white shadow-soft text-brand-700'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'text-teal-300 bg-white/10 border border-white/15 shadow-md'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
           <Settings2Icon className="h-4 w-4" />
@@ -445,3 +445,4 @@ export function AdminAuditSettings() {
     </motion.div>
   );
 }
+
