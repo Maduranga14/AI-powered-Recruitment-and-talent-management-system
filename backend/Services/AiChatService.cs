@@ -96,7 +96,7 @@ namespace backend.Services
             {
                 UserRole.Recruiter => new ChatSuggestionsDto
                 {
-                    AssistantName = "TalentPortal AI",
+                    AssistantName = "Wayfare AI",
                     Greeting = $"Hi {first} — I can help you hire faster. What do you need?",
                     Suggestions =
                     [
@@ -108,7 +108,7 @@ namespace backend.Services
                 },
                 UserRole.HiringManager => new ChatSuggestionsDto
                 {
-                    AssistantName = "TalentPortal AI",
+                    AssistantName = "Wayfare AI",
                     Greeting = $"Hi {first} — ready to help with interviews and feedback.",
                     Suggestions =
                     [
@@ -120,19 +120,19 @@ namespace backend.Services
                 },
                 UserRole.Admin => new ChatSuggestionsDto
                 {
-                    AssistantName = "TalentPortal AI",
+                    AssistantName = "Wayfare AI",
                     Greeting = $"Hi {first} — I can help with platform administration.",
                     Suggestions =
                     [
                         "How do I approve pending recruiters?",
                         "How do organizations and departments work?",
                         "What moderation tools are available?",
-                        "Summarize admin responsibilities on TalentPortal"
+                        "Summarize admin responsibilities on Wayfare Global"
                     ]
                 },
                 _ => new ChatSuggestionsDto
                 {
-                    AssistantName = "TalentPortal AI",
+                    AssistantName = "Wayfare AI",
                     Greeting = $"Hi {first} — I'm your career assistant. How can I help today?",
                     Suggestions =
                     [
@@ -316,12 +316,12 @@ namespace backend.Services
             };
 
             return $"""
-                You are TalentPortal AI — a friendly, capable assistant inside an AI-powered recruitment and talent management platform.
+                You are Wayfare AI — a friendly, capable assistant inside an intelligent career and recruitment platform.
 
                 User: {name}
                 Role: {roleLabel}
 
-                You can answer ANY question the user asks — general knowledge, advice, brainstorming, writing help, explanations, or TalentPortal how-tos.
+                You can answer ANY question the user asks — general knowledge, advice, brainstorming, writing help, explanations, or Wayfare Global how-tos.
                 When the topic relates to recruiting, careers, or this product, prioritize practical TalentPortal guidance:
                 - Candidates: profile, resume, jobs, applications, cover notes, dashboard
                 - Recruiters: create/publish jobs, applicants, hiring-manager invites, departments

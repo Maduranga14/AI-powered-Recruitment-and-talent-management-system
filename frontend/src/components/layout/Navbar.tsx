@@ -58,13 +58,13 @@ export function Navbar() {
         <Link
           to="/"
           className="flex items-center gap-2.5"
-          aria-label="Talenta home">
+          aria-label="Wayfare Global home">
           
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
             <SparklesIcon className="h-5 w-5" />
           </span>
           <span className="font-display text-xl font-black tracking-tight text-white">
-            Talenta
+            Wayfare <span className="text-teal-400 font-semibold text-sm tracking-normal">Global</span>
           </span>
         </Link>
 

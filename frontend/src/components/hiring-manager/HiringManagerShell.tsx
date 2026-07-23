@@ -116,14 +116,14 @@ export function HiringManagerShell({
         <button
           onClick={() => changeView('overview')}
           className="flex items-center gap-2.5 px-2 py-2 text-left"
-          aria-label="Talenta Manager home">
+          aria-label="Wayfare Manager home">
           
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
             <SparklesIcon className="h-5 w-5" />
           </span>
           <span>
             <span className="block font-display text-lg font-black tracking-tight text-white">
-              Talenta
+              Wayfare
             </span>
             <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-teal-400">
               Manager
@@ -300,7 +300,7 @@ export function HiringManagerShell({
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
                     <SparklesIcon className="h-5 w-5" />
                   </span>
-                  Talenta Manager
+                  Wayfare Manager
                 </button>
                 <button
                 onClick={() => setMobileOpen(false)}

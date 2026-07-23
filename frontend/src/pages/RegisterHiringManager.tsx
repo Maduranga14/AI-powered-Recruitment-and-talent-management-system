@@ -145,7 +145,7 @@ export function RegisterHiringManager() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
             <SparklesIcon className="h-5 w-5" />
           </span>
-          <span className="font-display text-xl font-extrabold text-slate-900">Talenta</span>
+          <span className="font-display text-xl font-extrabold text-white">Wayfare <span className="text-teal-400 font-semibold text-sm">Global</span></span>
         </Link>
 
         {/* Header */}

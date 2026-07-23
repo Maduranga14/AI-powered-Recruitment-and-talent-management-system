@@ -92,7 +92,7 @@ const steps = [
 const testimonials = [
 {
   quote:
-  'Talenta surfaced a role I would never have found on my own — and I signed the offer two weeks later.',
+  'Wayfare Global surfaced a role I would never have found on my own — and I signed the offer two weeks later.',
   name: 'Priya Nair',
   role: 'Product Designer',
   avatar:
@@ -108,12 +108,13 @@ const testimonials = [
 },
 {
   quote:
-  'Tracking everything in one dashboard removed all the anxiety from my job search. Game changer.',
-  name: 'Sofia Alvarez',
-  role: 'Data Analyst',
+  'As a hiring manager, the pre-interview scorecards saved our team dozens of hours of manual screening.',
+  name: 'Elena Rostova',
+  role: 'Engineering Lead',
   avatar:
-  'https://ui-avatars.com/api/?name=Sofia+Alvarez&background=db2777&color=fff&bold=true&size=96'
-}];
+  'https://ui-avatars.com/api/?name=Elena+Rostova&background=7c3aed&color=fff&bold=true&size=96'
+}
+];
 
 export function Landing() {
   const navigate = useNavigate();
@@ -224,7 +225,7 @@ export function Landing() {
               </span>
             </h1>
             <p className="mt-5 max-w-lg text-lg text-slate-300 leading-relaxed font-medium">
-              Talenta matches your skills and ambitions to thousands of live
+              Wayfare Global matches your skills and ambitions to thousands of live
               jobs — then helps you apply, interview, and land the offer faster.
             </p>
 
@@ -352,7 +353,7 @@ export function Landing() {
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <Badge tone="accent" className="mb-4 bg-teal-500/20 text-teal-300 border border-teal-500/30">
-            Why Talenta
+            Why Wayfare Global
           </Badge>
           <h2 className="font-display text-3xl font-extrabold text-white sm:text-4xl">
             Everything you need to land your next role

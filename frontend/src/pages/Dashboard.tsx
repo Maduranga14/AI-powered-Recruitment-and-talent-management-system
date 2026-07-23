@@ -398,7 +398,7 @@ export function Dashboard() {
                   AI-powered recommendations
                 </h2>
                 <p className="mt-1 text-sm text-slate-300">
-                  TalentPortal AI matches you with the best available job roles based on the skills, location, and experiences in your profile. Update your resume to refine the matches.
+                  Wayfare Global matches you with the best available job roles based on the skills, location, and experiences in your profile. Update your resume to refine the matches.
                 </p>
               </div>
             </div>

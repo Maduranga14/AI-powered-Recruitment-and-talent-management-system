@@ -137,16 +137,17 @@ export function RecruiterShell({
     <div className="min-h-screen w-full bg-slate-950 text-white">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-800 bg-slate-950 p-4 text-white lg:flex">
         <button
+          type="button"
           onClick={() => setView('overview')}
           className="flex items-center gap-2.5 px-2 py-2 text-left"
-          aria-label="Talenta Recruit home">
+          aria-label="Wayfare Recruit home">
           
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
             <SparklesIcon className="h-5 w-5" />
           </span>
           <span>
             <span className="block font-display text-lg font-black tracking-tight text-white">
-              Talenta
+              Wayfare
             </span>
             <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-teal-400">
               Recruit
@@ -322,7 +323,7 @@ export function RecruiterShell({
                     <SparklesIcon className="h-5 w-5" />
                   </span>
                   <span className="font-display font-extrabold">
-                    Talenta Recruit
+                    Wayfare Recruit
                   </span>
                 </button>
                 <button

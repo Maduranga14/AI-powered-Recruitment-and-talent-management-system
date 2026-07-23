@@ -77,12 +77,11 @@ export function Footer() {
                 <SparklesIcon className="h-5 w-5" />
               </span>
               <span className="font-display text-xl font-black text-white">
-                Talenta
+                Wayfare <span className="text-teal-400 font-semibold text-sm">Global</span>
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm text-slate-400">
-              AI-powered recruitment that connects people with the roles where
-              they'll thrive.
+              Intelligent career navigation and hiring platform connecting visionaries with top teams worldwide.
             </p>
           </div>
           {columns.map((col) =>
@@ -105,7 +104,7 @@ export function Footer() {
         </div>
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-800/80 pt-6 sm:flex-row">
           <p className="text-sm text-slate-500">
-            © 2026 Talenta, Inc. All rights reserved.
+            © 2026 Wayfare Global, Inc. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-slate-500">
             <Link to="/" className="hover:text-slate-300">

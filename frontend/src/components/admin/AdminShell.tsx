@@ -126,14 +126,14 @@ export function AdminShell({
         <button
           onClick={() => changeView('overview')}
           className="flex items-center gap-2.5 rounded-xl px-2 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-          aria-label="Talenta Admin home"
+          aria-label="Wayfare Admin home"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-brand-600 text-white shadow-md shadow-brand-500/20">
             <SparklesIcon className="h-5 w-5" />
           </span>
           <span>
             <span className="block font-display text-lg font-black tracking-tight text-white">
-              Talenta
+              Wayfare
             </span>
             <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-teal-400">
               Admin Console
@@ -295,7 +295,7 @@ export function AdminShell({
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
                     <SparklesIcon className="h-5 w-5" />
                   </span>
-                  Talenta Admin
+                  Wayfare Admin
                 </button>
                 <button
                   onClick={() => setMobileOpen(false)}

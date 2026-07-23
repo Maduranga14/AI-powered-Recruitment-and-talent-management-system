@@ -72,68 +72,67 @@ export function Login() {
             <SparklesIcon className="h-5 w-5" />
           </span>
           <span className="font-display text-xl font-black text-white">
-            Talenta
+            Wayfare <span className="text-teal-400 font-semibold text-sm">Global</span>
           </span>
         </Link>
 
         <h1 className="mt-6 font-display text-2xl font-black text-white">
           Welcome back
         </h1>
-        <p className="mt-1.5 text-sm text-slate-300">
-          Log in to continue your job search.
+        <p className="mt-1 text-sm text-slate-400">
+          Sign in to your Wayfare Global account
         </p>
 
-        <form onSubmit={submit} className="mt-8 space-y-4" noValidate>
-          {errors.form && (
-            <div className="rounded-xl bg-red-50 p-3.5 text-xs font-semibold text-red-600 border border-red-100">
-              {errors.form}
-            </div>
-          )}
+        {errors.form &&
+        <div className="mt-4 rounded-xl bg-red-500/20 border border-red-500/30 p-3 text-sm text-red-300">
+            {errors.form}
+          </div>
+        }
+
+        <form onSubmit={submit} className="mt-6 space-y-4">
           <Input
-            label="Email"
-            name="email"
+            label="Email address"
             type="email"
-            placeholder="you@example.com"
+            required
             value={form.email}
-            onChange={(e) =>
-            setForm({
-              ...form,
-              email: e.target.value
-            })
-            }
-            error={errors.email} />
-          
+            onChange={(e) => setForm({...form, email: e.target.value})}
+            placeholder="you@example.com"
+          />
+
           <div>
-            <PasswordInput
+            <Input
               label="Password"
-              name="password"
-              placeholder="Your password"
+              type="password"
+              required
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              error={errors.password}
+              onChange={(e) => setForm({...form, password: e.target.value})}
+              placeholder="••••••••"
             />
-            
-            <div className="mt-1.5 text-right">
-              <Link
-                to="/login"
-                className="text-xs font-medium text-brand-600 hover:underline">
-                
+
+            <div className="mt-2 text-right">
+              <a
+                href="#forgot"
+                onClick={(e) => {
+                  e.preventDefault();
+                  alert('Password reset instructions will be sent to your email.');
+                }}
+                className="text-xs font-medium text-teal-400 hover:underline"
+              >
                 Forgot password?
-              </Link>
+              </a>
             </div>
           </div>
-          <Button type="submit" fullWidth size="lg" disabled={loading}>
-            {loading ? 'Logging in…' : 'Log in'}
+
+          <Button type="submit" fullWidth disabled={loading} className="bg-brand-600 hover:bg-brand-500 text-white font-bold">
+            {loading ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>
 
-
-
-        <p className="mt-6 text-center text-sm text-slate-500">
-          New to Talenta?{' '}
+        <p className="mt-6 text-center text-sm text-slate-400">
+          New to Wayfare Global?{' '}
           <Link
             to="/register"
-            className="font-semibold text-brand-600 hover:underline">
+            className="font-bold text-teal-300 hover:underline">
             
             Create an account
           </Link>

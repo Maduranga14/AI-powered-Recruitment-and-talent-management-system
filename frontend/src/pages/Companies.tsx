@@ -73,7 +73,7 @@ export function Companies() {
             Companies hiring now
           </h1>
           <p className="mt-2 max-w-xl text-slate-300 font-medium">
-            Explore the teams hiring on Talenta and discover live roles across
+            Explore the teams hiring on Wayfare Global and discover live roles across
             departments.
           </p>
         </div>

@@ -77,7 +77,7 @@ export function Register() {
                 <SparklesIcon className="h-5 w-5" />
               </span>
               <span className="font-display text-xl font-black text-white">
-                Talenta
+                Wayfare <span className="text-teal-400 font-semibold text-sm">Global</span>
               </span>
             </Link>
 

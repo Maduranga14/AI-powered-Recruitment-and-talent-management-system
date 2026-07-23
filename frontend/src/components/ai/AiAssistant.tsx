@@ -57,7 +57,7 @@ export function AiAssistant() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [conversations, setConversations] = useState<ChatConversationSummary[]>([]);
-  const [greeting, setGreeting] = useState("Hi — I'm TalentPortal AI. How can I help?");
+  const [greeting, setGreeting] = useState("Hi — I'm Wayfare AI. How can I help?");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -240,7 +240,7 @@ export function AiAssistant() {
                   </span>
                   <div>
                     <h2 id={panelTitleId} className="font-display text-base font-bold tracking-tight">
-                      TalentPortal AI
+                      Wayfare AI
                     </h2>
                     <p className="mt-0.5 text-xs text-slate-300">
                       Your recruitment assistant
@@ -424,7 +424,7 @@ export function AiAssistant() {
                       onChange={(e) => setInput(e.target.value.slice(0, 4000))}
                       onKeyDown={onKeyDown}
                       rows={1}
-                      placeholder="Ask TalentPortal AI…"
+                      placeholder="Ask Wayfare AI…"
                       disabled={sending}
                       className="max-h-28 min-h-[40px] flex-1 resize-none bg-transparent px-1.5 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
                       aria-label="Message"
