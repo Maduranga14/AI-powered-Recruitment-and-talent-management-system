@@ -70,8 +70,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return data as T;
 }
 
-// Public request — never sends Authorization header so expired tokens
-// don't cause AllowAnonymous endpoints to return 401
+
 async function publicRequest<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -287,7 +286,7 @@ export const adminApi = {
   getAnalytics: () =>
     request<DashboardAnalyticsDto>('/admin/analytics/dashboard'),
 
-  // ─── Audit Logs ──────────────────────────────────────────────────────────
+
   getAuditLogs: (page = 1, pageSize = 20, search?: string, module?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
     if (search) params.set('search', search);
@@ -298,7 +297,7 @@ export const adminApi = {
   getAuditModules: () =>
     request<string[]>('/admin/audit-logs/modules'),
 
-  // ─── System Settings ─────────────────────────────────────────────────────
+
   getSettings: () =>
     request<SystemSettingEntry[]>('/admin/settings'),
 
@@ -396,7 +395,7 @@ export interface JobApplicant {
   recommendation?: string | null;
   overallRating?: number | null;
   skillRatings?: string | null;
-  // Post-interview evaluation fields
+
   interviewOverallRating?: number | null;
   interviewRecommendation?: string | null;
   interviewComments?: string | null;
@@ -436,7 +435,7 @@ export interface InterviewDto {
   rescheduleReason?: string | null;
   rescheduleRequestedAt?: string | null;
   lastRescheduledAt?: string | null;
-  // Post-interview feedback fields
+
   feedbackOverallRating?: number | null;
   feedbackRecommendation?: string | null;
   feedbackComments?: string | null;
@@ -471,7 +470,7 @@ export interface CreateJobPostingPayload {
   requirements?: string;
   location: string;
   employmentType: number;
-  status: number; // 0=Draft, 1=Published
+  status: number;
   salaryMin?: number | null;
   salaryMax?: number | null;
   salaryCurrency?: string;
@@ -483,7 +482,7 @@ export interface CreateJobPostingPayload {
 }
 
 
-// Employment type enum values matching the backend
+
 export const EmploymentTypeMap: Record<string, number> = {
   FullTime: 0,
   PartTime: 1,
@@ -762,7 +761,7 @@ export interface BusySlot {
   durationMinutes: number;
 }
 
-// ─── Public job types ─────────────────────────────────────────────────────────
+
 
 export interface PublicJob {
   id: string;
@@ -799,7 +798,7 @@ export const publicApi = {
     publicRequest<AdminOrganizationDto[]>('/organizations'),
 };
 
-// ─── Candidate Profile integration types ─────────────────────────────────────
+
 
 export interface CandidateLinksDto {
   linkedIn?: string | null;
@@ -1003,7 +1002,7 @@ export const candidateApi = {
     }),
 };
 
-// ── AI Chat Assistant ────────────────────────────────────────────────────────
+
 
 export interface ChatMessageDto {
   id: string;
@@ -1097,7 +1096,7 @@ export interface DepartmentDashboardDto {
   }[];
 }
 
-// ── Recruitment Analytics ─────────────────────────────────────────────────────
+
 
 export interface PipelineFunnelDto {
   received: number;
@@ -1138,7 +1137,7 @@ export interface DashboardAnalyticsDto {
   recentActivity: ActivityLogItemDto[];
 }
 
-// ── Audit & Settings ──────────────────────────────────────────────────────────
+
 
 export interface AuditLogEntry {
   id: number;
@@ -1159,3 +1158,27 @@ export interface SystemSettingEntry {
   updatedAt: string;
   updatedBy: string;
 }
+
+
+
+export interface CommunicationLogDto {
+  id: string;
+  applicationId: string;
+  senderId: string;
+  senderName: string;
+  subject: string;
+  body: string;
+  messageType: string;
+  sentAt: string;
+}
+
+export const recruiterCommunicationApi = {
+  sendApplicantEmail: (applicationId: string, payload: { subject: string; body: string; messageType?: string }) =>
+    request<{ message: string; data: CommunicationLogDto }>(`/jobpostings/applications/${applicationId}/send-email`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getCommunicationHistory: (applicationId: string) =>
+    request<CommunicationLogDto[]>(`/jobpostings/applications/${applicationId}/communication-history`),
+};

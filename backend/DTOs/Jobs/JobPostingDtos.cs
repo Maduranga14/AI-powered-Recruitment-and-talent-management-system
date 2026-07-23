@@ -105,7 +105,7 @@ namespace backend.DTOs.Jobs
         public int InterviewCount { get; set; }
     }
 
-    /// <summary>Applicant row shown on the recruiter "View applicants" pipeline.</summary>
+    
     public class WorkExperienceDto
     {
         public string Title { get; set; } = string.Empty;
@@ -152,7 +152,7 @@ namespace backend.DTOs.Jobs
         public int? OverallRating { get; set; }
         public string? SkillRatings { get; set; }
 
-        // Post-interview evaluation (submitted by interviewer after conducting interview)
+        
         public int? InterviewOverallRating { get; set; }
         public string? InterviewRecommendation { get; set; }
         public string? InterviewComments { get; set; }
@@ -241,7 +241,7 @@ namespace backend.DTOs.Jobs
 
     public class MakeHiringDecisionDto
     {
-        /// <summary>Expected: "Hired" | "Rejected" | "UnderFinalReview"</summary>
+        
         [Required(ErrorMessage = "Decision is required.")]
         public string Decision { get; set; } = string.Empty;
 
@@ -257,7 +257,7 @@ namespace backend.DTOs.Jobs
         [Range(15, 480)]
         public int DurationMinutes { get; set; } = 60;
 
-        /// <summary>Video | Phone | Onsite</summary>
+        
         [Required, MaxLength(30)]
         public string InterviewType { get; set; } = "Video";
 
@@ -298,7 +298,7 @@ namespace backend.DTOs.Jobs
         public DateTime? RescheduleRequestedAt { get; set; }
         public DateTime? LastRescheduledAt { get; set; }
 
-        // ── Post-interview feedback ──────────────────────────────────────────────
+        
         public int? FeedbackOverallRating { get; set; }
         public string? FeedbackRecommendation { get; set; }
         public string? FeedbackComments { get; set; }
@@ -312,7 +312,7 @@ namespace backend.DTOs.Jobs
     }
 
 
-    /// <summary>Payload for hiring manager submitting post-interview feedback.</summary>
+    
     public class SubmitInterviewFeedbackDto
     {
         [Required(ErrorMessage = "Recommendation is required.")]
@@ -326,7 +326,7 @@ namespace backend.DTOs.Jobs
         [Range(1, 5, ErrorMessage = "Overall rating must be between 1 and 5.")]
         public int OverallRating { get; set; }
 
-        /// <summary>JSON: {"Technical skills":4,"Communication":3,"Culture fit":5}</summary>
+       
         public string? SkillRatings { get; set; }
 
         [Range(1, 5, ErrorMessage = "Technical assessment score must be between 1 and 5.")]
@@ -337,5 +337,30 @@ namespace backend.DTOs.Jobs
     {
         [MaxLength(1000)]
         public string? Reason { get; set; }
+    }
+
+    public class SendApplicantEmailDto
+    {
+        [Required(ErrorMessage = "Subject is required.")]
+        [MaxLength(200)]
+        public string Subject { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email body is required.")]
+        public string Body { get; set; } = string.Empty;
+
+        [MaxLength(50)]
+        public string? MessageType { get; set; } = "ManualEmail";
+    }
+
+    public class CommunicationLogDto
+    {
+        public Guid Id { get; set; }
+        public Guid ApplicationId { get; set; }
+        public Guid SenderId { get; set; }
+        public string SenderName { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
+        public string Body { get; set; } = string.Empty;
+        public string MessageType { get; set; } = string.Empty;
+        public DateTime SentAt { get; set; }
     }
 }

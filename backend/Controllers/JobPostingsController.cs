@@ -14,9 +14,7 @@ namespace backend.Controllers
         private readonly IJobPostingService _jobService = jobService;
         private readonly ICandidateProfileService _profileService = profileService;
 
-        // RECRUITER ENDPOINTS  —  /api/recruiter/jobs
-
-        /// <summary>Create a new job posting (Draft or Published immediately)</summary>
+        
         [HttpPost("api/recruiter/jobs")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(JobPostingDetailDto), StatusCodes.Status201Created)]
@@ -52,7 +50,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>List all job postings created by the logged-in recruiter</summary>
+        
         [HttpGet("api/recruiter/jobs")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(PagedJobsDto), StatusCodes.Status200OK)]
@@ -72,7 +70,7 @@ namespace backend.Controllers
             return Ok(result);
         }
 
-        /// <summary>Get full detail of a single job posting (must belong to requester)</summary>
+        
         [HttpGet("api/recruiter/jobs/{id:guid}")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(JobPostingDetailDto), StatusCodes.Status200OK)]
@@ -94,7 +92,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Update an existing job posting</summary>
+        
         [HttpPut("api/recruiter/jobs/{id:guid}")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(JobPostingDetailDto), StatusCodes.Status200OK)]
@@ -128,7 +126,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Change status: Draft → Published / Published → Closed|Archived / etc.</summary>
+        
         [HttpPatch("api/recruiter/jobs/{id:guid}/status")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(JobPostingDetailDto), StatusCodes.Status200OK)]
@@ -155,7 +153,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Delete a Draft or Archived posting</summary>
+        
         [HttpDelete("api/recruiter/jobs/{id:guid}")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -182,7 +180,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>List candidates who applied to one of the recruiter's jobs</summary>
+        
         [HttpGet("api/recruiter/jobs/{id:guid}/applicants")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(JobApplicantsResultDto), StatusCodes.Status200OK)]
@@ -204,7 +202,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>List applicants across all of the recruiter's jobs</summary>
+        
         [HttpGet("api/recruiter/applicants")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(List<JobApplicantDto>), StatusCodes.Status200OK)]
@@ -218,7 +216,7 @@ namespace backend.Controllers
             return Ok(result);
         }
 
-        /// <summary>Update pipeline status for an applicant on a recruiter-owned job</summary>
+        
         [HttpPatch("api/recruiter/jobs/{id:guid}/applicants/{applicationId:guid}/status")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(JobApplicantDto), StatusCodes.Status200OK)]
@@ -244,7 +242,7 @@ namespace backend.Controllers
 
         
 
-        /// <summary>Browse all published jobs (candidates, unauthenticated)</summary>
+        
         [HttpGet("api/jobs")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(List<PublicJobPageDto>), StatusCodes.Status200OK)]
@@ -257,7 +255,7 @@ namespace backend.Controllers
             return Ok(result);
         }
 
-        /// <summary>View a single published job page</summary>
+        
         [HttpGet("api/jobs/{id:guid}")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(PublicJobPageDto), StatusCodes.Status200OK)]
@@ -275,7 +273,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Get a candidate's profile by ID (Recruiters/Managers only)</summary>
+        
         [HttpGet("api/recruiter/candidates/{id:guid}/profile")]
         [Authorize(Roles = "Recruiter,HiringManager")]
         [ProducesResponseType(typeof(backend.DTOs.Candidate.CandidateProfileResponseDto), StatusCodes.Status200OK)]
@@ -293,7 +291,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>List candidates who applied to jobs headed by the logged-in manager's departments</summary>
+        
         [HttpGet("api/manager/applicants")]
         [Authorize(Roles = "HiringManager")]
         [ProducesResponseType(typeof(List<JobApplicantDto>), StatusCodes.Status200OK)]
@@ -314,7 +312,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Submit notes/feedback and move application status for an applicant</summary>
+        
         [HttpPatch("api/manager/applications/{applicationId:guid}/feedback")]
         [Authorize(Roles = "HiringManager")]
         [ProducesResponseType(typeof(JobApplicantDto), StatusCodes.Status200OK)]
@@ -342,7 +340,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Submit final hiring decision (Hire / Reject / UnderFinalReview) for an applicant</summary>
+        
         [HttpPost("api/manager/applications/{applicationId:guid}/decision")]
         [Authorize(Roles = "HiringManager")]
         [ProducesResponseType(typeof(JobApplicantDto), StatusCodes.Status200OK)]
@@ -375,7 +373,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Schedule an interview for an applicant (sets status to Interview and emails the candidate)</summary>
+        
         [HttpPost("api/recruiter/jobs/{id:guid}/applicants/{applicationId:guid}/interview")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status201Created)]
@@ -413,7 +411,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>List interviews for the logged-in recruiter's jobs</summary>
+        
         [HttpGet("api/recruiter/interviews")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(List<InterviewDto>), StatusCodes.Status200OK)]
@@ -427,7 +425,7 @@ namespace backend.Controllers
             return Ok(result);
         }
 
-        /// <summary>List interviews for jobs in the hiring manager's departments</summary>
+        
         [HttpGet("api/manager/interviews")]
         [Authorize(Roles = "HiringManager")]
         [ProducesResponseType(typeof(List<InterviewDto>), StatusCodes.Status200OK)]
@@ -447,7 +445,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Hiring manager requests a reschedule for an interview</summary>
+        
         [HttpPost("api/manager/interviews/{interviewId:guid}/request-reschedule")]
         [Authorize(Roles = "HiringManager")]
         [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
@@ -478,7 +476,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Recruiter reschedules an existing interview</summary>
+      
         [HttpPut("api/recruiter/interviews/{interviewId:guid}")]
         [Authorize(Roles = "Recruiter")]
         [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
@@ -516,7 +514,7 @@ namespace backend.Controllers
             }
         }
 
-        /// <summary>Hiring manager submits post-interview feedback (sets application status to UnderFinalReview)</summary>
+       
         [HttpPost("api/manager/interviews/{interviewId:guid}/feedback")]
         [Authorize(Roles = "HiringManager")]
         [ProducesResponseType(typeof(InterviewDto), StatusCodes.Status200OK)]
@@ -556,6 +554,52 @@ namespace backend.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+
+        
+        [HttpPost("api/jobpostings/applications/{applicationId:guid}/send-email")]
+        [Authorize(Roles = "Recruiter,Admin")]
+        [ProducesResponseType(typeof(CommunicationLogDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SendApplicantEmail(
+            Guid applicationId, [FromBody] SendApplicantEmailDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _jobService.SendApplicantEmailAsync(applicationId, dto, recruiterId.Value);
+                return Ok(new
+                {
+                    message = "Email sent to candidate successfully.",
+                    data = result
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        
+        [HttpGet("api/jobpostings/applications/{applicationId:guid}/communication-history")]
+        [Authorize(Roles = "Recruiter,Admin")]
+        [ProducesResponseType(typeof(List<CommunicationLogDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetCommunicationHistory(Guid applicationId)
+        {
+            var recruiterId = GetRecruiterId();
+            if (recruiterId == null) return Unauthorized();
+
+            var history = await _jobService.GetCommunicationHistoryAsync(applicationId, recruiterId.Value);
+            return Ok(history);
         }
 
         private Guid? GetRecruiterId()
