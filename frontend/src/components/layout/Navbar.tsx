@@ -25,6 +25,14 @@ const navLinks = [
   label: 'How it works'
 }];
 
+function getUserAvatar(user: any): string {
+  if (user?.photoUrl) {
+    if (user.photoUrl.startsWith('http')) return user.photoUrl;
+    return `http://localhost:5073${user.photoUrl.startsWith('/') ? '' : '/'}${user.photoUrl}`;
+  }
+  return user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=4f46e5&color=fff&bold=true&size=128&format=png`;
+}
+
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -79,14 +87,14 @@ export function Navbar() {
           <div className="relative">
               <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-slate-100"
+              className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-slate-100 ring-1 ring-slate-200/80"
               aria-haspopup="menu"
               aria-expanded={menuOpen}>
               
                 <img
-                src={user.avatar}
-                alt=""
-                className="h-8 w-8 rounded-full" />
+                src={getUserAvatar(user)}
+                alt={user.name}
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-brand-500/20" />
               
                 <span className="text-sm font-semibold text-slate-700">
                   {user.name.split(' ')[0]}
@@ -113,16 +121,23 @@ export function Navbar() {
                     opacity: 0,
                     y: 6
                   }}
-                  className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lift"
+                  className="absolute right-0 z-20 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-lift"
                   role="menu">
                   
-                      <div className="px-3 py-2">
-                        <p className="text-sm font-semibold text-slate-900">
-                          {user.name}
-                        </p>
-                        <p className="truncate text-xs text-slate-500">
-                          {user.email}
-                        </p>
+                      <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-50/70 rounded-xl mb-1 border border-slate-100">
+                        <img
+                          src={getUserAvatar(user)}
+                          alt=""
+                          className="h-9 w-9 rounded-full object-cover ring-1 ring-slate-200"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-slate-900 truncate">
+                            {user.name}
+                          </p>
+                          <p className="truncate text-xs text-slate-500 font-medium">
+                            {user.email}
+                          </p>
+                        </div>
                       </div>
                       <div className="my-1 h-px bg-slate-100" />
                       <Link

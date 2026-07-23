@@ -12,7 +12,10 @@ import {
   Link2Icon,
   DownloadIcon,
   ShieldAlertIcon,
-  SparklesIcon
+  SparklesIcon,
+  CameraIcon,
+  ImageIcon,
+  Loader2Icon
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input, Textarea } from '../ui/Input';
@@ -28,12 +31,17 @@ export function ProfilePanel() {
     saveProfile, 
     uploadResume, 
     deleteResume, 
+    uploadPhoto,
+    deletePhoto,
     exportProfileData, 
     deleteCandidateProfile 
   } = useAuth();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -140,6 +148,33 @@ export function ProfilePanel() {
     }
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    setPhotoError('');
+    try {
+      await uploadPhoto(file);
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : 'Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
+
+  const handlePhotoDelete = async () => {
+    if (!window.confirm('Are you sure you want to remove your profile photo?')) return;
+    setUploadingPhoto(true);
+    try {
+      await deletePhoto();
+    } catch (err) {
+      alert('Failed to delete profile photo');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   const handleAddExperience = (e: React.FormEvent) => {
     e.preventDefault();
     if (!expCompany.trim() || !expTitle.trim() || !expStartDate) {
@@ -239,14 +274,80 @@ export function ProfilePanel() {
           <h2 className="font-display text-lg font-bold text-slate-900">
             Basic information
           </h2>
-          <div className="mt-5 flex items-center gap-4">
-            <img src={user.avatar} alt="" className="h-16 w-16 rounded-2xl" />
-            <div>
-              <p className="font-display text-lg font-bold text-slate-900">
-                {user.name}
-              </p>
-              <p className="text-sm text-slate-500">{user.email}</p>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-50 p-4 border border-slate-100">
+            <div className="flex items-center gap-4">
+              <div className="relative group">
+                <img
+                  src={user.photoUrl ? (user.photoUrl.startsWith('http') ? user.photoUrl : `http://localhost:5073${user.photoUrl.startsWith('/') ? '' : '/'}${user.photoUrl}`) : user.avatar}
+                  alt={user.name}
+                  className="h-20 w-20 rounded-2xl object-cover border-2 border-white shadow-sm ring-1 ring-slate-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="absolute inset-0 flex items-center justify-center rounded-2xl bg-slate-900/60 text-white opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
+                  title="Upload profile picture"
+                >
+                  {uploadingPhoto ? (
+                    <Loader2Icon className="h-6 w-6 animate-spin text-white" />
+                  ) : (
+                    <CameraIcon className="h-6 w-6 text-white" />
+                  )}
+                </button>
+              </div>
+
+              <div>
+                <p className="font-display text-lg font-bold text-slate-900">
+                  {user.name}
+                </p>
+                <p className="text-xs text-slate-500 font-medium">{user.email}</p>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Allowed: JPG, PNG, WEBP, GIF (Max 5MB)
+                </p>
+              </div>
             </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handlePhotoUpload}
+              />
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 text-xs font-bold shadow-xs transition disabled:opacity-50"
+              >
+                {uploadingPhoto ? (
+                  <Loader2Icon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CameraIcon className="h-4 w-4" />
+                )}
+                {user.photoUrl ? 'Change Photo' : 'Upload Photo'}
+              </button>
+
+              {user.photoUrl && (
+                <button
+                  type="button"
+                  onClick={handlePhotoDelete}
+                  disabled={uploadingPhoto}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white text-red-600 hover:bg-red-50 px-3 py-2 text-xs font-bold transition disabled:opacity-50"
+                >
+                  <Trash2Icon className="h-4 w-4" />
+                  Remove
+                </button>
+              )}
+            </div>
+
+            {photoError && (
+              <div className="w-full text-xs font-bold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100 mt-2">
+                {photoError}
+              </div>
+            )}
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Input

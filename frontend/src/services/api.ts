@@ -981,6 +981,20 @@ export const candidateApi = {
       method: 'DELETE',
     }),
 
+  uploadPhoto: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ message: string; photoUrl: string }>('/candidate/profile/photo', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  deletePhoto: () =>
+    request<void>('/candidate/profile/photo', {
+      method: 'DELETE',
+    }),
+
   deleteProfile: () =>
     request<{ message: string }>('/candidate/profile', {
       method: 'DELETE',
